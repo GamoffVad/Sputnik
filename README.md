@@ -2,7 +2,7 @@
 
 Локальное приложение Windows с веб-интерфейсом в WebView2. Для запуска нужны .NET Desktop Runtime 10 и Microsoft Edge WebView2 Runtime.
 
-Скачайте `Sputnik-win-x64.zip` в [GitHub Releases](https://github.com/GAMOFF/Sputnik/releases/latest), распакуйте архив целиком и запустите `Sputnik.exe`. Архив содержит сборку для Windows x64. Для сборки из исходников выполните `dotnet build -c Release` с .NET SDK 10 и откройте `bin/Release/net10.0-windows/Sputnik.exe`.
+Скачайте и запустите [SputnikSetup.exe для Windows x64](https://github.com/GAMOFF/Sputnik/releases/latest/download/SputnikSetup.exe). Установщик добавит «Спутник» в меню «Пуск». Переносимая сборка `Sputnik-win-x64.zip` доступна на [странице релизов](https://github.com/GAMOFF/Sputnik/releases/latest). Для сборки из исходников выполните `dotnet build -c Release` с .NET SDK 10 и откройте `bin/Release/net10.0-windows/Sputnik.exe`.
 
 Активный питомец появляется на рабочем столе при запуске Спутника. После каждого полного круга порядок движений перемешивается. Правый щелчок открывает меню над питомцем. Если сверху мало места, меню может открыться снизу. При выборе раздела меню остаётся открытым. Его можно закрыть кнопкой **×** или щелчком по рабочему столу. Формы и предпросмотр сменяют содержимое окна выбранного раздела.
 
@@ -27,3 +27,5 @@
 Контракт файла `.pet` и план реализации описаны в [SPEC.md](SPEC.md). Символы каталога поставляются с лицензиями Lucide и Feather в `wwwroot/assets/LUCIDE-LICENSE.txt`.
 
 [Промпт для подготовки анимаций питомца](PET-ANIMATION-PROMPT.md) описывает утверждение исходника, генерацию роликов и проверку хромакея на двух подложках.
+
+[Сборка установщика](installer/README.md) описана отдельно.
