@@ -1,0 +1,11 @@
+/bin/
+/obj/
+/.vs/
+/artifacts/
+*.user
+*.suo
+*.pfx
+.env
+.env.*
+/home-preview.png
+/narrow-preview.png

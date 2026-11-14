@@ -1,0 +1,110 @@
+[
+  {
+    "id": "hudi",
+    "name": "HUDI",
+    "description": "Компаньон рабочего стола",
+    "theme": {
+      "name": "Графит",
+      "accent": "#a5e4f6",
+      "background": "#181c20",
+      "surface": "#23292f"
+    },
+    "animations": [
+      {
+        "name": "Ожидание",
+        "file": "assets/hudi.png",
+        "frameCount": 1,
+        "fps": 1
+      }
+    ]
+  },
+  {
+    "id": "kudryashka",
+    "name": "Кудряшка",
+    "description": "Четыре анимации из исходных роликов",
+    "theme": {
+      "name": "Сирень",
+      "accent": "#ead8ff",
+      "background": "#201b27",
+      "surface": "#2b2434"
+    },
+    "animations": [
+      {
+        "name": "Приветствие",
+        "file": "assets/wink.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 72,
+        "fps": 18
+      },
+      {
+        "name": "Повороты головы",
+        "file": "assets/seedance.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 71,
+        "fps": 18
+      },
+      {
+        "name": "Опора ладонью",
+        "file": "assets/palm.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 144,
+        "fps": 18
+      },
+      {
+        "name": "Анимация Kling",
+        "file": "assets/kling.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 144,
+        "fps": 18
+      }
+    ]
+  },
+  {
+    "id": "klyaksa",
+    "name": "Клякса",
+    "description": "Озорная спутница с тремя анимациями",
+    "theme": {
+      "name": "Сумерки",
+      "accent": "#bac7ff",
+      "background": "#181b2c",
+      "surface": "#262b45"
+    },
+    "animations": [
+      {
+        "name": "Чих с сюрпризом",
+        "file": "assets/klyaksa/sneeze.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 84,
+        "fps": 21
+      },
+      {
+        "name": "Поймала равновесие",
+        "file": "assets/klyaksa/balance.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 84,
+        "fps": 21
+      },
+      {
+        "name": "Победный шажок",
+        "file": "assets/klyaksa/step.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 84,
+        "fps": 21
+      }
+    ]
+  }
+]
