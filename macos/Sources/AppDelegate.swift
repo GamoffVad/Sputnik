@@ -280,6 +280,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func prepareSmokeTest(store: MacStore, server: LocalWebServer, pet: DesktopPet) async throws {
         guard pet.hasFrame, !animationNames.isEmpty else { throw MacError("Первый встроенный спрайт не загрузился.") }
+        let watchmanID = "sand-watchman-clean"
+        guard let watchman = store.bundledPetManifests().first(where: { $0["id"] as? String == watchmanID }),
+              let watchmanName = watchman["name"] as? String,
+              let watchmanClips = watchman["animations"] as? [[String: Any]], watchmanClips.count == 5 else {
+            throw MacError("В библиотеке отсутствуют пять встроенных анимаций Песчаного дозорного.")
+        }
+        try store.writeWorkspace(["active": watchmanID, "themed": true])
+        pet.refresh(store.readWorkspace())
+        guard pet.name == watchmanName, pet.hasFrame, animationNames.count == watchmanClips.count else {
+            throw MacError("Спрайт встроенного Песчаного дозорного не загрузился.")
+        }
+        for clip in watchmanClips {
+            guard let file = clip["file"] as? String else {
+                throw MacError("Не указан файл анимации Песчаного дозорного.")
+            }
+            var request = URLRequest(url: server.origin.appendingPathComponent(file))
+            request.httpMethod = "HEAD"
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200, response.mimeType == "image/png" else {
+                throw MacError("Локальный интерфейс не смог получить кадры Песчаного дозорного.")
+            }
+        }
         guard let fixture = ProcessInfo.processInfo.environment["SPUTNIK_TEST_PET"], !fixture.isEmpty else { return }
         let preview = try await store.stagePet(fixture)
         guard let token = preview["token"] as? String else { throw MacError("Пакет тестового питомца не подготовлен.") }
@@ -419,7 +441,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         let heading = value as? String
                         let imported = self?.testedPetImport == true ? ", imported five Knight Watchman animations" : ""
                         self?.finishSmokeTest(heading == "Питомцы",
-                            error?.localizedDescription ?? heading.map { "decoded sprite, served UI, received bridge actions, rendered \($0)\(imported)" } ?? "Пустая панель")
+                            error?.localizedDescription ?? heading.map { "decoded bundled Sand Watchman sprite, served five animations, received bridge actions, rendered \($0)\(imported)" } ?? "Пустая панель")
                     }
                 }
             }

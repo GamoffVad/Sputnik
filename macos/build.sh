@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-version="${1:-0.1.1}"
+version="${1:-0.1.2}"
 output="${2:-$root/artifacts/macos}"
 build_number="${GITHUB_RUN_NUMBER:-1}"
 minimum_version="13.0"
@@ -53,10 +53,12 @@ xcrun lipo "$executable" -verify_arch arm64 x86_64
 chmod 755 "$executable"
 
 ditto "$root/wwwroot" "$resources/wwwroot"
-python3 - "$resources/wwwroot/assets" <<'PY'
+python3 - "$resources/wwwroot/assets" "$root/macos/pets/sand-watchman.pet" <<'PY'
 import json
 from pathlib import Path
+import shutil
 import sys
+from zipfile import ZipFile
 
 assets = Path(sys.argv[1])
 catalog = assets / "pets.json"
@@ -64,6 +66,18 @@ pets = [pet for pet in json.loads(catalog.read_text(encoding="utf-8-sig")) if pe
 pets.sort(key=lambda pet: pet["id"] != "klyaksa")
 if not pets or pets[0]["id"] != "klyaksa":
     raise SystemExit("The installer requires the Klyaksa pet")
+with ZipFile(sys.argv[2]) as archive:
+    watchman = json.loads(archive.read("manifest.json"))
+    if watchman.pop("schemaVersion") != 1 or watchman["id"] != "sand-watchman-clean" or len(watchman["animations"]) != 5:
+        raise SystemExit("Unexpected bundled Sand Watchman package")
+    destination = assets / watchman["id"]
+    destination.mkdir()
+    for index, clip in enumerate(watchman["animations"]):
+        target = destination / f"clip-{index}.png"
+        with archive.open(clip["file"]) as source, target.open("wb") as output:
+            shutil.copyfileobj(source, output)
+        clip["file"] = target.relative_to(assets.parent).as_posix()
+    pets.append(watchman)
 for pet in pets:
     for clip in pet["animations"]:
         if not (assets.parent / clip["file"]).is_file():

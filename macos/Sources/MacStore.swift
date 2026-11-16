@@ -51,11 +51,18 @@ final class MacStore {
         try write(value, to: dataDirectory.appendingPathComponent(name))
     }
 
+    func bundledPetManifests() -> [[String: Any]] {
+        guard let data = try? Data(contentsOf: root.appendingPathComponent("assets/pets.json")) else { return [] }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] ?? []
+    }
+
     func installedPetManifests() -> [[String: Any]] {
+        let bundledIDs = Set(bundledPetManifests().compactMap { $0["id"] as? String })
         let items = (try? fm.contentsOfDirectory(at: pets, includingPropertiesForKeys: [.isDirectoryKey], options: .skipsHiddenFiles)) ?? []
         return items.compactMap { folder in
             guard let info = read(folder.appendingPathComponent("pet.json")),
-                  info["id"] as? String == folder.lastPathComponent else { return nil }
+                  info["id"] as? String == folder.lastPathComponent,
+                  !bundledIDs.contains(folder.lastPathComponent) else { return nil }
             return info
         }.sorted { ($0["name"] as? String ?? "") < ($1["name"] as? String ?? "") }
     }
