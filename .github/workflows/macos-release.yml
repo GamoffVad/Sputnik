@@ -1,0 +1,131 @@
+name: macOS build
+
+on:
+  push:
+    branches: [main, 'macos/**']
+    tags: ['macos-v*']
+    paths:
+      - 'macos/**'
+      - 'wwwroot/**'
+      - 'Sputnik.ico'
+      - '.github/workflows/macos-release.yml'
+  pull_request:
+    paths:
+      - 'macos/**'
+      - 'wwwroot/**'
+      - 'Sputnik.ico'
+      - '.github/workflows/macos-release.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without v
+        required: true
+        default: '0.1.0'
+        type: string
+      publish:
+        description: Publish the disk image as a macOS prerelease
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          version="${INPUT_VERSION:-0.1.0}"
+          if [[ "$GITHUB_REF" == refs/tags/macos-v* ]]; then
+            version="${GITHUB_REF#refs/tags/macos-v}"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a version such as 0.1.0." >&2
+            exit 2
+          fi
+          echo "number=$version" >> "$GITHUB_OUTPUT"
+      - name: Build and smoke-test universal app
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.version.outputs.number }}
+          SPUTNIK_SMOKE_TEST: '1'
+        run: bash macos/build.sh "$APP_VERSION"
+      - name: Upload disk image and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ steps.version.outputs.number }}-universal
+          path: |
+            artifacts/macos/*.dmg
+            artifacts/macos/*.dmg.sha256
+          if-no-files-found: error
+          compression-level: 0
+
+  smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel, xcode-27]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ needs.build.outputs.version }}-universal
+          path: release
+      - name: Verify and launch app from the disk image
+        shell: bash
+        env:
+          APP_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          sw_vers
+          uname -m
+          dmg="SputnikSetup-$APP_VERSION-macos-universal.dmg"
+          (cd release && shasum -a 256 --check "$dmg.sha256")
+          mount_point="$(mktemp -d)"
+          trap 'hdiutil detach "$mount_point" -quiet || true; rmdir "$mount_point"' EXIT
+          hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "release/$dmg"
+          app="$mount_point/Sputnik.app"
+          codesign --verify --strict --verbose=2 "$app"
+          "$app/Contents/MacOS/Sputnik" --smoke-test
+
+  publish:
+    needs: [build, smoke]
+    if: startsWith(github.ref, 'refs/tags/macos-v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ needs.build.outputs.version }}-universal
+          path: release
+      - name: Publish macOS preview
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          tag="macos-v$APP_VERSION"
+          dmg="SputnikSetup-$APP_VERSION-macos-universal.dmg"
+          notes="Предварительная версия для macOS 13 и новее, Apple Silicon и Intel. Откройте DMG и перенесите Sputnik в «Программы». Использована локальная подпись ad hoc. Нотаризация Apple отсутствует."
+          (cd release && sha256sum --check "$dmg.sha256")
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" "release/$dmg" "release/$dmg.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" "release/$dmg" "release/$dmg.sha256" --target "$GITHUB_SHA" \
+              --title "Спутник $APP_VERSION для macOS" --notes "$notes" --prerelease --latest=false \
+              --repo "$GITHUB_REPOSITORY"
+          fi

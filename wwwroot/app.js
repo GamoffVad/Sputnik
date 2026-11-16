@@ -6,7 +6,15 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const main = $('#main');
 const dialog = $('#dialog');
 const handlers = new Map();
-const bridge = window.chrome?.webview;
+const macBridge = window.webkit?.messageHandlers?.sputnik;
+const isMac = Boolean(macBridge);
+const bridge = window.chrome?.webview ?? (isMac ? {
+  postMessage: message => macBridge.postMessage(message),
+  addEventListener(_event, callback) {
+    window.__sputnikReceive = data => callback({data});
+  }
+} : null);
+const iconURL = name => (isMac ? 'icons/' : 'https://icons.sputnik.local/') + name;
 let serial = 0;
 bridge?.addEventListener('message', ({data}) => {
   if (Array.isArray(data.history)) {
@@ -24,7 +32,7 @@ bridge?.addEventListener('message', ({data}) => {
   data.ok ? request.resolve(data.value) : request.reject(new Error(data.error));
 });
 function call(action, payload = null) {
-  if (!bridge) return Promise.reject(new Error('Откройте приложение Спутник в Windows.'));
+  if (!bridge) return Promise.reject(new Error('Откройте приложение «Спутник».'));
   return new Promise((resolve, reject) => {
     const id = String(++serial);
     handlers.set(id, {resolve, reject});
@@ -46,7 +54,7 @@ let quick = false, menu = false, hidden = false, busy = false, chatError = '', n
 let model = {};
 let desktopSection = null, desktopMotions = [], autoStart = false;
 let shareChannels = [];
-let appearanceFonts = ['Segoe UI'];
+let appearanceFonts = [isMac?'Helvetica Neue':'Segoe UI'];
 let hotkeys = {sections:[],bindings:{}};
 let sectionRevision = 0;
 let subpage = false;
@@ -81,7 +89,7 @@ function theme(t = activeTheme(), font = state.font) {
   style.setProperty('--accent-ink',ink(t.accent));
   style.setProperty('--ink',surfaceInk);
   style.setProperty('--field-ink',fieldInk);
-  style.setProperty('--app-font',JSON.stringify(font||'Segoe UI'));
+  style.setProperty('--app-font',font?JSON.stringify(font):(isMac?'-apple-system':JSON.stringify('Segoe UI')));
   style.colorScheme=surfaceInk==='#000'?'light':'dark';
   // WebView2 109 on Windows 7 predates CSS color-mix().
   if (!CSS.supports('color','color-mix(in srgb, black, white)')) {
@@ -221,7 +229,7 @@ function iconAction(label, icon, attrs, type='button') {
 }
 function favoriteGlyph(siteIcon,icon,monochrome=false) {
   if(!/^[a-f0-9]{64}\.png$/i.test(siteIcon??''))return glyph(icon);
-  const source='https://icons.sputnik.local/'+siteIcon;
+  const source=iconURL(siteIcon);
   return monochrome?'<span class="site-icon site-icon-mask" aria-hidden="true" style="--icon-mask:url('+source.slice(0,-4)+'-mono.png)"></span>':'<img class="site-icon" src="'+source+'" alt="">';
 }
 const monoOption = '<label class="icon-mono-option"><input name="monochrome" type="checkbox">Монохромный</label>';
@@ -342,7 +350,7 @@ function repeatLabel(reminder) {
 function remindersPage() {
   const items=[...state.reminders].sort((a,b)=>Number(a.done)-Number(b.done)||a.due-b.due);
   const page=pageOf(items,'reminders',pageRows(6,4),r=>'<div class="list-row">'+glyph('bell')+'<span class="clip-text" title="'+escape(r.title)+'">'+escape(r.title)+'<small class="muted">'+date(r.due)+(r.done?' · Выполнено':r.repeat&&r.repeat!=='none'?' · '+escape(repeatLabel(r)):'')+'</small></span><div class="favorite-actions">'+iconAction('Изменить напоминание','edit','data-edit-reminder="'+escape(r.id)+'"')+(r.done?'':iconAction('Готово','save','data-done="'+escape(r.id)+'"'))+'</div></div>');
-  return head('Напоминания',iconAction('Добавить напоминание','add','class="primary" id="add-reminder"'))+'<section class="panel list">'+(page.markup||empty('Добавьте напоминание, чтобы HUDI показал его в нужное время.'))+'</section>'+page.bar;
+  return head('Напоминания',iconAction('Добавить напоминание','add','class="primary" id="add-reminder"'))+'<section class="panel list">'+(page.markup||empty('Добавьте напоминание, чтобы питомец показал его в нужное время.'))+'</section>'+page.bar;
 }
 function composer() {
   return '<form class="compose"><input aria-label="Сообщение модели" maxlength="10000" placeholder="Спросить '+escape(activePet().name)+'…" value="'+escape(draft)+'" required><button type="submit" class="primary compose-send" aria-label="Отправить" title="Отправить (Enter)"'+(busy?' disabled':'')+'><svg viewBox="0 0 18 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h13M9 2l6 6-6 6"/></svg></button></form>';
@@ -406,7 +414,7 @@ const desktopSizes=[
 function appearancePage() {
   const mode=state.appearanceMode==='custom'?'custom':state.themed?'pet':'default';
   const colors=state.customTheme??activeTheme();
-  const font=state.font??'Segoe UI';
+  const font=state.font??appearanceFonts[0];
   return '<form class="form" id="appearance-form"><div class="field">Цветовая схема'+makeChoice('appearance-mode','Цветовая схема',appearanceModes,mode)+'</div>'+
     '<div class="appearance-colors"'+(mode!=='custom'?' hidden':'')+'>'+colorFields.map(([key,label])=>
       '<div class="field" data-picker-field><span>'+label+'</span><button type="button" class="color-trigger" id="appearance-'+key+'" aria-label="'+label+'" aria-expanded="false" aria-controls="appearance-'+key+'-popup"><i aria-hidden="true"></i><span>'+escape(colors[key])+'</span></button><div class="picker-popover appearance-popover color-popover" id="appearance-'+key+'-popup" hidden></div></div>').join('')+'</div>'+
@@ -421,7 +429,7 @@ function bindAppearance() {
   const form=$('#appearance-form',main);
   if(!form)return;
   let mode=state.appearanceMode==='custom'?'custom':state.themed?'pet':'default';
-  let font=state.font??'Segoe UI';
+  let font=state.font??appearanceFonts[0];
   const colorBox=$('.appearance-colors',form);
   const colors={...(state.customTheme??activeTheme())};
   const status=$('#appearance-status',form);
@@ -535,7 +543,7 @@ function renderSection() {
     chat:desktopChat,
     quick:desktopQuick,
     motion:()=>head('Движения','<div class="motion-toolbar" role="group" aria-label="Управление воспроизведением">'+iconAction('Случайный порядок','shuffle','class="primary" data-playback="shuffle"')+iconAction('Пауза','pause','data-playback="pause"')+iconAction('Продолжить','play','data-playback="resume"')+'</div>')+'<div class="list motion-list">'+movements+'</div>',
-    manage:()=>head('Управление')+'<section class="panel toggles"><label><input type="checkbox" id="autostart" '+(autoStart?'checked':'')+'>Запускать питомца при входе в Windows</label></section>'+button('Горячие клавиши','id="manage-hotkeys"','settings'),
+    manage:()=>head('Управление')+'<section class="panel toggles"><label><input type="checkbox" id="autostart" '+(autoStart?'checked':'')+'>Запускать питомца при входе в '+(isMac?'macOS':'Windows')+'</label></section>'+(isMac?'':button('Горячие клавиши','id="manage-hotkeys"','settings')),
     theme:()=>head('Внешний вид')+settings(true),
     model:()=>head('Модель и API')+settings(true),
     sharing:sharingPage,
