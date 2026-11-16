@@ -46,6 +46,7 @@ RestartApplications=no
 UninstallDisplayIcon={app}\Sputnik.exe
 OutputDir={#InstallerOutput}
 OutputBaseFilename=SputnikSetup
+SetupIconFile=..\Sputnik.ico
 Compression=lzma2/normal
 SolidCompression=yes
 SetupLogging=yes
@@ -91,6 +92,36 @@ const
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
   UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#AppKey}_is1';
 
+var
+  PersistentLog: String;
+
+procedure WriteInstallLog(MessageText: String);
+var
+  Lines: TArrayOfString;
+begin
+  Log(MessageText);
+  if PersistentLog <> '' then
+  begin
+    SetArrayLength(Lines, 1);
+    Lines[0] := GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':') + ' ' + MessageText;
+    SaveStringsToUTF8File(PersistentLog, Lines, True);
+  end;
+end;
+
+function InitializeSetup: Boolean;
+var
+  Folder, Name: String;
+begin
+  Folder := ExpandConstant('{localappdata}\{#AppKey}\logs');
+  if ForceDirectories(Folder) then
+  begin
+    Name := ExtractFileName(ExpandConstant('{log}'));
+    if Name <> '' then PersistentLog := AddBackslash(Folder) + ChangeFileExt(Name, '.log');
+  end;
+  WriteInstallLog('Sputnik {#AppVersion} setup started. Detailed log: ' + ExpandConstant('{log}'));
+  Result := True;
+end;
+
 function ExistingDirectory: String;
 var
   Location: String;
@@ -118,17 +149,18 @@ begin
   if (Location <> '') and
      (CompareText(AddBackslash(Location), AddBackslash(WizardDirValue)) <> 0) then
     Result := FmtMessage(CustomMessage('ExistingLocation'), [Location]);
-  if Result <> '' then Log(Result);
+  WriteInstallLog('Selected installation folder: ' + WizardDirValue);
+  if Result <> '' then WriteInstallLog(Result);
 end;
 
 procedure DeinitializeSetup;
 var
-  Folder, SourceLog: String;
+  SourceLog: String;
 begin
+  WriteInstallLog('Setup closed.');
   SourceLog := ExpandConstant('{log}');
-  Folder := ExpandConstant('{localappdata}\{#AppKey}\logs');
-  if (SourceLog <> '') and ForceDirectories(Folder) then
-    FileCopy(SourceLog, AddBackslash(Folder) + ExtractFileName(SourceLog), True);
+  if (PersistentLog <> '') and (SourceLog <> '') then
+    FileCopy(SourceLog, ChangeFileExt(PersistentLog, '.txt'), False);
 end;
 
 function WebViewRegistered(Root: Integer): Boolean;
@@ -149,16 +181,23 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
 begin
-  if (CurStep <> ssPostInstall) or HasWebView then Exit;
+  if CurStep <> ssPostInstall then Exit;
+  WriteInstallLog('Sputnik application files installed.');
+  if HasWebView then
+  begin
+    WriteInstallLog('WebView2 is already installed.');
+    Exit;
+  end;
+  WriteInstallLog('Installing bundled WebView2 runtime.');
   ExtractTemporaryFile('MicrosoftEdgeWebView2RuntimeInstallerX64.exe');
   if Exec(ExpandConstant('{tmp}\MicrosoftEdgeWebView2RuntimeInstallerX64.exe'),
           '/silent /install', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    Log('WebView2 offline installer exit code: ' + IntToStr(ResultCode))
+    WriteInstallLog('WebView2 offline installer exit code: ' + IntToStr(ResultCode))
   else
-    Log('Could not start WebView2 offline installer: ' + IntToStr(ResultCode));
+    WriteInstallLog('Could not start WebView2 offline installer: ' + IntToStr(ResultCode));
 
   if HasWebView then Exit;
-  Log(CustomMessage('MissingWebView'));
+  WriteInstallLog(CustomMessage('MissingWebView'));
   if not WizardSilent then
     MsgBox(CustomMessage('MissingWebView'), mbInformation, MB_OK);
 end;
