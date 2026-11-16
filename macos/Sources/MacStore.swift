@@ -212,8 +212,9 @@ enum PetArchive {
                                    "frameCount": count, "columns": columns, "fps": fps])
             }
             try fm.removeItem(at: archive)
-            let installed: [String: Any] = ["id": id, "name": name, "description": description,
+            var installed: [String: Any] = ["id": id, "name": name, "description": description,
                                             "theme": theme, "animations": animations]
+            if let scale = pet["displayScale"] as? Double, (0.75...1.5).contains(scale) { installed["displayScale"] = scale }
             try JSONSerialization.data(withJSONObject: installed).write(to: directory.appendingPathComponent("pet.json"), options: .atomic)
             return installed
         } catch {

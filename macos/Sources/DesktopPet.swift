@@ -150,6 +150,7 @@ private struct DesktopPetManifest: Decodable {
     let name: String
     let animations: [DesktopClip]
     let theme: Theme?
+    let displayScale: CGFloat?
 }
 
 @MainActor
@@ -168,7 +169,7 @@ private final class DesktopSprite: NSView {
         let scale = min(bounds.width / CGFloat(image.width), bounds.height / CGFloat(image.height))
         let size = CGSize(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
         let rect = CGRect(x: (bounds.width - size.width) / 2, y: 0, width: size.width, height: size.height)
-        ctx.interpolationQuality = .high
+        ctx.interpolationQuality = .none
         ctx.draw(image, in: rect)
     }
 
@@ -305,7 +306,8 @@ final class DesktopPet: NSObject {
         palette = SputnikPalette(theme)
         fontFamily = workspace["font"] as? String
         let scale = (workspace["petScale"] as? NSNumber)?.doubleValue ?? 100
-        sprite.preferredSize = 230 * max(0.6, min(1.6, scale / 100))
+        let displayScale = max(0.75, min(1.5, selected?.displayScale ?? 1))
+        sprite.preferredSize = 230 * max(0.6, min(1.6, scale / 100)) * displayScale
         constrainToScreen()
     }
 
