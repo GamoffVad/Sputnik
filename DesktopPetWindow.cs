@@ -41,6 +41,7 @@ internal sealed class DesktopPetWindow : Window
     private readonly ScaleTransform idle = new();
     private readonly DesktopControls controls;
     private readonly Stopwatch elapsed = new();
+    private readonly Random random = new();
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Queue<AnimationClip> upcoming = new();
     private readonly HashSet<AnimationClip> unavailable = new();
@@ -165,11 +166,11 @@ internal sealed class DesktopPetWindow : Window
         ResizePet(ReadScale("petScale"));
         controls.SetSphereSize(DesktopControls.DefaultOrbSize * ReadScale("sphereScale"));
         controls.SetSphereSpread(workspace?["sphereSpread"] is JsonValue spread && spread.TryGetValue<double>(out double spacingPercent)
-            ? Math.Clamp(spacingPercent, 0, 100) / 100 : 1);
+            ? Compatibility.Clamp(spacingPercent, 0, 100) / 100 : 1);
         controls.SetFavorites(favorites);
 
         double ReadScale(string name) => workspace?[name] is JsonValue value && value.TryGetValue<double>(out double percent)
-            ? Math.Clamp(percent, 60, 160) / 100
+            ? Compatibility.Clamp(percent, 60, 160) / 100
             : 1;
     }
 
@@ -181,8 +182,8 @@ internal sealed class DesktopPetWindow : Window
         double oldWidth = Width, oldHeight = Height;
         Width = Height = size;
         if (!IsLoaded) return;
-        Left = Math.Clamp(Left + (oldWidth - size) / 2, area.Left, area.Right - size);
-        Top = Math.Clamp(Top + oldHeight - size, area.Top, area.Bottom - size);
+        Left = Compatibility.Clamp(Left + (oldWidth - size) / 2, area.Left, area.Right - size);
+        Top = Compatibility.Clamp(Top + oldHeight - size, area.Top, area.Bottom - size);
     }
 
     private void SelectFromStore(string desired)
@@ -190,7 +191,7 @@ internal sealed class DesktopPetWindow : Window
         Pet? selected = builtins.FirstOrDefault(pet => pet.Id == desired);
         string folder = Assets;
         if (selected is null && desired.Length is > 0 and < 50 &&
-            desired.All(character => char.IsAsciiLetterOrDigit(character) || character == '-'))
+            desired.All(character => character is '-' or >= '0' and <= '9' or >= 'A' and <= 'Z' or >= 'a' and <= 'z'))
         {
             folder = Path.Combine(App.DataDirectory, "pets", desired);
             try
@@ -238,18 +239,23 @@ internal sealed class DesktopPetWindow : Window
         if (upcoming.Count == 0)
         {
             var order = active.Animations.Where(clip => !unavailable.Contains(clip) && (pinned is null || clip == pinned)).ToArray();
-            Random.Shared.Shuffle(order);
+            for (int index = order.Length - 1; index > 0; index--)
+            {
+                int swap = random.Next(index + 1);
+                (order[index], order[swap]) = (order[swap], order[index]);
+            }
             if (order.Length > 1 && order[0] == current)
             {
-                int swap = Random.Shared.Next(1, order.Length);
+                int swap = random.Next(1, order.Length);
                 (order[0], order[swap]) = (order[swap], order[0]);
             }
 
             foreach (var clip in order) upcoming.Enqueue(clip);
         }
 
-        while (upcoming.TryDequeue(out var next))
+        while (upcoming.Count != 0)
         {
+            var next = upcoming.Dequeue();
             try
             {
                 sheet = GetSheet(next);

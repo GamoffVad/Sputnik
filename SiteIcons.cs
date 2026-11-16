@@ -12,13 +12,18 @@ internal sealed class SiteIcons(string folder)
 {
     private static readonly HttpClient Client = new(new HttpClientHandler
     {
-        UseCookies = false, MaxAutomaticRedirections = 4, AutomaticDecompression = DecompressionMethods.All,
+        UseCookies = false, MaxAutomaticRedirections = 4,
+#if NET48
+        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+#else
+        AutomaticDecompression = DecompressionMethods.All,
+#endif
     });
 
     public async Task<string?> Find(string target)
     {
         if (!Uri.TryCreate(target, UriKind.Absolute, out var page) || !IsWeb(page)) return null;
-        string file = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(page.GetLeftPart(UriPartial.Path) + page.Query))).ToLowerInvariant() + ".png";
+        string file = CacheName(page);
         string path = Path.Combine(folder, file);
         if (File.Exists(path)) return file;
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(6));
@@ -33,7 +38,7 @@ internal sealed class SiteIcons(string folder)
                 foreach (Match tag in Regex.Matches(Encoding.UTF8.GetString(head), @"<link\b[^>]*>", RegexOptions.IgnoreCase))
                 {
                     string rel = Attribute(tag.Value, "rel");
-                    if (!rel.Split(' ', StringSplitOptions.RemoveEmptyEntries).Any(value => value.Equals("icon", StringComparison.OrdinalIgnoreCase) ||
+                    if (!rel.Split([' '], StringSplitOptions.RemoveEmptyEntries).Any(value => value.Equals("icon", StringComparison.OrdinalIgnoreCase) ||
                         value.Equals("apple-touch-icon", StringComparison.OrdinalIgnoreCase))) continue;
                     if (Uri.TryCreate(address, Attribute(tag.Value, "href"), out var icon) && IsWeb(icon))
                         candidates.Add(icon);
@@ -60,7 +65,7 @@ internal sealed class SiteIcons(string folder)
                 Directory.CreateDirectory(folder);
                 string temporary = path + "." + Guid.NewGuid().ToString("N");
                 File.WriteAllBytes(temporary, png);
-                File.Move(temporary, path, overwrite: true);
+                Compatibility.ReplaceFile(temporary, path);
                 return file;
             }
             catch (Exception error) when (error is HttpRequestException or IOException or NotSupportedException or FileFormatException or ArgumentException) { }
@@ -74,6 +79,18 @@ internal sealed class SiteIcons(string folder)
 
     private static bool IsWeb(Uri uri) => uri.Scheme is "http" or "https" && uri.UserInfo.Length == 0;
 
+    private static string CacheName(Uri page)
+    {
+        var address = Encoding.UTF8.GetBytes(page.GetLeftPart(UriPartial.Path) + page.Query);
+#if NET48
+        using var sha256 = SHA256.Create();
+        var hash = BitConverter.ToString(sha256.ComputeHash(address)).Replace("-", "");
+#else
+        var hash = Convert.ToHexString(SHA256.HashData(address));
+#endif
+        return hash.ToLowerInvariant() + ".png";
+    }
+
     private static string Attribute(string tag, string name)
     {
         var match = Regex.Match(tag, """\s""" + name + """\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""", RegexOptions.IgnoreCase);
@@ -82,12 +99,16 @@ internal sealed class SiteIcons(string folder)
 
     private static async Task<byte[]> ReadBytes(HttpContent content, int limit, CancellationToken token)
     {
+#if NET48
+        using var stream = await content.ReadAsStreamAsync();
+#else
         await using var stream = await content.ReadAsStreamAsync(token);
+#endif
         using var output = new MemoryStream();
         var buffer = new byte[8192];
         while (output.Length < limit)
         {
-            int length = await stream.ReadAsync(buffer.AsMemory(0, Math.Min(buffer.Length, limit - (int)output.Length)), token);
+            int length = await stream.ReadAsync(buffer, 0, Math.Min(buffer.Length, limit - (int)output.Length), token);
             if (length == 0) break;
             output.Write(buffer, 0, length);
         }

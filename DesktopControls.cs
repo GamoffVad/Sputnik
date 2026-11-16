@@ -116,7 +116,7 @@ internal sealed class DesktopControls : IDisposable
         Rect area = WorkArea();
         double diameter = Math.Min(area.Width, area.Height);
         double radius = Math.Max(orbSize, (diameter - orbSize) / 2);
-        return Math.Clamp((int)(Math.PI / (2 * Math.Asin((orbSize + 5) / (2 * radius)))) + 1, 1, MaxSpheresPerArc);
+        return (int)Compatibility.Clamp((int)(Math.PI / (2 * Math.Asin((orbSize + 5) / (2 * radius)))) + 1, 1, MaxSpheresPerArc);
     }
 
     private void RebuildSpheres()
@@ -334,15 +334,15 @@ internal sealed class DesktopControls : IDisposable
             Rect sprite = PetBounds();
             double above = sprite.Top - Gap - window.Height;
             double below = sprite.Bottom + Gap;
-            window.Left = Math.Clamp(sprite.Left + (sprite.Width - window.Width) / 2, area.Left, area.Right - window.Width);
+            window.Left = Compatibility.Clamp(sprite.Left + (sprite.Width - window.Width) / 2, area.Left, area.Right - window.Width);
             window.Top = above < area.Top && below + window.Height <= area.Bottom
-                ? below : Math.Clamp(above, area.Top, area.Bottom - window.Height);
+                ? below : Compatibility.Clamp(above, area.Top, area.Bottom - window.Height);
             return;
         }
         double right = pet.Left + pet.Width + Gap;
         double left = pet.Left - window.Width - Gap;
-        window.Left = Math.Clamp(right + window.Width <= area.Right ? right : left, area.Left, area.Right - window.Width);
-        window.Top = Math.Clamp(pet.Top + pet.Height / 2 - window.Height / 2, area.Top, area.Bottom - window.Height);
+        window.Left = Compatibility.Clamp(right + window.Width <= area.Right ? right : left, area.Left, area.Right - window.Width);
+        window.Top = Compatibility.Clamp(pet.Top + pet.Height / 2 - window.Height / 2, area.Top, area.Bottom - window.Height);
         KeepMenuClear(window, area);
     }
 
@@ -364,7 +364,7 @@ internal sealed class DesktopControls : IDisposable
     {
         Rect area = WorkArea();
         Rect sprite = PetBounds();
-        window.Left = Math.Clamp(sprite.Left + (sprite.Width - window.Width) / 2, area.Left, Math.Max(area.Left, area.Right - window.Width));
+        window.Left = Compatibility.Clamp(sprite.Left + (sprite.Width - window.Width) / 2, area.Left, Math.Max(area.Left, area.Right - window.Width));
         double above = sprite.Top - window.Height - Gap;
         double below = sprite.Bottom + Gap;
         window.Top = above >= area.Top || below + window.Height > area.Bottom
@@ -459,8 +459,8 @@ internal sealed class DesktopControls : IDisposable
                 double minX = start + halfOrb - left * actualRadius;
                 double minY = area.Top + halfOrb - top * actualRadius;
                 Point anchor = new(
-                    Math.Clamp(center.X, minX, Math.Max(minX, end - halfOrb - right * actualRadius)),
-                    Math.Clamp(center.Y, minY, Math.Max(minY, area.Bottom - halfOrb - bottom * actualRadius)));
+                    Compatibility.Clamp(center.X, minX, Math.Max(minX, end - halfOrb - right * actualRadius)),
+                    Compatibility.Clamp(center.Y, minY, Math.Max(minY, area.Bottom - halfOrb - bottom * actualRadius)));
                 double cost = (anchor - center).LengthSquared + rotation * rotation * 40
                     + Math.Pow(preferredRadius - actualRadius, 2) * 4;
 
@@ -520,7 +520,7 @@ internal sealed class DesktopControls : IDisposable
                 IntPtr hit = GetAncestor(WindowFromPoint(point), 2);
                 if (chat is { IsVisible: true } && !IsHit(chat, hit)) chat.Dismiss();
                 GetWindowThreadProcessId(hit, out uint owner);
-                if (owner == Environment.ProcessId)
+                if (owner == Compatibility.ProcessId)
                 {
                     if (!IsHit(pet, hit) && !IsHit(menu, hit) && !spheres.Any(window => IsHit(window, hit))) HideSpheres();
                     return;

@@ -10,6 +10,14 @@
 #ifndef WebViewInstaller
   #error WebViewInstaller must point to the Microsoft WebView2 offline installer
 #endif
+#ifdef LegacyArchitecture
+  #ifndef NetFrameworkInstaller
+    #error NetFrameworkInstaller must point to the .NET Framework 4.8 offline installer
+  #endif
+  #if LegacyArchitecture != "x64" && LegacyArchitecture != "x86"
+    #error LegacyArchitecture must be x64 or x86
+  #endif
+#endif
 #ifndef AppKey
   #define AppKey "Sputnik.Desktop"
 #endif
@@ -37,14 +45,28 @@ DisableDirPage=auto
 UsePreviousAppDir=yes
 AlwaysShowDirOnReadyPage=yes
 PrivilegesRequired=lowest
+#ifdef LegacyArchitecture
+  #if LegacyArchitecture == "x86"
+ArchitecturesAllowed=x86compatible and not x64compatible
+  #else
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
+  #endif
+MinVersion=6.1sp1
+#else
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
+#endif
 CloseApplications=yes
 RestartApplications=no
 UninstallDisplayIcon={app}\Sputnik.exe
 OutputDir={#InstallerOutput}
+#ifdef LegacyArchitecture
+OutputBaseFilename=SputnikSetup-win7-{#LegacyArchitecture}
+#else
 OutputBaseFilename=SputnikSetup
+#endif
 SetupIconFile=..\Sputnik.ico
 Compression=lzma2/normal
 SolidCompression=yes
@@ -73,9 +95,22 @@ russian.Running=Закройте питомца через пункт «Закр
 english.Running=Choose Quit pet from the pet menu, then run setup again. The log is in %1.
 russian.InstallingWebView=Установка встроенного компонента WebView2…
 english.InstallingWebView=Installing the bundled WebView2 component…
+#ifdef LegacyArchitecture
+russian.InstallingFramework=Установка .NET Framework 4.8…
+english.InstallingFramework=Installing .NET Framework 4.8…
+russian.FrameworkFailed=Не удалось установить .NET Framework 4.8 (код %1). Проверьте обновления Windows 7 SP1 и журналы в %2.
+english.FrameworkFailed=Could not install .NET Framework 4.8 (code %1). Check the Windows 7 SP1 updates and the logs in %2.
+russian.FrameworkRestart=Перезагрузите Windows после установки .NET Framework 4.8, затем снова запустите установщик «Спутника».
+english.FrameworkRestart=Restart Windows to finish installing .NET Framework 4.8, then run Sputnik setup again.
+#endif
 
 [Files]
+#ifdef LegacyArchitecture
+Source: "{#NetFrameworkInstaller}"; DestName: "NetFramework48Setup.exe"; Flags: dontcopy
+Source: "{#WebViewInstaller}"; DestName: "WebView2Runtime109Setup.exe"; Flags: dontcopy solidbreak
+#else
 Source: "{#WebViewInstaller}"; DestName: "MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; Flags: dontcopy
+#endif
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs solidbreak
 
 [InstallDelete]
@@ -97,10 +132,16 @@ const
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
   UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#AppKey}_is1';
   PetMutex = 'Local\Sputnik.Desktop';
+#ifdef LegacyArchitecture
+  FrameworkKey = 'Software\Microsoft\NET Framework Setup\NDP\v4\Full';
+#endif
 
 var
   LogFolder, PersistentLog: String;
   FilesInstalled: Boolean;
+#ifdef LegacyArchitecture
+  FrameworkPage: TOutputMarqueeProgressWizardPage;
+#endif
 
 function OpenEvent(DesiredAccess: LongWord; InheritHandle: Boolean; Name: String): THandle;
   external 'OpenEventW@kernel32.dll stdcall setuponly';
@@ -165,16 +206,21 @@ begin
   LogsButton.Anchors := [akLeft, akBottom];
   LogsButton.Caption := CustomMessage('OpenLogs');
   LogsButton.OnClick := @OpenLogs;
+#ifdef LegacyArchitecture
+  FrameworkPage := CreateOutputMarqueeProgressPage(CustomMessage('InstallingFramework'), '');
+#endif
 end;
 
 function ExistingDirectory: String;
 var
   Location: String;
+  Found: Boolean;
 begin
   Result := '';
-  if (RegQueryStringValue(HKCU64, UninstallKey, 'InstallLocation', Location) or
-      RegQueryStringValue(HKCU32, UninstallKey, 'InstallLocation', Location)) and
-     FileExists(AddBackslash(Location) + 'Sputnik.exe') then
+  Found := RegQueryStringValue(HKCU32, UninstallKey, 'InstallLocation', Location);
+  if IsWin64 and not Found then
+    Found := RegQueryStringValue(HKCU64, UninstallKey, 'InstallLocation', Location);
+  if Found and FileExists(AddBackslash(Location) + 'Sputnik.exe') then
     Result := Location;
 #if AppKey == "Sputnik.Desktop"
   if Result = '' then
@@ -184,6 +230,48 @@ begin
   end;
 #endif
 end;
+
+#ifdef LegacyArchitecture
+function EnsureFramework(var NeedsRestart: Boolean): String;
+var
+  Release: Cardinal;
+  ResultCode: Integer;
+  FrameworkLog: String;
+begin
+  Result := '';
+  if RegQueryDWordValue(HKLM32, FrameworkKey, 'Release', Release) and (Release >= 528040) then
+  begin
+    WriteInstallLog('.NET Framework 4.8 or newer is already installed.');
+    Exit;
+  end;
+
+  FrameworkLog := ChangeFileExt(PersistentLog, '.framework.html');
+  if PersistentLog = '' then
+    FrameworkLog := AddBackslash(LogFolder) + 'Sputnik-NetFramework48.html';
+  WriteInstallLog('Installing bundled .NET Framework 4.8. Log: ' + FrameworkLog);
+  FrameworkPage.Show;
+  try
+    FrameworkPage.Animate;
+    ExtractTemporaryFile('NetFramework48Setup.exe');
+    if ShellExec('runas', ExpandConstant('{tmp}\NetFramework48Setup.exe'),
+        '/q /norestart /log "' + FrameworkLog + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    begin
+      WriteInstallLog('.NET Framework offline installer exit code: ' + IntToStr(ResultCode));
+      NeedsRestart := (ResultCode = 3010) or (ResultCode = 1641);
+      if NeedsRestart then
+        Result := CustomMessage('FrameworkRestart')
+      else if (ResultCode <> 0) or
+              not RegQueryDWordValue(HKLM32, FrameworkKey, 'Release', Release) or (Release < 528040) then
+        Result := FmtMessage(CustomMessage('FrameworkFailed'), [IntToStr(ResultCode), LogFolder]);
+    end
+    else
+      Result := FmtMessage(CustomMessage('FrameworkFailed'), [IntToStr(ResultCode), LogFolder]);
+  finally
+    FrameworkPage.Hide;
+  end;
+  if Result <> '' then WriteInstallLog(Result);
+end;
+#endif
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
@@ -198,6 +286,10 @@ begin
     Result := FmtMessage(CustomMessage('ExistingLocation'), [Location]);
   WriteInstallLog('Selected installation folder: ' + WizardDirValue);
   if Result <> '' then WriteInstallLog(Result);
+#ifdef LegacyArchitecture
+  if Result <> '' then Exit;
+  Result := EnsureFramework(NeedsRestart);
+#endif
 #if AppKey == "Sputnik.Desktop"
   if (Result <> '') or not CheckForMutexes(PetMutex) then Exit;
 
@@ -247,15 +339,22 @@ end;
 function WebViewRegistered(Root: Integer): Boolean;
 var
   Version: String;
+#ifdef LegacyArchitecture
+  PackedVersion: Int64;
+#endif
 begin
   Result := RegQueryStringValue(Root, EdgeRuntimeKey, 'pv', Version) and
             (Version <> '') and (Version <> '0.0.0.0');
+#ifdef LegacyArchitecture
+  Result := Result and StrToVersion(Version, PackedVersion) and
+    (ComparePackedVersion(PackedVersion, PackVersionComponents(109, 0, 1518, 46)) >= 0);
+#endif
 end;
 
 function HasWebView: Boolean;
 begin
-  Result := WebViewRegistered(HKLM32) or WebViewRegistered(HKLM64) or
-            WebViewRegistered(HKCU);
+  Result := WebViewRegistered(HKLM32) or WebViewRegistered(HKCU);
+  if IsWin64 and not Result then Result := WebViewRegistered(HKLM64);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -272,9 +371,15 @@ begin
   end;
   WriteInstallLog('Installing bundled WebView2 runtime.');
   WizardForm.StatusLabel.Caption := CustomMessage('InstallingWebView');
+#ifdef LegacyArchitecture
+  ExtractTemporaryFile('WebView2Runtime109Setup.exe');
+  if Exec(ExpandConstant('{tmp}\WebView2Runtime109Setup.exe'),
+          '--msedgewebview --user-level --do-not-launch-msedge', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+#else
   ExtractTemporaryFile('MicrosoftEdgeWebView2RuntimeInstallerX64.exe');
   if Exec(ExpandConstant('{tmp}\MicrosoftEdgeWebView2RuntimeInstallerX64.exe'),
           '/silent /install', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+#endif
     WriteInstallLog('WebView2 offline installer exit code: ' + IntToStr(ResultCode))
   else
     WriteInstallLog('Could not start WebView2 offline installer: ' + IntToStr(ResultCode));

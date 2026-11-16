@@ -77,11 +77,32 @@ function theme(t = activeTheme(), font = state.font) {
     return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722 > .179 ? '#000' : '#fff';
   };
   const style=document.documentElement.style;
+  const surfaceInk=ink(t.surface), fieldInk=ink(t.background);
   style.setProperty('--accent-ink',ink(t.accent));
-  style.setProperty('--ink',ink(t.surface));
-  style.setProperty('--field-ink',ink(t.background));
+  style.setProperty('--ink',surfaceInk);
+  style.setProperty('--field-ink',fieldInk);
   style.setProperty('--app-font',JSON.stringify(font||'Segoe UI'));
-  document.documentElement.style.colorScheme=ink(t.surface)==='#000'?'light':'dark';
+  style.colorScheme=surfaceInk==='#000'?'light':'dark';
+  // WebView2 109 on Windows 7 predates CSS color-mix().
+  if (!CSS.supports('color','color-mix(in srgb, black, white)')) {
+    const rgb = hex => (hex.length===4 ? hex.slice(1).replace(/./g, channel=>channel+channel) : hex.slice(1))
+      .match(/../g).map(channel=>parseInt(channel,16));
+    const accent=rgb(t.accent), surface=rgb(t.surface), background=rgb(t.background);
+    const mixes = [
+      ['text-soft',surface,rgb(surfaceInk),.74], ['border-line',surface,accent,.36],
+      ['button-hover',surface,accent,.09], ['placeholder',background,rgb(fieldInk),.74],
+      ['rail-background',background,[0,0,0],.10], ['stage-glow',surface,accent,.13],
+      ['sphere-glow',accent,surface,.33], ['sphere-edge-light',accent,surface,.55],
+      ['sphere-edge-dark',accent,surface,.90], ['active-surface',surface,accent,.10],
+      ['send-hover',accent,[255,255,255],.25], ['selected-surface',surface,accent,.12],
+      ['bubble-border',accent,surface,.72], ['chat-footer',background,surface,.64],
+      ['slider-track',surface,accent,.14], ['picker-active',background,accent,.13]
+    ];
+    for (const [name, from, to, amount] of mixes) {
+      const channels=from.map((channel,i)=>Math.round(channel+(to[i]-channel)*amount));
+      style.setProperty('--'+name,'rgb('+channels.join(',')+')');
+    }
+  }
 }
 function button(title, attributes = '', icon = '') { return '<button '+attributes+'>'+glyph(icon)+'<span>'+escape(title)+'</span></button>'; }
 function head(title, action = '') { return '<header class="page-head"><h1>'+escape(title)+'</h1>'+action+'</header>'; }

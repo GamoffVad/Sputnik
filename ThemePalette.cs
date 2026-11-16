@@ -12,7 +12,7 @@ internal static class ThemePalette
     private const string DefaultFont = "Segoe UI";
     private static readonly Lazy<string[]> FontNames = new(() =>
         Fonts.SystemFontFamilies.Select(font => font.Source).Append(DefaultFont)
-            .Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.CurrentCultureIgnoreCase).ToArray());
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase).ToArray());
 
     static ThemePalette() => Apply(null);
 

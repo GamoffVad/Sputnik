@@ -70,9 +70,9 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
         var desktop = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
             SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
         if (note.Width is { } width)
-            window.Width = Math.Clamp(width, window.MinWidth, Math.Max(window.MinWidth, desktop.Width));
+            window.Width = Compatibility.Clamp(width, window.MinWidth, Math.Max(window.MinWidth, desktop.Width));
         if (note.Height is { } height)
-            window.Height = Math.Clamp(height, window.MinHeight, Math.Max(window.MinHeight, desktop.Height));
+            window.Height = Compatibility.Clamp(height, window.MinHeight, Math.Max(window.MinHeight, desktop.Height));
         if (note.Left is double left && note.Top is double top && desktop.Contains(new Point(left + window.Width / 2, top + 20)))
         {
             window.Left = left;
@@ -122,7 +122,7 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
     {
         string temporary = path + ".tmp";
         File.WriteAllText(temporary, JsonSerializer.Serialize(notes));
-        File.Move(temporary, path, overwrite: true);
+        Compatibility.ReplaceFile(temporary, path);
     }
 
     private static List<Note> Load(string directory)
@@ -136,7 +136,7 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             string title = note["title"]?.ToString() ?? "";
             string body = note["body"]?.ToString() ?? "";
             return new Note(Guid.NewGuid().ToString("N"),
-                (title.Length == 0 ? body : title + "\n" + body).ReplaceLineEndings("\n").Split('\n').Select((line, index) =>
+                Compatibility.NormalizeLineEndings(title.Length == 0 ? body : title + "\n" + body).Split('\n').Select((line, index) =>
                     new StickyNoteContent.BlockData("text", [new("run", line, Bold: index == 0 && title.Length != 0)])).ToArray());
         }).ToList();
     }

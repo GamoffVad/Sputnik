@@ -164,7 +164,7 @@ internal sealed class QuickChatWindow : Window
         DockPanel.SetDock(full, Dock.Bottom);
         stack.Children.Add(full);
         stack.Children.Add(new ScrollViewer { Content = text, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden });
-        Present(stack, 300, Math.Clamp(text.DesiredSize.Height + 45, 63, 195));
+        Present(stack, 300, Compatibility.Clamp(text.DesiredSize.Height + 45, 63, 195));
     }
 
     internal void Dismiss()

@@ -11,7 +11,7 @@ internal static class FavoriteIcons
 {
     private static readonly Lazy<Dictionary<string, Geometry>> Catalog = new(Load);
 
-    public static Geometry? Get(string id) => Catalog.Value.GetValueOrDefault(id);
+    public static Geometry? Get(string id) => Catalog.Value.TryGetValue(id, out var geometry) ? geometry : null;
 
     private static Dictionary<string, Geometry> Load()
     {

@@ -148,7 +148,7 @@ internal static class PetPackages
     private static string Required(JsonObject obj, string key, int max)
     {
         string? value = obj[key]?.GetValue<string>()?.Trim();
-        return !string.IsNullOrWhiteSpace(value) && value.Length <= max ? value :
+        return value is not null && !string.IsNullOrWhiteSpace(value) && value.Length <= max ? value :
             throw new InvalidDataException($"Проверьте поле {key}.");
     }
 

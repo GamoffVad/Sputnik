@@ -33,7 +33,7 @@ internal sealed class NoteSharing(string directory)
         }
         string temporary = FilePath + ".tmp";
         File.WriteAllText(temporary, JsonSerializer.Serialize(channels));
-        File.Move(temporary, FilePath, overwrite: true);
+        Compatibility.ReplaceFile(temporary, FilePath);
     }
 
     public static void Open(Channel channel, FlowDocument document)
@@ -45,7 +45,7 @@ internal sealed class NoteSharing(string directory)
         if (uri.Host.Equals("t.me", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.TrimEnd('/') == "/share/url")
         {
             // Telegram Desktop rejects an empty url parameter before opening the recipient picker.
-            string query = uri.Query.Replace("url=&", "url=%E2%80%8B&", StringComparison.Ordinal);
+            string query = uri.Query.Replace("url=&", "url=%E2%80%8B&");
             try
             {
                 Launch("tg://msg_url" + query);
@@ -90,12 +90,12 @@ internal sealed class NoteSharing(string directory)
 
     internal static string BuildUri(Channel channel, string title, string text)
     {
-        if (!channel.Template.Contains("{text}", StringComparison.Ordinal))
+        if (!channel.Template.Contains("{text}"))
             throw new InvalidOperationException("Добавьте {text} в параметр текста ссылки.");
-        string target = channel.Template.Replace("{title}", Uri.EscapeDataString(title), StringComparison.Ordinal)
-            .Replace("{text}", Uri.EscapeDataString(text), StringComparison.Ordinal);
+        string target = channel.Template.Replace("{title}", Uri.EscapeDataString(title))
+            .Replace("{text}", Uri.EscapeDataString(text));
         if (!Uri.TryCreate(target, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "mailto") || uri.UserInfo.Length != 0 ||
-            (uri.Scheme == "https" && channel.Template.IndexOf('?') is var query && (query < 0 || !channel.Template[(query + 1)..].Contains("{text}", StringComparison.Ordinal))))
+            (uri.Scheme == "https" && channel.Template.IndexOf('?') is var query && (query < 0 || !channel.Template[(query + 1)..].Contains("{text}"))))
             throw new InvalidOperationException("Используйте ссылку HTTPS с параметром текста или адрес mailto.");
         return target;
     }

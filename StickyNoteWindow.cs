@@ -194,8 +194,8 @@ internal sealed class StickyNoteWindow : Window
         grip.Template = new ControlTemplate(typeof(Thumb)) { VisualTree = gripShape };
         void Resize(double dx, double dy)
         {
-            Width = Math.Clamp(Width + dx, MinWidth, Math.Max(MinWidth, SystemParameters.VirtualScreenWidth));
-            Height = Math.Clamp(Height + dy, MinHeight, Math.Max(MinHeight, SystemParameters.VirtualScreenHeight));
+            Width = Compatibility.Clamp(Width + dx, MinWidth, Math.Max(MinWidth, SystemParameters.VirtualScreenWidth));
+            Height = Compatibility.Clamp(Height + dy, MinHeight, Math.Max(MinHeight, SystemParameters.VirtualScreenHeight));
         }
         grip.DragDelta += (_, e) => Resize(e.HorizontalChange, e.VerticalChange);
         grip.KeyDown += (_, e) =>

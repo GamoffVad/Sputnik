@@ -20,7 +20,7 @@ internal static class SiteIconMask
             try
             {
                 File.WriteAllBytes(temp, StickyNoteContent.ToPng(Create(image)));
-                File.Move(temp, path, overwrite: true);
+                Compatibility.ReplaceFile(temp, path);
             }
             finally { File.Delete(temp); }
             return name;
@@ -55,7 +55,7 @@ internal static class SiteIconMask
             {
                 int i = p * 4;
                 double distance = Math.Sqrt(Math.Pow(pixels[i] - b, 2) + Math.Pow(pixels[i + 1] - g, 2) + Math.Pow(pixels[i + 2] - r, 2));
-                alpha[p] = (byte)Math.Round(pixels[i + 3] * Math.Clamp((distance - 14) / 72, 0, 1));
+                alpha[p] = (byte)Math.Round(pixels[i + 3] * Compatibility.Clamp((distance - 14) / 72, 0, 1));
             }
         }
         if (!alpha.Any(value => value >= 128))

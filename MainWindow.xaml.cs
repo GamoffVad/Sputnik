@@ -11,6 +11,11 @@ using System.Windows;
 using System.Windows.Input;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Win32;
+#if NET48
+using BrowserView = Microsoft.Web.WebView2.Wpf.WebView2;
+#else
+using BrowserView = Microsoft.Web.WebView2.Wpf.WebView2CompositionControl;
+#endif
 
 namespace Sputnik;
 
@@ -27,11 +32,20 @@ public partial class MainWindow : Window
     private string section = "quick";
     private bool ready;
     private bool sending;
+    private readonly BrowserView View = new();
 
     public MainWindow()
     {
         InitializeComponent();
+#if NET48
+        RoundedWindow.ApplyNativeRegion(this, Frame);
+        View.DefaultBackgroundColor = System.Drawing.Color.FromArgb(35, 41, 47);
+#else
         RoundedWindow.Apply(this, Frame);
+        View.DefaultBackgroundColor = System.Drawing.Color.FromArgb(0, 255, 255, 255);
+#endif
+        KeyboardNavigation.SetTabIndex(View, 0);
+        BrowserHost.Children.Add(View);
         Loaded += InitializeBrowser;
         Closed += (_, _) => { View.Dispose(); http.Dispose(); };
     }
@@ -194,7 +208,7 @@ public partial class MainWindow : Window
         try
         {
             JsonArray history = AppendMessage("user", text);
-            string reply = await Send(null, new JsonArray(history.TakeLast(40).Select(message =>
+            string reply = await Send(null, new JsonArray(history.Skip(Math.Max(0, history.Count - 40)).Select(message =>
             {
                 var copy = message?.DeepClone();
                 if (copy?["content"]?.ToString() is { Length: > 20000 } longMessage) copy["content"] = longMessage[..20000];
@@ -232,14 +246,14 @@ public partial class MainWindow : Window
     {
         string temporary = path + ".tmp";
         File.WriteAllText(temporary, content, Encoding.UTF8);
-        File.Move(temporary, path, true);
+        Compatibility.ReplaceFile(temporary, path);
     }
 
     internal static void OpenTarget(string kind, string target)
     {
         if (kind == "site")
             HttpUri(target);
-        else if (kind != "app" || !Path.IsPathFullyQualified(target) || !File.Exists(target) ||
+        else if (kind != "app" || !Compatibility.IsFullyQualifiedPath(target) || !File.Exists(target) ||
                  !Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Выберите существующее приложение Windows (.exe).");
 
@@ -297,6 +311,6 @@ public partial class MainWindow : Window
         string? reply = response?["choices"]?[0]?["message"]?["content"]?.ToString();
         if (string.IsNullOrWhiteSpace(reply))
             throw new InvalidOperationException("Модель вернула пустой ответ.");
-        return testing ? "Подключение работает" : reply;
+        return testing ? "Подключение работает" : reply!;
     }
 }
