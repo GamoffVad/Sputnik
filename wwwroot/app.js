@@ -37,7 +37,7 @@ const date = value => new Intl.DateTimeFormat('ru-RU', {dateStyle:'medium',timeS
 const defaultTheme = {name:'Графит',accent:'#a5e4f6',background:'#181c20',surface:'#23292f'};
 let builtins = [];
 const routes = [['home','Главная','house'],['pets','Питомцы','heart-pulse'],['notes','Заметки','notebook-pen'],['favorites','Избранное','bookmark'],['reminders','Напоминания','bell'],['chat','Чат','message-circle'],['settings','Настройки','settings']];
-let state = {active:'hudi',themed:true,notes:[],favorites:[],reminders:[],messages:[]};
+let state = {active:'klyaksa',themed:true,notes:[],favorites:[],reminders:[],messages:[]};
 let pets = builtins;
 let groups = [];
 let glyphs = new Map();
@@ -53,7 +53,7 @@ let subpage = false;
 let noteEditing = false;
 const pageNumbers = new Map();
 let saveTimer, feedbackTimer;
-const activePet = () => pets.find(p => p.id === state.active) ?? builtins[0];
+const activePet = () => pets.find(p => p.id === state.active) ?? builtins.find(p => p.id === 'klyaksa') ?? builtins[0];
 const glyph = key => glyphs.get(key)?.svg ?? '';
 function feedback(text) {
   $('#feedback').textContent = text;

@@ -148,7 +148,7 @@ internal sealed class DesktopPetWindow : Window
     public void UpdateFromStore()
     {
         var workspace = ReadWorkspace();
-        string desired = workspace?["active"]?.ToString() ?? "hudi";
+        string desired = workspace?["active"]?.ToString() ?? "klyaksa";
         if (desired != active?.Id) SelectFromStore(desired);
         var favorites = (workspace?["favorites"] as JsonArray)?.OfType<JsonObject>()
             .Select(item => new DesktopControls.Favorite(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "",
@@ -200,7 +200,8 @@ internal sealed class DesktopPetWindow : Window
             catch (Exception error) when (error is IOException or JsonException) { }
         }
 
-        UsePet(selected ?? builtins[0], selected is null ? Assets : folder);
+        UsePet(selected ?? builtins.FirstOrDefault(pet => pet.Id == "klyaksa") ?? builtins[0],
+            selected is null ? Assets : folder);
     }
 
     private static JsonNode? ReadWorkspace()
