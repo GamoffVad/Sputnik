@@ -1,8 +1,8 @@
 # Спутник
 
-Локальное приложение Windows с веб-интерфейсом в WebView2. Для запуска нужны .NET Desktop Runtime 10 и Microsoft Edge WebView2 Runtime.
+Локальное приложение для Windows x64. Установщик работает офлайн: .NET входит в сборку, а WebView2 для настроек и чата устанавливается из комплекта при необходимости.
 
-Скачайте и запустите [SputnikSetup.exe для Windows x64](https://github.com/GAMOFF/Sputnik/releases/latest/download/SputnikSetup.exe). Установщик добавит «Спутник» в меню «Пуск». Переносимая сборка `Sputnik-win-x64.zip` доступна на [странице релизов](https://github.com/GAMOFF/Sputnik/releases/latest). Для сборки из исходников выполните `dotnet build -c Release` с .NET SDK 10 и откройте `bin/Release/net10.0-windows/Sputnik.exe`.
+Скачайте и запустите [SputnikSetup.exe для Windows x64](https://github.com/GAMOFF/Sputnik/releases/latest/download/SputnikSetup.exe). Установщик подходит для Windows 10 22H2 и Windows 11. Он добавит «Спутник» в меню «Пуск». Переносимая сборка `Sputnik-win-x64.zip` использует установленный WebView2 для встроенных окон и доступна на [странице релизов](https://github.com/GAMOFF/Sputnik/releases/latest). Для сборки из исходников выполните `dotnet build -c Release` с .NET SDK 10 и откройте `bin/Release/net10.0-windows/Sputnik.exe`.
 
 Активный питомец появляется на рабочем столе при запуске Спутника. После каждого полного круга порядок движений перемешивается. Правый щелчок открывает меню над питомцем. Если сверху мало места, меню может открыться снизу. При выборе раздела меню остаётся открытым. Его можно закрыть кнопкой **×** или щелчком по рабочему столу. Формы и предпросмотр сменяют содержимое окна выбранного раздела.
 

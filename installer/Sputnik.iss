@@ -7,6 +7,9 @@
 #ifndef InstallerOutput
   #error InstallerOutput must point to the destination directory
 #endif
+#ifndef WebViewInstaller
+  #error WebViewInstaller must point to the Microsoft WebView2 offline installer
+#endif
 #ifndef AppKey
   #define AppKey "Sputnik.Desktop"
 #endif
@@ -52,14 +55,11 @@ russian.DesktopShortcut=Создать ярлык на рабочем столе
 english.DesktopShortcut=Create a desktop shortcut
 russian.RunSputnik=Запустить «Спутник»
 english.RunSputnik=Launch Sputnik
-russian.MissingDesktopRuntime=Для запуска установите .NET Desktop Runtime 10 (x64).
-english.MissingDesktopRuntime=Install .NET Desktop Runtime 10 (x64) before running Sputnik.
-russian.MissingWebView=Для окон настроек и чата установите Microsoft Edge WebView2 Runtime.
-english.MissingWebView=Install Microsoft Edge WebView2 Runtime for settings and chat.
-russian.OpenPrerequisites=Открыть страницы Microsoft?
-english.OpenPrerequisites=Open the Microsoft download pages?
+russian.MissingWebView=Не удалось установить WebView2. Питомец и заметки доступны. Для настроек и полного чата повторите установку Спутника.
+english.MissingWebView=WebView2 could not be installed. The pet and sticky notes still work. Run setup again to repair WebView2 to enable settings and full chat.
 
 [Files]
+Source: "{#WebViewInstaller}"; DestName: "MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; Flags: dontcopy
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Tasks]
@@ -70,40 +70,12 @@ Name: "{userprograms}\{#ProductName}"; Filename: "{app}\Sputnik.exe"; WorkingDir
 Name: "{userdesktop}\{#ProductName}"; Filename: "{app}\Sputnik.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\Sputnik.exe"; Parameters: "--desktop-only"; Description: "{cm:RunSputnik}"; Flags: postinstall nowait skipifsilent; Check: CanLaunch
+Filename: "{app}\Sputnik.exe"; Parameters: "--desktop-only"; Description: "{cm:RunSputnik}"; Flags: postinstall nowait skipifsilent
 
 [Code]
 const
-  DotNetKey = 'SOFTWARE\dotnet\Setup\InstalledVersions\x64';
   EdgeRuntimeKey = 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
-
-function HasDesktopRuntime: Boolean;
-var
-  Root: String;
-  Version: TFindRec;
-begin
-  if not RegQueryStringValue(HKLM64, DotNetKey, 'InstallLocation', Root) then
-    Root := ExpandConstant('{commonpf64}\dotnet');
-  Root := AddBackslash(Root) + 'shared\Microsoft.WindowsDesktop.App\';
-  Result := False;
-  if FindFirst(Root + '10.0.*', Version) then
-  begin
-    try
-      repeat
-        if ((Version.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0) and
-           (Pos('-', Version.Name) = 0) and
-           FileExists(Root + Version.Name + '\PresentationFramework.dll') then
-        begin
-          Result := True;
-          Exit;
-        end;
-      until not FindNext(Version);
-    finally
-      FindClose(Version);
-    end;
-  end;
-end;
 
 function WebViewRegistered(Root: Integer): Boolean;
 var
@@ -119,31 +91,22 @@ begin
             WebViewRegistered(HKCU);
 end;
 
-function CanLaunch: Boolean;
-begin
-  Result := HasDesktopRuntime and HasWebView;
-end;
-
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  Missing: String;
-  NeedsDotNet, NeedsWebView: Boolean;
-  Code: Integer;
+  ResultCode: Integer;
 begin
-  if CurStep <> ssPostInstall then Exit;
-  NeedsDotNet := not HasDesktopRuntime;
-  NeedsWebView := not HasWebView;
-  if not (NeedsDotNet or NeedsWebView) then Exit;
-  Missing := '';
-  if NeedsDotNet then Missing := CustomMessage('MissingDesktopRuntime') + #13#10;
-  if NeedsWebView then Missing := Missing + CustomMessage('MissingWebView') + #13#10;
-  Log(Missing);
-  if WizardSilent then Exit;
-  if MsgBox(Missing + #13#10 + CustomMessage('OpenPrerequisites'), mbInformation, MB_YESNO) <> IDYES then Exit;
-  if NeedsDotNet then
-    ShellExec('open', 'https://dotnet.microsoft.com/download/dotnet/10.0', '', '', SW_SHOWNORMAL, ewNoWait, Code);
-  if NeedsWebView then
-    ShellExec('open', 'https://developer.microsoft.com/microsoft-edge/webview2/#download-section', '', '', SW_SHOWNORMAL, ewNoWait, Code);
+  if (CurStep <> ssPostInstall) or HasWebView then Exit;
+  ExtractTemporaryFile('MicrosoftEdgeWebView2RuntimeInstallerX64.exe');
+  if Exec(ExpandConstant('{tmp}\MicrosoftEdgeWebView2RuntimeInstallerX64.exe'),
+          '/silent /install', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Log('WebView2 offline installer exit code: ' + IntToStr(ResultCode))
+  else
+    Log('Could not start WebView2 offline installer: ' + IntToStr(ResultCode));
+
+  if HasWebView then Exit;
+  Log(CustomMessage('MissingWebView'));
+  if not WizardSilent then
+    MsgBox(CustomMessage('MissingWebView'), mbInformation, MB_OK);
 end;
 
 procedure CurUninstallStepChanged(CurStep: TUninstallStep);

@@ -78,6 +78,14 @@ public partial class MainWindow : Window
             browser.WebMessageReceived += OnMessage;
             browser.Navigate(Origin + "/index.html");
         }
+        catch (WebView2RuntimeNotFoundException)
+        {
+            MessageBox.Show(this,
+                "Питомец и заметки продолжают работать. Для настроек и полного чата нужен WebView2. Запустите установщик Спутника повторно для восстановления WebView2.",
+                "Спутник");
+            Hide();
+            Loaded += InitializeBrowser;
+        }
         catch (Exception error)
         {
             MessageBox.Show(this, error.Message, "Не удалось запустить Спутник");
