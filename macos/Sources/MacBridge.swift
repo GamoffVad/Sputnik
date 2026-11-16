@@ -193,7 +193,11 @@ enum MacBridge {
     private static func listModels(base: URL, key: String?) async throws -> [String: Any] {
         let bases = base.path.isEmpty || base.path == "/" ? [base, base.appendingPathComponent("v1")] : [base]
         for candidate in bases {
-            var request = URLRequest(url: candidate.appendingPathComponent("models"))
+            let endpoint = candidate.appendingPathComponent("models")
+            let claude = endpoint.scheme == "https" && endpoint.host?.lowercased() == "api.anthropic.com"
+                && (endpoint.port == nil || endpoint.port == 443) && endpoint.path == "/v1/models"
+            var request = URLRequest(url: claude ? endpoint.appending(queryItems: [URLQueryItem(name: "limit", value: "1000")]) : endpoint)
+            if claude { request.setValue("2026-10-21", forHTTPHeaderField: "anthropic-version") }
             if let key { request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization") }
             let (data, response) = try await session.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
@@ -201,8 +205,8 @@ enum MacBridge {
                 if status == 404, candidate != bases.last { continue }
                 throw MacError("Список моделей недоступен (HTTP \(status)). Проверьте URL и ключ или укажите ID вручную.")
             }
-            guard let result = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-                  let models = result["data"] as? [Any] else { continue }
+            let result = try? JSONSerialization.jsonObject(with: data)
+            guard let models = (result as? [String: Any])?["data"] as? [Any] ?? result as? [Any] else { continue }
             var seen = Set<String>()
             let ids = models.compactMap { item -> String? in
                 guard let id = (item as? [String: Any])?["id"] as? String,
@@ -250,8 +254,10 @@ enum MacBridge {
         guard let status = (response as? HTTPURLResponse)?.statusCode, (200...299).contains(status) else {
             throw MacError("Модель вернула HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0). Проверьте URL, модель и ключ.")
         }
-        let result = try JSONSerialization.jsonObject(with: data) as? [String:Any]
-        let choices = result?["choices"] as? [[String:Any]]
+        guard let result = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            throw MacError("Сервер вернул ответ в формате, отличном от JSON. Проверьте базовый URL API.")
+        }
+        let choices = result["choices"] as? [[String:Any]]
         let message = choices?.first?["message"] as? [String:Any]
         guard let reply = message?["content"] as? String, !reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw MacError("Модель вернула пустой ответ.")

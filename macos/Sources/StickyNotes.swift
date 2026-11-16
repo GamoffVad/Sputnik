@@ -7,7 +7,7 @@ private struct StickyRecord: Codable, Sendable {
     var content: Data?
     var frame: CGRect?
     var tint = 0
-    var pinned = true
+    var pinned = false
 }
 
 struct StickyShareChannel: Decodable, Equatable {
@@ -137,6 +137,7 @@ final class MacStickyNotes {
         let notes = MacStickyNotes(dataDirectory: directory)
         notes.show(palette: palette)
         guard let first = notes.cards.values.first else { throw MacError("Не открылась тестовая заметка.") }
+        try first.verifyEditing()
         first.create?()
         first.create?()
         guard notes.cards.count == 3, notes.cards.values.allSatisfy({ $0.window.isVisible }) else {
@@ -148,7 +149,9 @@ final class MacStickyNotes {
             notes.flush { continuation.resume() }
         }
         let saved = try JSONDecoder().decode([StickyRecord].self, from: Data(contentsOf: notes.location))
-        guard saved.count == 3 else { throw MacError("Не сохранились три тестовые заметки.") }
+        guard saved.count == 3, saved.filter(\.pinned).count == 1, saved.contains(where: { $0.content != nil }) else {
+            throw MacError("Не сохранились три тестовые заметки с текстом и закреплением.")
+        }
     }
 
     @discardableResult
@@ -365,9 +368,14 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
             ("checkmark.square", "Список с флажками", { [weak self] in self?.list("☐ ") }),
             ("photo", "Добавить изображение", { [weak self] in self?.image() }),
         ]
-        for item in items { formats.addArrangedSubview(button(item.0, item.1, action: item.2)) }
+        for item in items {
+            formats.addArrangedSubview(button(item.0, item.1) { [weak self] in
+                guard let self else { return }
+                window.makeFirstResponder(editor)
+                item.2()
+            })
+        }
         formats.addArrangedSubview(NSView())
-        updatePinSymbol()
         updatePalette(palette)
     }
 
@@ -410,6 +418,7 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
             control.hoverColor = tint.withAlphaComponent(0.23)
             control.idleColor = .clear
         }
+        updatePinSymbol()
         editor.insertionPointColor = value.ink
         if let contents = editor.textStorage, contents.length > 0 {
             contents.addAttribute(.foregroundColor, value: value.ink, range: NSRange(location: 0, length: contents.length))
@@ -423,13 +432,18 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     private func togglePin() {
         record.pinned.toggle()
         window.level = record.pinned ? .floating : .normal
+        window.makeKeyAndOrderFront(nil)
         updatePinSymbol()
         didEdit?()
     }
 
     private func updatePinSymbol() {
         let label = record.pinned ? "Снять закрепление" : "Закрепить поверх окон"
-        pin?.image = NSImage(systemSymbolName: record.pinned ? "pin.slash" : "pin", accessibilityDescription: label)
+        pin?.image = NSImage(systemSymbolName: record.pinned ? "pin.fill" : "pin", accessibilityDescription: label)
+        pin?.contentTintColor = record.pinned ? palette.surface : palette.ink
+        pin?.idleColor = record.pinned ? palette.ink : .clear
+        pin?.hoverColor = palette.ink.withAlphaComponent(record.pinned ? 0.8 : 0.16)
+        pin?.layer?.backgroundColor = pin?.idleColor.cgColor
         pin?.toolTip = label
         pin?.setAccessibilityLabel(label)
     }
@@ -531,6 +545,12 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
         }
     }
 
+    private func listMark(at index: Int, in source: NSString) -> String? {
+        guard index + 2 <= source.length else { return nil }
+        let prefix = source.substring(with: NSRange(location: index, length: 2))
+        return ["• ", "☐ ", "☑ "].contains(prefix) ? prefix : nil
+    }
+
     private func list(_ mark: String) {
         guard let contents = editor.textStorage else { return }
         let source = editor.string as NSString
@@ -542,17 +562,70 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
                 offsets.append(index + 1)
             }
         }
-        for index in offsets.reversed() {
-            let lineEnd = NSMaxRange(section)
-            let startsWithMark = index + 2 <= lineEnd &&
-                ["• ", "☐ ", "☑ "].contains(source.substring(with: NSRange(location: index, length: 2)))
-            if startsWithMark { continue }
-            let whereToInsert = NSRange(location: index, length: 0)
-            if editor.shouldChangeText(in: whereToInsert, replacementString: mark) {
-                contents.replaceCharacters(in: whereToInsert, with: NSAttributedString(string: mark, attributes: editor.typingAttributes))
-            }
+        let marks = offsets.map { listMark(at: $0, in: source) }
+        let remove = marks.allSatisfy { prefix in
+            mark == "• " ? prefix == mark : prefix == "☐ " || prefix == "☑ "
         }
+        let replacement = remove ? "" : mark
+        let attributes = editor.typingAttributes
+        var delta = 0
+        for (index, prefix) in zip(offsets, marks).reversed() {
+            if prefix == replacement || (!remove && mark == "☐ " && prefix == "☑ ") { continue }
+            let range = NSRange(location: index, length: prefix == nil ? 0 : 2)
+            guard editor.shouldChangeText(in: range, replacementString: replacement) else { continue }
+            contents.replaceCharacters(in: range, with: NSAttributedString(string: replacement, attributes: attributes))
+            delta += replacement.utf16.count - range.length
+        }
+        if previous.length == 0 {
+            let caret = max(section.location + replacement.utf16.count, previous.location + delta)
+            editor.setSelectedRange(NSRange(location: min(contents.length, caret), length: 0))
+        } else {
+            editor.setSelectedRange(NSRange(location: section.location, length: section.length + delta))
+        }
+        editor.typingAttributes = attributes
         editor.didChangeText()
+    }
+
+    func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard commandSelector == #selector(NSResponder.insertNewline(_:)) else { return false }
+        let source = textView.string as NSString
+        let selection = textView.selectedRange()
+        var start = 0
+        var end = 0
+        source.getParagraphStart(&start, end: nil, contentsEnd: &end, for: NSRange(location: selection.location, length: 0))
+        guard let mark = listMark(at: start, in: source), NSMaxRange(selection) <= end else { return false }
+        let item = NSRange(location: start + 2, length: end - start - 2)
+        let attributes = textView.typingAttributes
+        if source.substring(with: item).trimmingCharacters(in: .whitespaces).isEmpty {
+            textView.insertText("", replacementRange: NSRange(location: start, length: end - start))
+        } else {
+            let split = max(selection.location, item.location)
+            let range = NSRange(location: split, length: max(0, NSMaxRange(selection) - split))
+            textView.insertText("\n" + (mark == "• " ? mark : "☐ "), replacementRange: range)
+        }
+        textView.typingAttributes = attributes
+        return true
+    }
+
+    func verifyEditing() throws {
+        let enter = #selector(NSResponder.insertNewline(_:))
+        list("☐ ")
+        editor.insertText("Первый", replacementRange: editor.selectedRange())
+        guard textView(editor, doCommandBy: enter) else { throw MacError("Не продолжился список с флажками.") }
+        editor.insertText("Второй", replacementRange: editor.selectedRange())
+        guard textView(editor, doCommandBy: enter), textView(editor, doCommandBy: enter),
+              editor.string == "☐ Первый\n☐ Второй\n" else {
+            throw MacError("Не завершился список с флажками на пустом пункте.")
+        }
+        list("• ")
+        editor.insertText("Пункт", replacementRange: editor.selectedRange())
+        guard textView(editor, doCommandBy: enter), editor.string.hasSuffix("• Пункт\n• ") else {
+            throw MacError("Не продолжился маркированный список.")
+        }
+        togglePin()
+        guard record.pinned, window.level == .floating, pin?.idleColor == palette.ink else {
+            throw MacError("Не закрепилась тестовая заметка.")
+        }
     }
 
     private func image() {
