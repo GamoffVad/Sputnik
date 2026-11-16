@@ -42,7 +42,7 @@ private struct StickyShareChannel: Decodable {
               let title = "Заметка из «Спутника»".addingPercentEncoding(withAllowedCharacters: Self.unreserved)
         else { return nil }
         let base = template[..<queryStart]
-        guard !base.contains("{text}"), !base.contains("{title}") else { return nil }
+        guard !base.contains("#"), !base.contains("{text}"), !base.contains("{title}") else { return nil }
         let expanded = template.replacingOccurrences(of: "{title}", with: title)
             .replacingOccurrences(of: "{text}", with: encodedText)
         guard let target = URLComponents(string: expanded),

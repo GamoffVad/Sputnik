@@ -49,7 +49,7 @@ enum MacBridge {
             guard let value = payload as? Bool else { throw MacError("Некорректная настройка автозапуска.") }
             let service = SMAppService.mainApp
             if value && service.status == .notRegistered { try service.register() }
-            if !value && (service.status == .enabled || service.status == .requiresApproval) { try service.unregister() }
+            if !value && (service.status == .enabled || service.status == .requiresApproval) { try await service.unregister() }
             if value && service.status == .requiresApproval {
                 SMAppService.openSystemSettingsLoginItems()
                 throw MacError("Разрешите автозапуск «Спутника» в системных настройках.")
