@@ -18,6 +18,7 @@ namespace Sputnik;
 public partial class MainWindow : Window
 {
     private const string Origin = "https://sputnik.local";
+    private static Task<CoreWebView2Environment>? environment;
     private readonly string data = App.DataDirectory;
     private readonly HttpClient http = new(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(60) };
     private string Store => Path.Combine(data, "workspace.json");
@@ -62,6 +63,15 @@ public partial class MainWindow : Window
 
     private void HidePanel(object sender, RoutedEventArgs e) => Hide();
 
+    private static Task<CoreWebView2Environment> GetBrowserEnvironment() =>
+        environment ??= CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(App.DataDirectory, "webview"));
+
+    internal static async void WarmBrowser()
+    {
+        try { await GetBrowserEnvironment(); }
+        catch (Exception) { if (environment?.IsFaulted == true) environment = null; }
+    }
+
     private async void InitializeBrowser(object sender, RoutedEventArgs args)
     {
         Loaded -= InitializeBrowser;
@@ -70,7 +80,7 @@ public partial class MainWindow : Window
             Directory.CreateDirectory(Pending);
             Directory.CreateDirectory(Pets);
             Directory.CreateDirectory(Favicons);
-            var env = await CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(data, "webview"));
+            var env = await GetBrowserEnvironment();
             await View.EnsureCoreWebView2Async(env);
             var browser = View.CoreWebView2;
             browser.SetVirtualHostNameToFolderMapping("sputnik.local", Path.Combine(AppContext.BaseDirectory, "wwwroot"), CoreWebView2HostResourceAccessKind.DenyCors);
@@ -89,6 +99,7 @@ public partial class MainWindow : Window
         }
         catch (Exception error)
         {
+            if (environment?.IsFaulted == true) environment = null;
             string message = error is WebView2RuntimeNotFoundException
                 ? "Для настроек и полного чата нужен WebView2. Запустите установщик «Спутника» повторно для восстановления WebView2."
                 : "Не удалось открыть встроенное окно. " + error.Message;

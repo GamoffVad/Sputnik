@@ -92,6 +92,8 @@ internal static class PetPackages
             }
 
             var result = new JsonObject { ["id"] = id, ["name"] = name, ["description"] = description, ["theme"] = cleanTheme, ["animations"] = clips };
+            if (manifest["displayScale"] is JsonValue value && value.TryGetValue<double>(out double scale) && scale is >= 0.75 and <= 1.5)
+                result["displayScale"] = scale;
             File.WriteAllText(Path.Combine(workspace, "pet.json"), result.ToJsonString());
             return WebPet(result, $"https://preview.sputnik.local/{token}", token);
         }

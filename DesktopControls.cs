@@ -510,11 +510,38 @@ internal sealed class DesktopControls : IDisposable
         var handle = new WindowInteropHelper(pet).Handle;
         if (handle == IntPtr.Zero) return SystemParameters.WorkArea;
         IntPtr monitor = MonitorFromWindow(handle, 2);
-        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
-        if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info)) return SystemParameters.WorkArea;
-        Point top = pet.PointFromScreen(new Point(info.Work.Left, info.Work.Top));
-        Point bottom = pet.PointFromScreen(new Point(info.Work.Right, info.Work.Bottom));
+        if (!TryWorkArea(monitor, out var work)) return SystemParameters.WorkArea;
+        Point top = pet.PointFromScreen(new Point(work.Left, work.Top));
+        Point bottom = pet.PointFromScreen(new Point(work.Right, work.Bottom));
         return new Rect(new Point(pet.Left + top.X, pet.Top + top.Y), new Size(bottom.X - top.X, bottom.Y - top.Y));
+    }
+
+    internal static bool ConstrainDrag(IntPtr window, IntPtr moveRect)
+    {
+        IntPtr monitor = GetCursorPos(out var cursor) ? MonitorFromPoint(cursor, 2) : MonitorFromWindow(window, 2);
+        if (!TryWorkArea(monitor, out var work)) return false;
+        var frame = Marshal.PtrToStructure<NativeRect>(moveRect);
+        var fitted = ClampPetFrame(new Rect(frame.Left, frame.Top, frame.Right - frame.Left, frame.Bottom - frame.Top),
+            new Rect(work.Left, work.Top, work.Right - work.Left, work.Bottom - work.Top));
+        if (frame.Left == fitted.Left && frame.Top == fitted.Top) return false;
+        frame.Right += (int)fitted.Left - frame.Left;
+        frame.Bottom += (int)fitted.Top - frame.Top;
+        frame.Left = (int)fitted.Left;
+        frame.Top = (int)fitted.Top;
+        Marshal.StructureToPtr(frame, moveRect, false);
+        return true;
+    }
+
+    internal static Rect ClampPetFrame(Rect frame, Rect area) =>
+        new(Compatibility.Clamp(frame.Left, area.Left, Math.Max(area.Left, area.Right - frame.Width)),
+            Compatibility.Clamp(frame.Top, area.Top, Math.Max(area.Top, area.Bottom - frame.Height)), frame.Width, frame.Height);
+
+    private static bool TryWorkArea(IntPtr monitor, out NativeRect work)
+    {
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        bool found = monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info);
+        work = info.Work;
+        return found;
     }
 
     private IntPtr MousePressed(int code, IntPtr message, IntPtr data)
@@ -719,6 +746,8 @@ internal sealed class DesktopControls : IDisposable
     [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr handle, uint flags);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr handle, out uint processId);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(NativePoint point, uint flags);
+    [DllImport("user32.dll")] private static extern bool GetCursorPos(out NativePoint point);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfo(IntPtr handle, ref MonitorInfo info);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongW")] private static extern int GetWindowLong(IntPtr handle, int index);
     [DllImport("user32.dll", EntryPoint = "SetWindowLongW")] private static extern int SetWindowLong(IntPtr handle, int index, int value);

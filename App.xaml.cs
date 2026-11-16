@@ -45,6 +45,7 @@ public partial class App : Application
         try
         {
             StartDesktop();
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new Action(Sputnik.MainWindow.WarmBrowser));
             showWait = ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) =>
                 Dispatcher.BeginInvoke(() => ShowWorkspace("quick")), null, Timeout.Infinite, false);
         }

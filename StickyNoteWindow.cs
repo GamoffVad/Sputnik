@@ -163,7 +163,9 @@ internal sealed class StickyNoteWindow : Window
                 sharePanel.Children.Clear();
                 foreach (var channel in configured.Skip(page * 4).Take(4))
                 {
-                    sharePanel.Children.Add(Button(channel.Name, channel.Name, () =>
+                    string label = channel.Template.StartsWith("https://web.max.ru/:share?", StringComparison.Ordinal)
+                        ? channel.Name + " (в браузере)" : channel.Name;
+                    sharePanel.Children.Add(Button(label, label, () =>
                     {
                         shareMenu.IsOpen = false;
                         try { NoteSharing.Open(channel, editor.Document); }

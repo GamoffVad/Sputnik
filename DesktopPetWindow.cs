@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -31,6 +32,7 @@ internal sealed class DesktopPetWindow : Window
         public required string Name { get; init; }
         public required AnimationClip[] Animations { get; init; }
         public PetTheme? Theme { get; init; }
+        public double DisplayScale { get; init; } = 1;
     }
 
 
@@ -52,6 +54,7 @@ internal sealed class DesktopPetWindow : Window
     private string root = Assets;
     private int lastFrame = -1;
     private bool paused;
+    private double preferredSize = DefaultPetSize;
     private AnimationClip? pinned;
 
     public DesktopPetWindow(Action<string> openWorkspace, Action exitApp)
@@ -67,7 +70,7 @@ internal sealed class DesktopPetWindow : Window
         Topmost = true;
         UseLayoutRounding = true;
         sprite.RenderTransform = idle;
-        RenderOptions.SetBitmapScalingMode(sprite, BitmapScalingMode.HighQuality);
+        RenderOptions.SetBitmapScalingMode(sprite, BitmapScalingMode.NearestNeighbor);
         Content = sprite;
         controls = new DesktopControls(this, openWorkspace, exitApp);
         sprite.MouseRightButtonUp += (_, args) =>
@@ -106,9 +109,13 @@ internal sealed class DesktopPetWindow : Window
         Loaded += (_, _) =>
         {
             Rect area = SystemParameters.WorkArea;
-            Left = area.Right - Width - 24;
-            Top = area.Bottom - Height - 18;
+            double size = Math.Min(preferredSize, Math.Min(area.Width, area.Height));
+            var frame = DesktopControls.ClampPetFrame(new Rect(area.Right - size - 24, area.Bottom - size - 18, size, size), area);
+            Width = Height = frame.Width;
+            Left = frame.Left;
+            Top = frame.Top;
         };
+        SourceInitialized += (_, _) => HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(HandleScreenChange);
         timer.Tick += (_, _) => RenderFrame();
         timer.Start();
         LocationChanged += (_, _) => Follow();
@@ -177,16 +184,35 @@ internal sealed class DesktopPetWindow : Window
             : 1;
     }
 
+    private IntPtr HandleScreenChange(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        const int moving = 0x0216, exitMove = 0x0232, displayChange = 0x007E, settingChange = 0x001A;
+        const int setWorkArea = 0x002F;
+        if (message == moving && lParam != IntPtr.Zero && DesktopControls.ConstrainDrag(hwnd, lParam))
+        {
+            handled = true;
+            return new IntPtr(1);
+        }
+        if (message is exitMove or displayChange || (message == settingChange && wParam.ToInt64() == setWorkArea))
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(ConstrainToScreen));
+        return IntPtr.Zero;
+    }
+
     private void ResizePet(double scale)
     {
+        preferredSize = DefaultPetSize * scale * Compatibility.Clamp(active?.DisplayScale ?? 1, 0.75, 1.5);
+        if (IsLoaded) ConstrainToScreen();
+    }
+
+    private void ConstrainToScreen()
+    {
+        if (!IsLoaded || !IsVisible) return;
         Rect area = controls.WorkArea();
-        double size = Math.Min(DefaultPetSize * scale, Math.Min(area.Width, area.Height));
-        if (Width == size && Height == size) return;
-        double oldWidth = Width, oldHeight = Height;
-        Width = Height = size;
-        if (!IsLoaded) return;
-        Left = Compatibility.Clamp(Left + (oldWidth - size) / 2, area.Left, area.Right - size);
-        Top = Compatibility.Clamp(Top + oldHeight - size, area.Top, area.Bottom - size);
+        double size = Math.Min(preferredSize, Math.Min(area.Width, area.Height));
+        var frame = DesktopControls.ClampPetFrame(new Rect(Left + (Width - size) / 2, Top + Height - size, size, size), area);
+        Width = Height = frame.Width;
+        Left = frame.Left;
+        Top = frame.Top;
     }
 
     private void SelectFromStore(string desired)

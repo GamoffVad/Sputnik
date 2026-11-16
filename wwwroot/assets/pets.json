@@ -166,8 +166,8 @@
       {
         "name": "На посту",
         "file": "assets/sand-watchman-clean/clip-0.png",
-        "frameWidth": 448,
-        "frameHeight": 448,
+        "frameWidth": 512,
+        "frameHeight": 512,
         "columns": 12,
         "frameCount": 120,
         "fps": 24
@@ -175,8 +175,8 @@
       {
         "name": "Подозрительный шорох",
         "file": "assets/sand-watchman-clean/clip-1.png",
-        "frameWidth": 448,
-        "frameHeight": 448,
+        "frameWidth": 512,
+        "frameHeight": 512,
         "columns": 12,
         "frameCount": 120,
         "fps": 24
@@ -184,8 +184,8 @@
       {
         "name": "Порыв ветра",
         "file": "assets/sand-watchman-clean/clip-2.png",
-        "frameWidth": 448,
-        "frameHeight": 448,
+        "frameWidth": 512,
+        "frameHeight": 512,
         "columns": 12,
         "frameCount": 120,
         "fps": 24
@@ -193,8 +193,8 @@
       {
         "name": "Почтительный поклон",
         "file": "assets/sand-watchman-clean/clip-3.png",
-        "frameWidth": 448,
-        "frameHeight": 448,
+        "frameWidth": 512,
+        "frameHeight": 512,
         "columns": 12,
         "frameCount": 120,
         "fps": 24
@@ -202,12 +202,13 @@
       {
         "name": "Задремал на посту",
         "file": "assets/sand-watchman-clean/clip-4.png",
-        "frameWidth": 448,
-        "frameHeight": 448,
+        "frameWidth": 512,
+        "frameHeight": 512,
         "columns": 12,
         "frameCount": 120,
         "fps": 24
       }
-    ]
+    ],
+    "displayScale": 1.192308
   }
 ]

@@ -11,16 +11,25 @@ internal sealed class NoteSharing(string directory)
     internal sealed record Channel(string Name, string Template);
 
     private string FilePath => Path.Combine(directory, "note-channels.json");
+    private const string Telegram = "https://t.me/share/url?url=%E2%80%8B&text={text}";
+    private const string Max = "https://web.max.ru/:share?text={text}";
     private static readonly Channel[] Defaults =
     [
         new("Почта", "mailto:?subject={title}&body={text}"),
-        new("Telegram", "https://t.me/share/url?url=&text={text}"),
-        new("MAX", "https://max.ru/:share?text={text}"),
+        new("Telegram", Telegram),
+        new("MAX", Max),
     ];
 
     public Channel[] Load() => File.Exists(FilePath)
-        ? JsonSerializer.Deserialize<Channel[]>(File.ReadAllText(FilePath)) ?? []
+        ? (JsonSerializer.Deserialize<Channel[]>(File.ReadAllText(FilePath)) ?? []).Select(CurrentTemplate).ToArray()
         : Defaults;
+
+    private static Channel CurrentTemplate(Channel channel) => channel.Template switch
+    {
+        "https://t.me/share/url?url=&text={text}" => channel with { Template = Telegram },
+        "https://max.ru/:share?text={text}" => channel with { Template = Max },
+        _ => channel,
+    };
 
     public void Save(Channel[] channels)
     {
@@ -40,21 +49,25 @@ internal sealed class NoteSharing(string directory)
     {
         string text = Text(document);
         if (text.Length == 0) throw new InvalidOperationException("Добавьте текст в заметку.");
-        string target = BuildUri(channel, "Заметка из «Спутника»", text);
+        var (target, fallback) = Targets(channel, text);
+        try { Launch(target); }
+        catch (Win32Exception error) when (fallback is not null && error.NativeErrorCode is (1155 or 2 or 3))
+        {
+            Launch(fallback);
+        }
+    }
+
+    internal static (string Primary, string? Fallback) Targets(Channel channel, string text)
+    {
+        string target = BuildUri(CurrentTemplate(channel), "Заметка из «Спутника»", text);
         var uri = new Uri(target);
         if (uri.Host.Equals("t.me", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.TrimEnd('/') == "/share/url")
         {
             // Telegram Desktop rejects an empty url parameter before opening the recipient picker.
             string query = uri.Query.Replace("url=&", "url=%E2%80%8B&");
-            try
-            {
-                Launch("tg://msg_url" + query);
-                return;
-            }
-            catch (Win32Exception error) when (error.NativeErrorCode is 1155 or 2 or 3) { }
-            target = uri.GetLeftPart(UriPartial.Path) + query;
+            return ("tg://msg_url" + query, uri.GetLeftPart(UriPartial.Path) + query);
         }
-        Launch(target);
+        return (target, null);
     }
 
     private static void Launch(string target) => Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
