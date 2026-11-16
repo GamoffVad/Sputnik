@@ -125,7 +125,8 @@ private struct DesktopClip: Decodable {
     func sheet(at root: URL) -> CGImage? {
         guard frameCount > 0, fps > 0,
               let source = CGImageSourceCreateWithURL(root.appendingPathComponent(file) as CFURL, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+              let image = CGImageSourceCreateImageAtIndex(source, 0,
+                  [kCGImageSourceShouldCacheImmediately: true] as CFDictionary) else { return nil }
         if frameCount == 1 && frameWidth == nil && frameHeight == nil { return image }
         guard let w = frameWidth, let h = frameHeight, let c = columns, w > 0, h > 0, c > 0,
               c <= image.width / w, (frameCount - 1) / c < image.height / h else { return nil }
@@ -220,6 +221,8 @@ final class DesktopPet: NSObject {
     private var pinned: Int?
     private var current: Int?
     private var sheet: CGImage?
+    private var preload: Task<Void, Never>?
+    private var preloaded: (index: Int, image: CGImage)?
     private var lastFrame = -1
     private var start = CACurrentMediaTime()
     private var stoppedAt: CFTimeInterval?
@@ -259,7 +262,11 @@ final class DesktopPet: NSObject {
         self.timer = timer
     }
 
-    func stop() { timer?.invalidate(); timer = nil }
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+        cancelPreload()
+    }
 
     func refresh(_ workspace: [String: Any]) {
         let desired = workspace["active"] as? String ?? "klyaksa"
@@ -307,6 +314,7 @@ final class DesktopPet: NSObject {
             if let stoppedAt { start += now - stoppedAt; self.stoppedAt = nil }
         case "clip", "shuffle":
             if command == "clip", selected?.animations.indices.contains(index) != true { return }
+            cancelPreload()
             pinned = command == "clip" ? index : nil
             stoppedAt = nil
             pending.removeAll()
@@ -322,6 +330,7 @@ final class DesktopPet: NSObject {
     }
 
     private func setPet(_ manifest: DesktopPetManifest?, folder: URL) {
+        cancelPreload()
         selected = manifest
         selectedFolder = folder
         pending.removeAll()
@@ -333,24 +342,50 @@ final class DesktopPet: NSObject {
         playNext()
     }
 
-    private func playNext() {
-        guard let clips = selected?.animations, !clips.isEmpty else { return }
+    private func refillQueue() {
+        guard let clips = selected?.animations else { return }
         if pending.isEmpty {
             pending = (pinned.map { [$0] } ?? Array(clips.indices)).filter { !unavailable.contains($0) }.shuffled()
             if pending.count > 1, pending.first == current {
                 pending.swapAt(0, Int.random(in: 1..<pending.count))
             }
         }
+    }
+
+    private func cancelPreload() {
+        preload?.cancel()
+        preload = nil
+        preloaded = nil
+    }
+
+    private func preloadNext() {
+        refillQueue()
+        guard let index = pending.first, index != current, let clip = selected?.animations[index] else { return }
+        let folder = selectedFolder
+        preload = Task(priority: .utility) { [weak self] in
+            let image = await Task.detached(priority: .utility) { clip.sheet(at: folder) }.value
+            guard !Task.isCancelled, let self, let image else { return }
+            preloaded = (index, image)
+        }
+    }
+
+    private func playNext() {
+        guard let clips = selected?.animations, !clips.isEmpty else { return }
+        let cached = preloaded
+        cancelPreload()
+        refillQueue()
         while !pending.isEmpty {
             let index = pending.removeFirst()
             let clip = clips[index]
-            let bitmap = index == current ? sheet : clip.sheet(at: selectedFolder)
+            let bitmap = index == current ? sheet : (cached?.index == index ? cached?.image : clip.sheet(at: selectedFolder))
             if let bitmap, let first = clip.frame(0, in: bitmap) {
                 sheet = bitmap
                 current = index
                 lastFrame = 0
                 sprite.image = first
                 start = CACurrentMediaTime()
+                if stoppedAt != nil { stoppedAt = start }
+                preloadNext()
                 return
             }
             unavailable.insert(index)

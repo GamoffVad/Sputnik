@@ -18,14 +18,14 @@ final class MacStore {
     private let workspace: URL
     private let fm = FileManager.default
 
-    init() throws {
+    init(dataOverride: URL? = nil) throws {
         guard let resources = Bundle.main.resourceURL,
               FileManager.default.fileExists(atPath: resources.appendingPathComponent("wwwroot/index.html").path) else {
             throw MacError("В пакете отсутствуют файлы интерфейса «Спутника».")
         }
         root = resources.appendingPathComponent("wwwroot", isDirectory: true)
         let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        let directory = support.appendingPathComponent("Sputnik", isDirectory: true)
+        let directory = dataOverride ?? support.appendingPathComponent("Sputnik", isDirectory: true)
         dataDirectory = directory
         pets = directory.appendingPathComponent("pets", isDirectory: true)
         pending = directory.appendingPathComponent("preview", isDirectory: true)

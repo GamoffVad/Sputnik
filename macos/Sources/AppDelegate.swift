@@ -167,6 +167,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ]
 
     private let smokeTest: Bool
+    private var smokeDirectory: URL?
+    private var testedPetImport = false
     private var store: MacStore?
     private var server: LocalWebServer?
     private var pet: DesktopPet?
@@ -187,6 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var reminderTimer: Timer?
     private var shownReminders: [String: Double] = [:]
     private var stickyNotes: MacStickyNotes?
+    private var hotkeys: MacHotkeys?
 
     init(smokeTest: Bool) {
         self.smokeTest = smokeTest
@@ -197,7 +200,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         do {
-            let store = try MacStore()
+            if smokeTest {
+                smokeDirectory = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("sputnik-smoke-" + UUID().uuidString, isDirectory: true)
+            }
+            let store = try MacStore(dataOverride: smokeDirectory)
             let server = try LocalWebServer(store: store)
             let pet = try DesktopPet(bundledRoot: store.root, dataRoot: store.dataDirectory)
             self.store = store
@@ -205,17 +212,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.pet = pet
             pet.refresh(store.readWorkspace())
             if smokeTest {
-                guard pet.hasFrame, !animationNames.isEmpty else {
-                    throw NSError(domain: "Sputnik", code: 1,
-                                  userInfo: [NSLocalizedDescriptionKey: "Первый спрайт не загрузился."])
+                DispatchQueue.main.asyncAfter(deadline: .now() + 40) { [weak self] in
+                    self?.finishSmokeTest(false, "Timed out waiting for the pet import and shared WKWebView panel")
                 }
-                openSection("pets")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
-                    self?.finishSmokeTest(false, "WKWebView timed out waiting for the shared panel")
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    do {
+                        try await prepareSmokeTest(store: store, server: server, pet: pet)
+                        openSection("pets")
+                    } catch {
+                        finishSmokeTest(false, error.localizedDescription)
+                    }
                 }
                 return
             }
             stickyNotes = MacStickyNotes(dataDirectory: store.dataDirectory)
+            let registry = MacHotkeys(sections: Self.sections.map(\.id)) { [weak self] in self?.openSection($0) }
+            registry.restore(hotkeyBindings())
+            hotkeys = registry
             installStatus()
             installMonitors()
             pet.onMenu = { [weak self] in self?.toggleMenu() }
@@ -240,6 +254,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         stickyNotes?.flush()
+        hotkeys?.stop()
         browser?.dispose()
         pet?.stop()
         reminderTimer?.invalidate()
@@ -257,9 +272,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func finishSmokeTest(_ ok: Bool, _ detail: String) {
+        if let smokeDirectory { try? FileManager.default.removeItem(at: smokeDirectory) }
         let output = ok ? FileHandle.standardOutput : FileHandle.standardError
         output.write(Data(("Sputnik smoke: " + detail + "\n").utf8))
         exit(ok ? 0 : 1)
+    }
+
+    private func prepareSmokeTest(store: MacStore, server: LocalWebServer, pet: DesktopPet) async throws {
+        guard pet.hasFrame, !animationNames.isEmpty else { throw MacError("Первый встроенный спрайт не загрузился.") }
+        guard let fixture = ProcessInfo.processInfo.environment["SPUTNIK_TEST_PET"], !fixture.isEmpty else { return }
+        let preview = try await store.stagePet(fixture)
+        guard let token = preview["token"] as? String else { throw MacError("Пакет тестового питомца не подготовлен.") }
+        let installed = try store.installPet(token)
+        guard installed["id"] as? String == "knight-watchman", let clips = installed["animations"] as? [[String: Any]],
+              clips.count == 5, let file = clips.first?["file"] as? String else {
+            throw MacError("В пакете Рыцаря-дозорного ожидалось пять анимаций.")
+        }
+        try store.writeWorkspace(["active": "knight-watchman", "themed": true])
+        pet.refresh(store.readWorkspace())
+        guard pet.hasFrame, animationNames.count == 5 else { throw MacError("Спрайт импортированного питомца не загрузился.") }
+        var request = URLRequest(url: server.origin.appendingPathComponent(file))
+        request.httpMethod = "HEAD"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200, response.mimeType == "image/png" else {
+            throw MacError("Локальный интерфейс не смог получить кадры импортированного питомца.")
+        }
+        testedPetImport = true
     }
 
     private func installStatus() {
@@ -313,6 +351,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func publish(_ message: [String: Any]) { browser?.publish(message) }
 
+    func hotkeyBindings() -> [String: Any] { store?.readSettings("hotkeys.json") ?? [:] }
+
+    func setHotkey(_ section: String, modifiers: Int, key: Int) throws {
+        guard let store, let hotkeys else { throw MacError("Горячие клавиши пока недоступны.") }
+        var settings = hotkeyBindings()
+        let previous = settings[section] as? [String: Int]
+        try hotkeys.set(section, modifiers: modifiers, key: key)
+        if key == 0 {
+            settings.removeValue(forKey: section)
+        } else {
+            settings[section] = ["modifiers": modifiers, "key": key]
+        }
+        do {
+            try store.writeSettings(settings, name: "hotkeys.json")
+        } catch {
+            try? hotkeys.set(section, modifiers: previous?["modifiers"] ?? 0, key: previous?["key"] ?? 0)
+            throw error
+        }
+    }
+
     func openSection(_ section: String) {
         guard let pet, let server,
               Self.sections.contains(where: { $0.id == section }) || section == "sharing" else { return }
@@ -359,8 +417,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self, weak browser] in
                     browser?.web.evaluateJavaScript("document.querySelector('#main h1')?.textContent") { value, error in
                         let heading = value as? String
+                        let imported = self?.testedPetImport == true ? ", imported five Knight Watchman animations" : ""
                         self?.finishSmokeTest(heading == "Питомцы",
-                            error?.localizedDescription ?? heading.map { "decoded sprite, served UI, received bridge actions, rendered \($0)" } ?? "Пустая панель")
+                            error?.localizedDescription ?? heading.map { "decoded sprite, served UI, received bridge actions, rendered \($0)\(imported)" } ?? "Пустая панель")
                     }
                 }
             }

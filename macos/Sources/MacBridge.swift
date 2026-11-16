@@ -103,9 +103,14 @@ enum MacBridge {
             }
             try store.writeSettings(["channels":channels], name:"share.json")
         case "hotkeys":
-            return ["sections": [[String:String]](), "bindings": [String:Any]()]
+            return ["sections": AppDelegate.sections.map { ["title": $0.label, "action": $0.id] },
+                    "bindings": app.hotkeyBindings()]
         case "setHotkey":
-            throw MacError("Изменение системных сочетаний клавиш в этой версии macOS недоступно.")
+            guard let section = values["section"] as? String,
+                  let modifiers = values["modifiers"] as? Int, let key = values["key"] as? Int else {
+                throw MacError("Укажите поддерживаемое сочетание клавиш.")
+            }
+            try app.setHotkey(section, modifiers: modifiers, key: key)
         default:
             throw MacError("Неизвестное действие.")
         }

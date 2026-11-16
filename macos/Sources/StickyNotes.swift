@@ -10,9 +10,53 @@ private struct StickyRecord: Codable {
     var pinned = true
 }
 
+private struct StickyShareChannel: Decodable {
+    let name: String
+    let template: String
+
+    private static let defaults = [
+        StickyShareChannel(name: "Почта", template: "mailto:?body={text}"),
+        StickyShareChannel(name: "Telegram", template: "tg://msg?text={text}"),
+    ]
+    private static let schemes: Set<String> = ["https", "mailto", "tg", "max", "whatsapp", "viber", "sms"]
+    private static let unreserved = CharacterSet(charactersIn:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+
+    static func load(from url: URL) -> [StickyShareChannel] {
+        struct Settings: Decodable { let channels: [StickyShareChannel] }
+        guard let data = try? Data(contentsOf: url),
+              let settings = try? JSONDecoder().decode(Settings.self, from: data) else { return defaults }
+        return Array(settings.channels.prefix(32))
+    }
+
+    func url(text: String) -> URL? {
+        guard !name.isEmpty, name.count <= 40, template.count <= 1800,
+              template.rangeOfCharacter(from: .controlCharacters) == nil,
+              let queryStart = template.firstIndex(of: "?"),
+              let query = template[template.index(after: queryStart)...].split(separator: "#", maxSplits: 1).first,
+              query.split(separator: "&").contains(where: { item in
+                  let parts = item.split(separator: "=", maxSplits: 1)
+                  return parts.count == 2 && parts[1].contains("{text}")
+              }),
+              let encodedText = text.addingPercentEncoding(withAllowedCharacters: Self.unreserved),
+              let title = "Заметка из «Спутника»".addingPercentEncoding(withAllowedCharacters: Self.unreserved)
+        else { return nil }
+        let base = template[..<queryStart]
+        guard !base.contains("{text}"), !base.contains("{title}") else { return nil }
+        let expanded = template.replacingOccurrences(of: "{title}", with: title)
+            .replacingOccurrences(of: "{text}", with: encodedText)
+        guard let target = URLComponents(string: expanded),
+              let scheme = target.scheme?.lowercased(), Self.schemes.contains(scheme),
+              target.user == nil, target.password == nil,
+              scheme != "https" || target.host?.isEmpty == false else { return nil }
+        return target.url
+    }
+}
+
 @MainActor
 final class MacStickyNotes {
     private let location: URL
+    private let sharingSettings: URL
     private var records: [StickyRecord]
     private var cards: [UUID: StickyCard] = [:]
     private var pendingSave: DispatchWorkItem?
@@ -21,6 +65,7 @@ final class MacStickyNotes {
 
     init(dataDirectory: URL) {
         location = dataDirectory.appendingPathComponent("sticky-notes.json")
+        sharingSettings = dataDirectory.appendingPathComponent("share.json")
         if let stored = try? Data(contentsOf: location) {
             records = (try? JSONDecoder().decode([StickyRecord].self, from: stored)) ?? []
         } else {
@@ -81,6 +126,7 @@ final class MacStickyNotes {
         let card = StickyCard(record, palette: palette, offset: offset)
         cards[record.id] = card
         card.didEdit = { [weak self] in self?.saveSoon() }
+        card.shareChannels = { [sharingSettings] in StickyShareChannel.load(from: sharingSettings) }
         card.create = { [weak self, weak card] in
             guard let self, let card else { return }
             let second = StickyRecord()
@@ -145,6 +191,7 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     var didEdit: (() -> Void)?
     var create: (() -> Void)?
     var delete: (() -> Void)?
+    var shareChannels: (() -> [StickyShareChannel])?
 
     private var record: StickyRecord
     private let editor = StickyEditor()
@@ -368,8 +415,45 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
 
     private func shareNote() {
         guard let share, !editor.string.isEmpty else { return }
+        let plain = shareText()
+        let options: [(String, URL)] = plain.isEmpty ? [] : (shareChannels?() ?? []).compactMap { channel in
+            channel.url(text: plain).map { (channel.name, $0) }
+        }
+        guard !options.isEmpty else {
+            shareUsingSystem()
+            return
+        }
+        let menu = NSMenu()
+        for (name, url) in options {
+            let entry = NSMenuItem(title: name, action: #selector(openShareChannel(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = url
+            menu.addItem(entry)
+        }
+        menu.addItem(.separator())
+        let system = NSMenuItem(title: "Другие способы…", action: #selector(shareUsingSystem), keyEquivalent: "")
+        system.target = self
+        menu.addItem(system)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: share.bounds.minY), in: share)
+    }
+
+    private func shareText() -> String {
+        editor.string.replacingOccurrences(of: "\u{FFFC}", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    @objc private func openShareChannel(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        if NSWorkspace.shared.open(url) { return }
+        let telegramWeb = StickyShareChannel(name: "Telegram", template: "https://t.me/share/url?url=%E2%80%8B&text={text}")
+        if url.scheme?.lowercased() == "tg", let target = telegramWeb.url(text: shareText()),
+           NSWorkspace.shared.open(target) { return }
+        shareUsingSystem()
+    }
+
+    @objc private func shareUsingSystem() {
+        guard let share else { return }
         var items: [Any] = []
-        let plain = editor.string.replacingOccurrences(of: "\u{FFFC}", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let plain = shareText()
         if !plain.isEmpty { items.append(plain) }
         if let contents = editor.textStorage {
             contents.enumerateAttribute(.attachment, in: NSRange(location: 0, length: contents.length)) { value, _, _ in

@@ -543,7 +543,7 @@ function renderSection() {
     chat:desktopChat,
     quick:desktopQuick,
     motion:()=>head('Движения','<div class="motion-toolbar" role="group" aria-label="Управление воспроизведением">'+iconAction('Случайный порядок','shuffle','class="primary" data-playback="shuffle"')+iconAction('Пауза','pause','data-playback="pause"')+iconAction('Продолжить','play','data-playback="resume"')+'</div>')+'<div class="list motion-list">'+movements+'</div>',
-    manage:()=>head('Управление')+'<section class="panel toggles"><label><input type="checkbox" id="autostart" '+(autoStart?'checked':'')+'>Запускать питомца при входе в '+(isMac?'macOS':'Windows')+'</label></section>'+(isMac?'':button('Горячие клавиши','id="manage-hotkeys"','settings')),
+    manage:()=>head('Управление')+'<section class="panel toggles"><label><input type="checkbox" id="autostart" '+(autoStart?'checked':'')+'>Запускать питомца при входе в '+(isMac?'macOS':'Windows')+'</label></section>'+button('Горячие клавиши','id="manage-hotkeys"','settings'),
     theme:()=>head('Внешний вид')+settings(true),
     model:()=>head('Модель и API')+settings(true),
     sharing:sharingPage,
@@ -582,7 +582,7 @@ function sharingPage() {
 }
 function shortcutName(shortcut) {
   if(!shortcut?.key)return '';
-  const labels=[[2,'Ctrl'],[1,'Alt'],[4,'Shift'],[8,'Win']];
+  const labels=[[2,'Ctrl'],[1,isMac?'Option':'Alt'],[4,'Shift'],[8,isMac?'Command':'Win']];
   const key=shortcut.key>=112?'F'+(shortcut.key-111):String.fromCharCode(shortcut.key);
   return [...labels.filter(([flag])=>shortcut.modifiers&flag).map(([,label])=>label),key].join(' + ');
 }
@@ -637,7 +637,7 @@ async function openHotkeys() {
       const key=/^Key[A-Z]$/.test(code)?code.charCodeAt(3):/^Digit\d$/.test(code)?code.charCodeAt(5):/^F\d{1,2}$/.test(code)?111+Number(code.slice(1)):0;
       if(!key)return;
       const modifiers=(e.altKey?1:0)+(e.ctrlKey?2:0)+(e.shiftKey?4:0)+(e.metaKey?8:0);
-      if(!modifiers){status.textContent='Добавьте Ctrl, Alt, Shift или Win.';return;}
+      if(!modifiers){status.textContent=isMac?'Добавьте Ctrl, Option, Shift или Command.':'Добавьте Ctrl, Alt, Shift или Win.';return;}
       assign(modifiers,key);
     };
   };

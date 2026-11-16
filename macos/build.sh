@@ -133,7 +133,7 @@ plutil -lint "$app/Contents/Info.plist"
 codesign --force --sign - "$app"
 codesign --verify --strict --verbose=2 "$app"
 if [[ "${SPUTNIK_SMOKE_TEST:-0}" == 1 ]]; then
-  "$executable" --smoke-test
+  SPUTNIK_TEST_PET="$root/pets/knight-watchman.pet" "$executable" --smoke-test
 fi
 
 ln -s /Applications "$volume/Applications"
