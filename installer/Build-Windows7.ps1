@@ -83,5 +83,5 @@ foreach ($arch in $Architecture) {
     & (Join-Path $PSScriptRoot 'Prepare-Payload.ps1') -PublishDir $payload
     & $Compiler "/DAppVersion=$Version" "/DPublishDir=$payload" "/DInstallerOutput=$out" "/DLegacyArchitecture=$arch" "/DNetFrameworkInstaller=$framework" "/DWebViewInstaller=$offline" (Join-Path $PSScriptRoot 'Sputnik.iss')
     if ($LASTEXITCODE) { throw "Sputnik installer build failed for $arch" }
-    Get-FileHash -LiteralPath (Join-Path $out "SputnikSetup-win7-$arch.exe") -Algorithm SHA256
+    Get-FileHash -LiteralPath (Join-Path $out "SputnikSetup-$Version-win7-$arch.exe") -Algorithm SHA256
 }

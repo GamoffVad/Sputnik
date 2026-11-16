@@ -5,13 +5,13 @@
 **Анимированный питомец на рабочем столе Windows.** Открывайте избранные сайты и программы, держите под рукой заметки и напоминания или пишите модели прямо из меню питомца.
 
 <p>
-  <a href="https://github.com/GamoffVad/Sputnik/releases/latest/download/SputnikSetup.exe"><img alt="Скачать установщик Windows x64" src="https://img.shields.io/badge/Скачать-SputnikSetup.exe-7569D7?style=for-the-badge"></a>
+  <a href="https://github.com/GamoffVad/Sputnik/releases/latest"><img alt="Скачать установщик Windows x64" src="https://img.shields.io/badge/Скачать-Windows_10_%2F_11_x64-7569D7?style=for-the-badge"></a>
   <a href="https://github.com/GamoffVad/Sputnik/releases"><img alt="Все релизы" src="https://img.shields.io/badge/Все_релизы-GitHub-262B45?style=for-the-badge"></a>
 </p>
 
 ## Установка
 
-1. Скачайте [SputnikSetup.exe для Windows x64](https://github.com/GamoffVad/Sputnik/releases/latest/download/SputnikSetup.exe).
+1. Скачайте файл `SputnikSetup-<версия>-win10-win11-x64.exe` из [последнего выпуска](https://github.com/GamoffVad/Sputnik/releases/latest).
 2. Запустите мастер, выберите папку и завершите установку. После скачивания интернет для установки не требуется.
 3. Откройте **Спутник** из меню «Пуск». При первом запуске на рабочем столе появится **Клякса**.
 

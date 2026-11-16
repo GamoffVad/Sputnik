@@ -63,9 +63,13 @@ RestartApplications=no
 UninstallDisplayIcon={app}\Sputnik.exe
 OutputDir={#InstallerOutput}
 #ifdef LegacyArchitecture
-OutputBaseFilename=SputnikSetup-win7-{#LegacyArchitecture}
+OutputBaseFilename=SputnikSetup-{#AppVersion}-win7-{#LegacyArchitecture}
+#else
+#ifdef VersionedOutput
+OutputBaseFilename=SputnikSetup-{#AppVersion}-win10-win11-x64
 #else
 OutputBaseFilename=SputnikSetup
+#endif
 #endif
 SetupIconFile=..\Sputnik.ico
 Compression=lzma2/normal
