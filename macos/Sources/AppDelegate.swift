@@ -576,7 +576,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     do {
                         _ = try await MacBridge.execute("open", payload: item, store: store, app: self)
                     } catch {
-                        showMessage(error.localizedDescription)
+                        self.showMessage(error.localizedDescription)
                     }
                 }
             }
@@ -640,9 +640,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let radius = base + CGFloat(offset)*step
             let increment = min(CGFloat.pi/2, step/radius)
             let count = Int(CGFloat.pi/2/increment)
-            let angles = [CGFloat(0)] + (count == 0 ? [] : (1...count).flatMap { i in
-                [firstDirection*CGFloat(i)*increment, -firstDirection*CGFloat(i)*increment]
-            })
+            var angles: [CGFloat] = [0]
+            if count > 0 {
+                for i in 1...count {
+                    let angle = firstDirection * CGFloat(i) * increment
+                    angles.append(angle)
+                    angles.append(-angle)
+                }
+            }
             for angle in angles {
                 let point = CGPoint(x: center.x - radius*sin(angle), y: center.y + radius*cos(angle))
                 if region.contains(point), used.allSatisfy({ hypot($0.x-point.x, $0.y-point.y) >= width+4 }) {
