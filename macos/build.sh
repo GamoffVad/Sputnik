@@ -73,15 +73,17 @@ with ZipFile(sys.argv[2]) as archive:
     destination = assets / watchman["id"]
     destination.mkdir()
     for index, clip in enumerate(watchman["animations"]):
-        target = destination / f"clip-{index}.png"
-        with archive.open(clip["file"]) as source, target.open("wb") as output:
-            shutil.copyfileobj(source, output)
-        clip["file"] = target.relative_to(assets.parent).as_posix()
+        for page, part in enumerate(clip.get("sheets", [clip])):
+            target = destination / f"clip-{index}-{page}.png"
+            with archive.open(part["file"]) as source, target.open("wb") as output:
+                shutil.copyfileobj(source, output)
+            part["file"] = target.relative_to(assets.parent).as_posix()
     pets.append(watchman)
 for pet in pets:
     for clip in pet["animations"]:
-        if not (assets.parent / clip["file"]).is_file():
-            raise SystemExit(f"Missing packaged sprite sheet: {clip['file']}")
+        for part in clip.get("sheets", [clip]):
+            if not (assets.parent / part["file"]).is_file():
+                raise SystemExit(f"Missing packaged sprite sheet: {part['file']}")
 catalog.write_text(json.dumps(pets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 (assets / "hudi.png").unlink(missing_ok=True)
 PY

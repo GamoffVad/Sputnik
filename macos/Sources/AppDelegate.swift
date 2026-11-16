@@ -328,14 +328,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             throw MacError("Спрайт встроенного Песчаного дозорного не загрузился.")
         }
         for clip in watchmanClips {
-            guard let file = clip["file"] as? String else {
-                throw MacError("Не указан файл анимации Песчаного дозорного.")
-            }
-            var request = URLRequest(url: server.origin.appendingPathComponent(file))
-            request.httpMethod = "HEAD"
-            let (_, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200, response.mimeType == "image/png" else {
-                throw MacError("Локальный интерфейс не смог получить кадры Песчаного дозорного.")
+            let sheets = clip["sheets"] as? [[String: Any]] ?? [clip]
+            for sheet in sheets {
+                guard let file = sheet["file"] as? String else {
+                    throw MacError("Не указан файл анимации Песчаного дозорного.")
+                }
+                var request = URLRequest(url: server.origin.appendingPathComponent(file))
+                request.httpMethod = "HEAD"
+                let (_, response) = try await URLSession.shared.data(for: request)
+                guard (response as? HTTPURLResponse)?.statusCode == 200, response.mimeType == "image/png" else {
+                    throw MacError("Локальный интерфейс не смог получить кадры Песчаного дозорного.")
+                }
             }
         }
         guard let fixture = ProcessInfo.processInfo.environment["SPUTNIK_TEST_PET"], !fixture.isEmpty else { return }

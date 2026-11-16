@@ -523,9 +523,12 @@ function queueAppearanceSave(status, preview=false) {
 }
 const imageCache = new Map();
 function imageOf(url) {
-  if (!imageCache.has(url)) imageCache.set(url,new Promise((resolve,reject)=>{
-    const image=new Image(); image.onload=()=>resolve(image); image.onerror=()=>reject(new Error('Не удалось прочитать кадры питомца.')); image.src=url;
-  }).catch(error=>{imageCache.delete(url);throw error;}));
+  if (!imageCache.has(url)) {
+    if(imageCache.size>=8) imageCache.delete(imageCache.keys().next().value);
+    imageCache.set(url,new Promise((resolve,reject)=>{
+      const image=new Image(); image.onload=()=>resolve(image); image.onerror=()=>reject(new Error('Не удалось прочитать кадры питомца.')); image.src=url;
+    }).catch(error=>{imageCache.delete(url);throw error;}));
+  }
   return imageCache.get(url);
 }
 function paint(canvas, image, clip, frame = 0) {
@@ -535,13 +538,22 @@ function paint(canvas, image, clip, frame = 0) {
   if(canvas.width!==targetWidth) canvas.width=targetWidth;
   if(canvas.height!==targetHeight) canvas.height=targetHeight;
   const ctx=canvas.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
   const scale=Math.min(canvas.width/w,canvas.height/h);
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.drawImage(image,frame%cols*w,Math.floor(frame/cols)*h,w,h,(canvas.width-w*scale)/2,(canvas.height-h*scale)/2,w*scale,h*scale);
 }
+function paintClip(canvas, clip, sheets, images, frame) {
+  for (let i=0;i<sheets.length;i++) {
+    const count=sheets[i].frames??clip.frameCount;
+    if(frame<count) {paint(canvas,images[i],clip,frame);return;}
+    frame-=count;
+  }
+}
 function draw(canvas, clip, animate = false, allowMotion = () => !paused) {
   if(!canvas || !clip) return;
-  imageOf(clip.file).then(image=>{
+  const sheets=clip.sheets??[clip];
+  Promise.all((animate?sheets:sheets.slice(0,1)).map(part=>imageOf(part.file))).then(images=>{
     let lastTime, elapsed = 0, previous = -1;
     function frame(time) {
       if(!canvas.isConnected) return;
@@ -549,7 +561,7 @@ function draw(canvas, clip, animate = false, allowMotion = () => !paused) {
       lastTime=time;
       const index=Math.floor(elapsed*clip.fps/1000)%clip.frameCount;
       if(index!==previous || Math.round(canvas.clientWidth*devicePixelRatio)!==canvas.width || Math.round(canvas.clientHeight*devicePixelRatio)!==canvas.height) {
-        paint(canvas,image,clip,index); previous=index;
+        paintClip(canvas,clip,sheets,images,index); previous=index;
       }
       requestAnimationFrame(frame);
     }
@@ -787,9 +799,10 @@ async function importPet() {
     scene.replaceChildren(canvas); draw(canvas,clip,true);
     const samples=Math.min(clip.frameCount,4);
     frames.innerHTML='<canvas width="65" height="65" style="width:65px;height:65px"></canvas>'.repeat(samples);
-    imageOf(clip.file).then(image=>{
+    const sheets=clip.sheets??[clip];
+    Promise.all(sheets.map(part=>imageOf(part.file))).then(images=>{
       if (revision!==previewRevision || !frames.isConnected) return;
-      Array.from(frames.children).forEach((c,i)=>paint(c,image,clip,Math.floor(i*clip.frameCount/samples)));
+      Array.from(frames.children).forEach((c,i)=>paintClip(c,clip,sheets,images,Math.floor(i*clip.frameCount/samples)));
     }).catch(error=>feedback(error.message));
   }
   bindChoice($('#preview-motion',dialog),motions,0,key=>{motionIndex=key;preview();});

@@ -114,22 +114,40 @@ class SputnikButton: NSButton {
 }
 
 private struct DesktopClip: Decodable {
+    struct Sheet: Decodable {
+        let file: String
+        let frames: Int
+    }
+
     let name: String
-    let file: String
+    let file: String?
+    let sheets: [Sheet]?
     let frameWidth: Int?
     let frameHeight: Int?
     let columns: Int?
     let frameCount: Int
     let fps: Int
 
-    func sheet(at root: URL) -> CGImage? {
+    func location(_ frame: Int) -> (page: Int, local: Int) {
+        var offset = frame
+        for (page, sheet) in (sheets ?? []).enumerated() {
+            if offset < sheet.frames { return (page, offset) }
+            offset -= sheet.frames
+        }
+        return (0, frame)
+    }
+
+    func sheet(at root: URL, page: Int = 0) -> CGImage? {
+        let part = sheets.flatMap { $0.indices.contains(page) ? $0[page] : nil }
+        guard let filename = part?.file ?? file else { return nil }
+        let count = part?.frames ?? frameCount
         guard frameCount > 0, fps > 0,
-              let source = CGImageSourceCreateWithURL(root.appendingPathComponent(file) as CFURL, nil),
+              let source = CGImageSourceCreateWithURL(root.appendingPathComponent(filename) as CFURL, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0,
                   [kCGImageSourceShouldCacheImmediately: true] as CFDictionary) else { return nil }
         if frameCount == 1 && frameWidth == nil && frameHeight == nil { return image }
         guard let w = frameWidth, let h = frameHeight, let c = columns, w > 0, h > 0, c > 0,
-              c <= image.width / w, (frameCount - 1) / c < image.height / h else { return nil }
+              c <= image.width / w, (count - 1) / c < image.height / h else { return nil }
         return image
     }
 
@@ -227,6 +245,10 @@ final class DesktopPet: NSObject {
     private var pinned: Int?
     private var current: Int?
     private var sheet: CGImage?
+    private var firstSheet: CGImage?
+    private var currentPage = 0
+    private var segmentLoader: Task<Void, Never>?
+    private var nextSheet: (page: Int, image: CGImage)?
     private var preload: Task<Void, Never>?
     private var preloaded: (index: Int, image: CGImage)?
     private var lastFrame = -1
@@ -306,7 +328,7 @@ final class DesktopPet: NSObject {
         palette = SputnikPalette(theme)
         fontFamily = workspace["font"] as? String
         let scale = (workspace["petScale"] as? NSNumber)?.doubleValue ?? 100
-        let displayScale = max(0.75, min(1.5, selected?.displayScale ?? 1))
+        let displayScale = max(0.75, min(1.6, selected?.displayScale ?? 1))
         sprite.preferredSize = 230 * max(0.6, min(1.6, scale / 100)) * displayScale
         constrainToScreen()
     }
@@ -358,6 +380,8 @@ final class DesktopPet: NSObject {
         current = nil
         pinned = nil
         sheet = nil
+        firstSheet = nil
+        currentPage = 0
         sprite.image = nil
         playNext()
     }
@@ -376,6 +400,9 @@ final class DesktopPet: NSObject {
         preload?.cancel()
         preload = nil
         preloaded = nil
+        segmentLoader?.cancel()
+        segmentLoader = nil
+        nextSheet = nil
     }
 
     private func preloadNext() {
@@ -389,6 +416,17 @@ final class DesktopPet: NSObject {
         }
     }
 
+    private func preloadSegment(_ page: Int, for clip: DesktopClip) {
+        guard let sheets = clip.sheets, sheets.indices.contains(page) else { preloadNext(); return }
+        let folder = selectedFolder
+        segmentLoader = Task(priority: .utility) { [weak self] in
+            let image = await Task.detached(priority: .utility) { clip.sheet(at: folder, page: page) }.value
+            guard !Task.isCancelled, let self else { return }
+            if let image { nextSheet = (page, image) }
+            segmentLoader = nil
+        }
+    }
+
     private func playNext() {
         guard let clips = selected?.animations, !clips.isEmpty else { return }
         let cached = preloaded
@@ -397,15 +435,17 @@ final class DesktopPet: NSObject {
         while !pending.isEmpty {
             let index = pending.removeFirst()
             let clip = clips[index]
-            let bitmap = index == current ? sheet : (cached?.index == index ? cached?.image : clip.sheet(at: selectedFolder))
+            let bitmap = index == current ? firstSheet : (cached?.index == index ? cached?.image : clip.sheet(at: selectedFolder))
             if let bitmap, let first = clip.frame(0, in: bitmap) {
                 sheet = bitmap
+                firstSheet = bitmap
+                currentPage = 0
                 current = index
                 lastFrame = 0
                 sprite.image = first
                 start = CACurrentMediaTime()
                 if stoppedAt != nil { stoppedAt = start }
-                preloadNext()
+                preloadSegment(1, for: clip)
                 return
             }
             unavailable.insert(index)
@@ -413,14 +453,29 @@ final class DesktopPet: NSObject {
     }
 
     @objc private func advance() {
-        guard stoppedAt == nil, let current, let clip = selected?.animations[current], let sheet else { return }
+        guard stoppedAt == nil, let current, let clip = selected?.animations[current], sheet != nil else { return }
         if clip.frameCount == 1, selected?.animations.count == 1 { return }
         let index = Int((CACurrentMediaTime() - start) * Double(clip.fps))
         if index >= clip.frameCount {
             playNext()
         } else if index != lastFrame {
+            let location = clip.location(index)
+            if location.page != currentPage {
+                if segmentLoader != nil { return }
+                let prepared = nextSheet?.page == location.page ? nextSheet?.image : nil
+                guard let bitmap = prepared ?? clip.sheet(at: selectedFolder, page: location.page) else {
+                    unavailable.insert(current)
+                    pending.removeAll { $0 == current }
+                    playNext()
+                    return
+                }
+                sheet = bitmap
+                nextSheet = nil
+                currentPage = location.page
+                preloadSegment(location.page + 1, for: clip)
+            }
             lastFrame = index
-            if let frame = clip.frame(index, in: sheet) { sprite.image = frame }
+            if let sheet, let frame = clip.frame(location.local, in: sheet) { sprite.image = frame }
         }
     }
 }

@@ -71,7 +71,13 @@ final class MacStore {
         var copy = pet
         copy["animations"] = (pet["animations"] as? [[String: Any]] ?? []).map { clip in
             var clip = clip
-            if let name = clip["file"] as? String { clip["file"] = path + "/" + name }
+            if let sheets = clip["sheets"] as? [[String: Any]] {
+                clip["sheets"] = sheets.map { source in
+                    var sheet = source
+                    if let name = sheet["file"] as? String { sheet["file"] = path + "/" + name }
+                    return sheet
+                }
+            } else if let name = clip["file"] as? String { clip["file"] = path + "/" + name }
             return clip
         }
         return copy
@@ -180,41 +186,60 @@ enum PetArchive {
             var extracted = 0
             for (index, clip) in clips.enumerated() {
                 let title = try field(clip, "name", limit: 60)
-                let file = try field(clip, "file", limit: 160)
-                guard names.insert(title.lowercased()).inserted,
-                      matches(file, "^(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\\.[pP][nN][gG]$"),
-                      let size = lengths[file], size > 0 else {
-                    throw MacError("Укажите уникальные имена анимаций и корректные PNG-листы.")
-                }
-                extracted += size
-                guard extracted <= maximum else { throw MacError("Суммарный размер листов превышает 96 МБ.") }
+                guard names.insert(title.lowercased()).inserted else { throw MacError("Названия анимаций должны различаться.") }
                 let w = try integer(clip, "frameWidth", 1...2048)
                 let h = try integer(clip, "frameHeight", 1...2048)
                 let count = try integer(clip, "frameCount", 1...480)
                 let columns = try integer(clip, "columns", 1...64)
                 let fps = try integer(clip, "fps", 1...60)
-                let width = w * columns
-                let height = h * ((count + columns - 1) / columns)
-                guard width <= 8192, height <= 8192, width * height <= 32_000_000 else {
-                    throw MacError("Размер PNG-листа превышает допустимый.")
+                var installed: [String: Any] = ["name": title, "frameWidth": w, "frameHeight": h,
+                                                  "frameCount": count, "columns": columns, "fps": fps]
+                func extractSheet(_ part: [String: Any], asset: String, frames: Int) throws {
+                    let file = try field(part, "file", limit: 160)
+                    guard matches(file, "^(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\\.[pP][nN][gG]$"),
+                          let size = lengths[file], size > 0 else { throw MacError("Некорректный PNG-лист.") }
+                    extracted += size
+                    guard extracted <= maximum else { throw MacError("Суммарный размер листов превышает 96 МБ.") }
+                    let width = w * columns
+                    let height = h * ((frames + columns - 1) / columns)
+                    guard width <= 8192, height <= 8192, width * height <= 32_000_000 else {
+                        throw MacError("Размер PNG-листа превышает допустимый.")
+                    }
+                    let data = try extract(file, size: size, from: archive)
+                    guard let image = CGImageSourceCreateWithData(data as CFData, nil),
+                          CGImageSourceGetType(image).map({ ($0 as String) == UTType.png.identifier }) == true,
+                          let props = CGImageSourceCopyPropertiesAtIndex(image, 0, nil) as? [String: Any],
+                          props[kCGImagePropertyPixelWidth as String] as? Int == width,
+                          props[kCGImagePropertyPixelHeight as String] as? Int == height else {
+                        throw MacError("Размер PNG не соответствует сетке кадров.")
+                    }
+                    try data.write(to: directory.appendingPathComponent(asset), options: .atomic)
                 }
-                let data = try extract(file, size: size, from: archive)
-                guard let image = CGImageSourceCreateWithData(data as CFData, nil),
-                      CGImageSourceGetType(image).map({ ($0 as String) == UTType.png.identifier }) == true,
-                      let props = CGImageSourceCopyPropertiesAtIndex(image, 0, nil) as? [String: Any],
-                      props[kCGImagePropertyPixelWidth as String] as? Int == width,
-                      props[kCGImagePropertyPixelHeight as String] as? Int == height else {
-                    throw MacError("Размер PNG не соответствует сетке кадров.")
+                if let sheets = clip["sheets"] as? [[String: Any]] {
+                    guard (1...12).contains(sheets.count) else { throw MacError("Некорректное число PNG-листов.") }
+                    var installedSheets = [[String: Any]]()
+                    var total = 0
+                    for (page, part) in sheets.enumerated() {
+                        guard total < count else { throw MacError("Число кадров в PNG-листах превышено.") }
+                        let frames = try integer(part, "frames", 1...(count - total))
+                        let asset = "clip-\(index)-\(page).png"
+                        try extractSheet(part, asset: asset, frames: frames)
+                        installedSheets.append(["file": asset, "frames": frames])
+                        total += frames
+                    }
+                    guard total == count else { throw MacError("Число кадров в PNG-листах не совпадает с анимацией.") }
+                    installed["sheets"] = installedSheets
+                } else {
+                    let asset = "clip-\(index).png"
+                    try extractSheet(clip, asset: asset, frames: count)
+                    installed["file"] = asset
                 }
-                let asset = "clip-\(index).png"
-                try data.write(to: directory.appendingPathComponent(asset), options: .atomic)
-                animations.append(["name": title, "file": asset, "frameWidth": w, "frameHeight": h,
-                                   "frameCount": count, "columns": columns, "fps": fps])
+                animations.append(installed)
             }
             try fm.removeItem(at: archive)
             var installed: [String: Any] = ["id": id, "name": name, "description": description,
                                             "theme": theme, "animations": animations]
-            if let scale = pet["displayScale"] as? Double, (0.75...1.5).contains(scale) { installed["displayScale"] = scale }
+            if let scale = pet["displayScale"] as? Double, (0.75...1.6).contains(scale) { installed["displayScale"] = scale }
             try JSONSerialization.data(withJSONObject: installed).write(to: directory.appendingPathComponent("pet.json"), options: .atomic)
             return installed
         } catch {
