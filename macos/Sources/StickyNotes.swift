@@ -380,7 +380,7 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
         }
         editor.insertionPointColor = value.ink
         if let contents = editor.textStorage, contents.length > 0 {
-            contents.addAttribute(.foregroundColor, value.ink, range: NSRange(location: 0, length: contents.length))
+            contents.addAttribute(.foregroundColor, value: value.ink, range: NSRange(location: 0, length: contents.length))
         }
         var attributes = editor.typingAttributes
         attributes[.foregroundColor] = value.ink

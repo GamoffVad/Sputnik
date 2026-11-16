@@ -44,7 +44,7 @@ fi
 
 sdk="$(xcrun --sdk macosx --show-sdk-path)"
 for architecture in arm64 x86_64; do
-  xcrun swiftc -O -parse-as-library -module-name SputnikMac -sdk "$sdk" \
+  xcrun swiftc -O -whole-module-optimization -parse-as-library -module-name SputnikMac -sdk "$sdk" \
     -target "$architecture-apple-macosx$minimum_version" \
     "${sources[@]}" -o "$work/Sputnik-$architecture"
 done
