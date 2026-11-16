@@ -76,16 +76,16 @@ internal sealed class StickyNoteWindow : Window
         var share = Button(Glyph("M6 10L13 5 M6 11L13 16 M5 8A2 2 0 1 0 5 12A2 2 0 1 0 5 8 M15 2A2 2 0 1 0 15 6A2 2 0 1 0 15 2 M15 14A2 2 0 1 0 15 18A2 2 0 1 0 15 14", "AccentInk"), "Поделиться заметкой", () => { }, 36, header: true);
         DockPanel.SetDock(share, Dock.Right);
         header.Children.Add(share);
-        var pin = Button(Glyph(PinIcon, "AccentInk"), "Закрепить поверх окон", () => { }, 30, header: true);
-        var pinBadge = new Border { Child = pin, CornerRadius = new CornerRadius(7), Margin = new Thickness(1, 3, 1, 3) };
-        pin.Height = 33;
+        var pin = Button(Glyph(PinIcon, "AccentInk"), "Закрепить поверх окон", () => { }, 26, header: true);
+        var pinBadge = new Border { Child = pin, CornerRadius = new CornerRadius(7), Margin = new Thickness(1, 3, 1, 3), Padding = new Thickness(2) };
+        pin.Height = 29;
         DockPanel.SetDock(pinBadge, Dock.Right);
         header.Children.Add(pinBadge);
         void UpdatePin()
         {
-            if (Topmost) pinBadge.UseTheme(Border.BackgroundProperty, "Ink");
+            if (Topmost) pinBadge.UseTheme(Border.BackgroundProperty, "AccentInk");
             else pinBadge.Background = Brushes.Transparent;
-            pin.Content = Glyph(PinIcon, Topmost ? "Surface" : "AccentInk");
+            pin.Content = Glyph(PinIcon, Topmost ? "Accent" : "AccentInk");
             string action = Topmost ? "Снять закрепление" : "Закрепить поверх окон";
             pin.ToolTip = action;
             AutomationProperties.SetName(pin, action);
