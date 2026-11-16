@@ -7,6 +7,10 @@ on:
         description: Release version without v
         required: true
         type: string
+      publish:
+        description: Publish the installer and portable build as a GitHub release
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -31,7 +35,7 @@ jobs:
           if (!$compiler) { throw 'Inno Setup compiler not found.' }
           $payload = Join-Path $PWD 'artifacts/payload'
           $out = Join-Path $PWD 'artifacts/release'
-          dotnet publish Sputnik.csproj -c Release -r win-x64 --self-contained true -o $payload
+          dotnet publish Sputnik.csproj -c Release -r win-x64 --self-contained true -p:Version=$env:APP_VERSION -o $payload
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force $out | Out-Null
           Compress-Archive -Path "$payload/*" -DestinationPath "$out/Sputnik-win-x64.zip"
@@ -42,17 +46,28 @@ jobs:
           if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'CN=Microsoft Corporation') {
             throw 'The WebView2 installer signature could not be verified.'
           }
-          & $compiler.FullName "/DAppVersion=$env:APP_VERSION" "/DPublishDir=$payload" "/DInstallerOutput=$out" "/DWebViewInstaller=$webview" installer/Sputnik.iss
+          & $compiler.FullName "/DAppVersion=$env:APP_VERSION" "/DVersionedOutput" "/DPublishDir=$payload" "/DInstallerOutput=$out" "/DWebViewInstaller=$webview" installer/Sputnik.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Get-FileHash -LiteralPath "$out/SputnikSetup.exe"
+          Get-FileHash -LiteralPath "$out/SputnikSetup-$env:APP_VERSION-win10-win11-x64.exe"
+      - name: Upload preview installer and portable build
+        if: ${{ !inputs.publish }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sputnik-Windows-${{ inputs.version }}-preview
+          path: |
+            artifacts/release/SputnikSetup-*-win10-win11-x64.exe
+            artifacts/release/Sputnik-win-x64.zip
+          if-no-files-found: error
+          compression-level: 0
       - name: Publish release
+        if: inputs.publish
         shell: pwsh
         env:
           APP_VERSION: ${{ inputs.version }}
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "v$env:APP_VERSION"
-          $notes = 'Офлайн-установщик Windows x64 с Кляксой и Кудряшкой. .NET входит в сборку, WebView2 устанавливается из комплекта при необходимости. Доступен выбор папки, а повторная установка обновляет существующую копию. Логи установки находятся в %LOCALAPPDATA%\Sputnik.Desktop\logs.'
+          $notes = 'Офлайн-установщик и переносимая сборка для Windows 10/11 x64. В библиотеку добавлен «Песчаный дозорный (чёткий контур)» с пятью зеркальными анимациями. .NET входит в сборку, WebView2 устанавливается из комплекта при необходимости. Повторная установка обновляет существующую копию. Логи находятся в %LOCALAPPDATA%\Sputnik.Desktop\logs.'
           $repo = $env:GITHUB_REPOSITORY
           $drafts = gh api "repos/$repo/releases" | ConvertFrom-Json
           $draft = $drafts | Where-Object { $_.draft -and $_.name -eq "Спутник $tag" } | Select-Object -First 1
@@ -65,5 +80,5 @@ jobs:
             }
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          gh release upload $tag artifacts/release/SputnikSetup.exe artifacts/release/Sputnik-win-x64.zip --clobber --repo $repo
+          gh release upload $tag "artifacts/release/SputnikSetup-$env:APP_VERSION-win10-win11-x64.exe" artifacts/release/Sputnik-win-x64.zip --clobber --repo $repo
           exit $LASTEXITCODE

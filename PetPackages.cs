@@ -119,11 +119,13 @@ internal static class PetPackages
     public static JsonArray Installed(string library)
     {
         var pets = new JsonArray();
+        var bundledIds = ReadBundledIds();
         foreach (string directory in Directory.EnumerateDirectories(library))
         {
             string file = Path.Combine(directory, "pet.json");
             if (!File.Exists(file)) continue;
             var pet = JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+            if (pet["id"]?.GetValue<string>() is string id && bundledIds.Contains(id)) continue;
             pets.Add(WebPet(pet, $"https://pets.sputnik.local/{pet["id"]}", null));
         }
         return pets;
@@ -138,11 +140,13 @@ internal static class PetPackages
         return result;
     }
 
-    private static bool IsBundled(string id)
+    private static bool IsBundled(string id) => ReadBundledIds().Contains(id);
+
+    private static HashSet<string> ReadBundledIds()
     {
         string manifest = Path.Combine(AppContext.BaseDirectory, "wwwroot", "assets", "pets.json");
         var pets = JsonNode.Parse(File.ReadAllText(manifest))!.AsArray();
-        return pets.Any(pet => pet?["id"]?.GetValue<string>() == id);
+        return new HashSet<string>(pets.Select(pet => pet?["id"]?.GetValue<string>()).OfType<string>(), StringComparer.Ordinal);
     }
 
     private static string Required(JsonObject obj, string key, int max)

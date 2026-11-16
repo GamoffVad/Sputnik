@@ -151,5 +151,63 @@
         "fps": 23
       }
     ]
+  },
+  {
+    "id": "sand-watchman-clean",
+    "name": "Песчаный дозорный (чёткий контур)",
+    "description": "Молчаливый страж в тканевых обмотках и бронзовых доспехах.",
+    "theme": {
+      "name": "Песок и бронза",
+      "accent": "#CEA87A",
+      "background": "#241C19",
+      "surface": "#362A24"
+    },
+    "animations": [
+      {
+        "name": "На посту",
+        "file": "assets/sand-watchman-clean/clip-0.png",
+        "frameWidth": 448,
+        "frameHeight": 448,
+        "columns": 12,
+        "frameCount": 120,
+        "fps": 24
+      },
+      {
+        "name": "Подозрительный шорох",
+        "file": "assets/sand-watchman-clean/clip-1.png",
+        "frameWidth": 448,
+        "frameHeight": 448,
+        "columns": 12,
+        "frameCount": 120,
+        "fps": 24
+      },
+      {
+        "name": "Порыв ветра",
+        "file": "assets/sand-watchman-clean/clip-2.png",
+        "frameWidth": 448,
+        "frameHeight": 448,
+        "columns": 12,
+        "frameCount": 120,
+        "fps": 24
+      },
+      {
+        "name": "Почтительный поклон",
+        "file": "assets/sand-watchman-clean/clip-3.png",
+        "frameWidth": 448,
+        "frameHeight": 448,
+        "columns": 12,
+        "frameCount": 120,
+        "fps": 24
+      },
+      {
+        "name": "Задремал на посту",
+        "file": "assets/sand-watchman-clean/clip-4.png",
+        "frameWidth": 448,
+        "frameHeight": 448,
+        "columns": 12,
+        "frameCount": 120,
+        "fps": 24
+      }
+    ]
   }
 ]
