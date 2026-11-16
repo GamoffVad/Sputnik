@@ -51,20 +51,26 @@ public partial class App : Application
         catch (Exception error)
         {
             string message = "Не удалось запустить «Спутник». " + error.Message;
-            try
-            {
-                var folder = Path.Combine(DataDirectory, "logs");
-                Directory.CreateDirectory(folder);
-                var log = Path.Combine(folder, $"startup-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.log");
-                File.WriteAllText(log, $"{DateTimeOffset.Now:O}{Environment.NewLine}{error}");
-                message += $"{Environment.NewLine}{Environment.NewLine}Журнал запуска: {log}";
-            }
-            catch (Exception logError) when (logError is IOException or UnauthorizedAccessException)
-            {
-                message += $"{Environment.NewLine}{Environment.NewLine}Не удалось записать журнал: {logError.Message}";
-            }
+            string? log = WriteDiagnostic("startup", error.ToString());
+            if (log is not null) message += $"\n\nЖурнал: {log}";
             MessageBox.Show(message, "Спутник", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
+        }
+    }
+
+    internal static string? WriteDiagnostic(string stage, string details)
+    {
+        try
+        {
+            var folder = Path.Combine(DataDirectory, "logs");
+            Directory.CreateDirectory(folder);
+            var log = Path.Combine(folder, $"{stage}-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.log");
+            File.WriteAllText(log, $"{DateTimeOffset.Now:O}{Environment.NewLine}{details}");
+            return log;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return null;
         }
     }
 
@@ -111,13 +117,23 @@ public partial class App : Application
             return;
         }
 
-        var panel = Workspace();
-        pet?.PositionPanel(panel, section);
-        panel.OpenSection(section);
-        panel.Show();
-        if (panel.WindowState == WindowState.Minimized) panel.WindowState = WindowState.Normal;
-        panel.Activate();
-        panel.FocusSection();
+        try
+        {
+            var panel = Workspace();
+            pet?.PositionPanel(panel, section);
+            panel.OpenSection(section);
+            panel.Show();
+            if (panel.WindowState == WindowState.Minimized) panel.WindowState = WindowState.Normal;
+            panel.Activate();
+            panel.FocusSection();
+        }
+        catch (Exception error)
+        {
+            string message = "Не удалось открыть окно «Спутника». " + error.Message;
+            string? log = WriteDiagnostic("window", $"{section}{Environment.NewLine}{error}");
+            if (log is not null) message += $"\n\nЖурнал: {log}";
+            MessageBox.Show(message, "Спутник", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private MainWindow Workspace()

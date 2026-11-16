@@ -19,7 +19,7 @@
 
 ### Windows 7 SP1
 
-Для Windows 7 SP1 есть отдельные офлайн-установщики на .NET Framework 4.8 с WebView2 109. Выберите файл по разрядности Windows. Пакеты и требования к обновлениям системы указаны в [выпуске для Windows 7](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.3-win7).
+Для Windows 7 SP1 предусмотрены отдельные офлайн-установщики на .NET Framework 4.8 с WebView2 109. [Инструкция по сборке и требования к системе](installer/README.md#windows-7-sp1).
 
 В [релизах](https://github.com/GamoffVad/Sputnik/releases/latest) также доступна переносимая сборка. Для её встроенных окон WebView2 должен быть уже установлен.
 
@@ -27,7 +27,7 @@
 <summary><strong>Если приложение не запускается</strong></summary>
 
 - Кнопка **Журналы установки** в мастере открывает папку `%LOCALAPPDATA%\Sputnik.Desktop\logs`. Файл `.log` появляется при открытии мастера. Файл `.txt` с подробностями появляется после выхода из него.
-- Ошибки при инициализации питомца записываются отдельно в `%LOCALAPPDATA%\Sputnik\logs`.
+- Ошибки запуска питомца и встроенных окон записываются отдельно в `%LOCALAPPDATA%\Sputnik\logs`.
 - Если попытка запуска не удалась, приложите журнал и сообщите версию Windows, разрядность и текст ошибки. [Сообщить о проблеме](https://github.com/GamoffVad/Sputnik/issues/new)
 - Заметки, настройки и библиотека импортированных питомцев хранятся в `%LOCALAPPDATA%\Sputnik`.
 

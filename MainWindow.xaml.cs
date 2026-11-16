@@ -10,12 +10,8 @@ using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
-#if NET48
-using BrowserView = Microsoft.Web.WebView2.Wpf.WebView2;
-#else
-using BrowserView = Microsoft.Web.WebView2.Wpf.WebView2CompositionControl;
-#endif
 
 namespace Sputnik;
 
@@ -32,18 +28,15 @@ public partial class MainWindow : Window
     private string section = "quick";
     private bool ready;
     private bool sending;
-    private readonly BrowserView View = new();
+    private readonly WebView2 View = new()
+    {
+        DefaultBackgroundColor = System.Drawing.Color.FromArgb(35, 41, 47),
+    };
 
     public MainWindow()
     {
         InitializeComponent();
-#if NET48
         RoundedWindow.ApplyNativeRegion(this, Frame);
-        View.DefaultBackgroundColor = System.Drawing.Color.FromArgb(35, 41, 47);
-#else
-        RoundedWindow.Apply(this, Frame);
-        View.DefaultBackgroundColor = System.Drawing.Color.FromArgb(0, 255, 255, 255);
-#endif
         KeyboardNavigation.SetTabIndex(View, 0);
         BrowserHost.Children.Add(View);
         Loaded += InitializeBrowser;
@@ -90,19 +83,18 @@ public partial class MainWindow : Window
             browser.NavigationStarting += (_, e) => e.Cancel = !e.Uri.StartsWith(Origin + "/", StringComparison.Ordinal);
             browser.NewWindowRequested += (_, e) => e.Handled = true;
             browser.WebMessageReceived += OnMessage;
+            browser.ProcessFailed += (_, e) =>
+                App.WriteDiagnostic("webview", "WebView2 process failure: " + e.ProcessFailedKind);
             browser.Navigate(Origin + "/index.html");
-        }
-        catch (WebView2RuntimeNotFoundException)
-        {
-            MessageBox.Show(this,
-                "Питомец и заметки продолжают работать. Для настроек и полного чата нужен WebView2. Запустите установщик Спутника повторно для восстановления WebView2.",
-                "Спутник");
-            Hide();
-            Loaded += InitializeBrowser;
         }
         catch (Exception error)
         {
-            MessageBox.Show(this, error.Message, "Не удалось запустить Спутник");
+            string message = error is WebView2RuntimeNotFoundException
+                ? "Для настроек и полного чата нужен WebView2. Запустите установщик «Спутника» повторно для восстановления WebView2."
+                : "Не удалось открыть встроенное окно. " + error.Message;
+            string? log = App.WriteDiagnostic("webview", error.ToString());
+            if (log is not null) message += $"\n\nЖурнал: {log}";
+            MessageBox.Show(this, message, "Спутник", MessageBoxButton.OK, MessageBoxImage.Error);
             Hide();
             Loaded += InitializeBrowser;
         }

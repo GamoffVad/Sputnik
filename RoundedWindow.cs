@@ -1,10 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-#if NET48
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
-#endif
 
 namespace Sputnik;
 
@@ -29,7 +27,6 @@ internal static class RoundedWindow
         frame.Loaded += (_, _) => ClipContent();
     }
 
-#if NET48
     public static void ApplyNativeRegion(Window window, Border frame)
     {
         frame.CornerRadius = new CornerRadius(Radius);
@@ -66,5 +63,4 @@ internal static class RoundedWindow
 
     [DllImport("gdi32.dll")]
     private static extern bool DeleteObject(IntPtr region);
-#endif
 }
