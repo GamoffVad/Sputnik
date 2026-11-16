@@ -24,7 +24,7 @@ final class MacStore {
             throw MacError("В пакете отсутствуют файлы интерфейса «Спутника».")
         }
         root = resources.appendingPathComponent("wwwroot", isDirectory: true)
-        let support = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let directory = support.appendingPathComponent("Sputnik", isDirectory: true)
         dataDirectory = directory
         pets = directory.appendingPathComponent("pets", isDirectory: true)
@@ -85,9 +85,13 @@ final class MacStore {
         let bundled = root.appendingPathComponent("assets/pets.json")
         let pets = self.pets
         let file = URL(fileURLWithPath: path)
-        let manifest = try await Task.detached(priority: .userInitiated) {
-            try PetArchive.stage(file, at: stage, library: pets, builtins: bundled)
+        let bytes = try await Task.detached(priority: .userInitiated) {
+            let validated = try PetArchive.stage(file, at: stage, library: pets, builtins: bundled)
+            return try JSONSerialization.data(withJSONObject: validated)
         }.value
+        guard let manifest = try JSONSerialization.jsonObject(with: bytes) as? [String: Any] else {
+            throw MacError("Не удалось подготовить предпросмотр питомца.")
+        }
         var preview = webPet(manifest, path: "preview/\(token)")
         preview["token"] = token
         return preview
