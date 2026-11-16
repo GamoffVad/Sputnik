@@ -397,7 +397,12 @@ function settings(contentOnly = false) {
 }
 const appearanceModes=[['pet','Палитра питомца'],['custom','Своя палитра'],['default','Графит']];
 const colorFields=[['background','Фон'],['surface','Поверхности'],['accent','Акцент']];
-const desktopSizes=[['petScale','Размер питомца',60,160],['sphereScale','Размер сфер',60,160],['sphereSpread','Расстояние между сферами',0,100]];
+const desktopSizes=[
+  ['petScale','Размер питомца',60,160,100,'%'],
+  ['sphereScale','Размер сфер',60,160,100,'%'],
+  ['sphereSpread','Между сферами',0,100,100,'%'],
+  ['sphereOffset','Отступ от питомца',0,80,10,' пкс']
+];
 function appearancePage() {
   const mode=state.appearanceMode==='custom'?'custom':state.themed?'pet':'default';
   const colors=state.customTheme??activeTheme();
@@ -406,9 +411,9 @@ function appearancePage() {
     '<div class="appearance-colors"'+(mode!=='custom'?' hidden':'')+'>'+colorFields.map(([key,label])=>
       '<div class="field" data-picker-field><span>'+label+'</span><button type="button" class="color-trigger" id="appearance-'+key+'" aria-label="'+label+'" aria-expanded="false" aria-controls="appearance-'+key+'-popup"><i aria-hidden="true"></i><span>'+escape(colors[key])+'</span></button><div class="picker-popover appearance-popover color-popover" id="appearance-'+key+'-popup" hidden></div></div>').join('')+'</div>'+
     '<div class="field" data-picker-field><span>Шрифт</span><button type="button" class="choice" id="appearance-font" aria-label="Шрифт" aria-controls="appearance-font-popup" aria-expanded="false"><span>'+escape(font)+'</span></button><div class="picker-popover appearance-popover font-popover" id="appearance-font-popup" hidden></div></div>'+
-    '<div class="desktop-scales">'+desktopSizes.map(([key,label,min,max])=>{
-      const percent=state[key]??100;
-      return '<label class="desktop-scale" for="'+key+'"><span>'+label+'</span><output for="'+key+'">'+percent+'%</output><input type="range" id="'+key+'" min="'+min+'" max="'+max+'" step="5" value="'+percent+'" aria-label="'+label+'" aria-valuetext="'+percent+'%"></label>';
+    '<div class="desktop-scales">'+desktopSizes.map(([key,label,min,max,initial,unit])=>{
+      const value=state[key]??initial;
+      return '<label class="desktop-scale" for="'+key+'"><span>'+label+'</span><output for="'+key+'">'+value+unit+'</output><input type="range" id="'+key+'" min="'+min+'" max="'+max+'" step="5" value="'+value+'" aria-label="'+label+'" aria-valuetext="'+value+unit+'"></label>';
     }).join('')+'</div>'+
     '<div class="actions"><button type="button" id="appearance-reset" title="Вернуть стандартное оформление и размеры">Сбросить</button><p id="appearance-status" role="status"></p></div></form>';
 }
@@ -430,32 +435,37 @@ function bindAppearance() {
   for(const [key] of colorFields)
     bindColorPicker($('#appearance-'+key,form),colors[key],value=>{colors[key]=value;commit();});
   bindFontDropdown($('#appearance-font',form),appearanceFonts,font,value=>{font=value;commit();});
-  for(const [key] of desktopSizes) {
+  for(const [key,,,,,unit] of desktopSizes) {
     const slider=$('#'+key,form);
     slider.addEventListener('input',()=>{
       state[key]=slider.valueAsNumber;
-      slider.previousElementSibling.value=slider.value+'%';
-      slider.setAttribute('aria-valuetext',slider.value+'%');
-      queueAppearanceSave(status);
+      slider.previousElementSibling.value=slider.value+unit;
+      slider.setAttribute('aria-valuetext',slider.value+unit);
+      queueAppearanceSave(status,key==='sphereOffset');
     });
   }
   form.onsubmit=event=>event.preventDefault();
   $('#appearance-reset',form).onclick=()=>{
-    Object.assign(state,{appearanceMode:'pet',themed:true,font:'Segoe UI',customTheme:null,petScale:100,sphereScale:100,sphereSpread:100});
+    Object.assign(state,{appearanceMode:'pet',themed:true,font:'Segoe UI',customTheme:null});
+    for(const [key,,,,initial] of desktopSizes) state[key]=initial;
     render();
     queueAppearanceSave($('#appearance-status',main));
   };
 }
-let appearanceSaveTimer, appearanceRevision=0, appearanceStatus;
-function queueAppearanceSave(status) {
+let appearanceSaveTimer, appearanceRevision=0, appearanceStatus, previewFavoriteSpheres=false;
+function queueAppearanceSave(status, preview=false) {
   ++appearanceRevision;
   appearanceStatus=status;
+  previewFavoriteSpheres ||= preview;
   if(appearanceSaveTimer)return;
   appearanceSaveTimer=setTimeout(async ()=>{
     appearanceSaveTimer=null;
     const revision=appearanceRevision;
+    const showSpheres=previewFavoriteSpheres;
+    previewFavoriteSpheres=false;
     try {
       await call('save',structuredClone(state));
+      if(showSpheres) await call('previewFavoriteSpheres');
       if(revision===appearanceRevision&&appearanceStatus?.isConnected)appearanceStatus.textContent='Оформление сохранено';
     } catch(error) {
       if(revision===appearanceRevision)feedback(error.message);

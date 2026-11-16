@@ -15,6 +15,7 @@ namespace Sputnik;
 internal sealed class DesktopControls : IDisposable
 {
     internal const double DefaultOrbSize = 52;
+    internal const double DefaultSphereOffset = 10;
     private const double Gap = 10;
     private const int MaxSpheresPerArc = 9;
     private static readonly (string Title, string Action, string Icon, string Hint)[] Entries =
@@ -45,6 +46,7 @@ internal sealed class DesktopControls : IDisposable
     private int spheresPerPage;
     private double orbSize = DefaultOrbSize;
     private double sphereSpread = 1;
+    private double sphereOffset = DefaultSphereOffset;
     private ControlTemplate? sphereTemplate;
     private readonly MouseHook mouseCallback;
     private IntPtr hook;
@@ -98,6 +100,13 @@ internal sealed class DesktopControls : IDisposable
     {
         if (sphereSpread == spread) return;
         sphereSpread = spread;
+        FollowPet();
+    }
+
+    public void SetSphereOffset(double offset)
+    {
+        if (sphereOffset == offset) return;
+        sphereOffset = offset;
         FollowPet();
     }
 
@@ -352,7 +361,7 @@ internal sealed class DesktopControls : IDisposable
         if (!spheresVisible && !spheres.Any(sphere => sphere.IsVisible)) return;
         Rect area = WorkArea();
         Rect sprite = PetBounds();
-        Point[] positions = Arrange(sprite, area, spheres.Length, orbSize, sphereSpread);
+        Point[] positions = Arrange(sprite, area, spheres.Length, orbSize, sphereSpread, sphereOffset);
         for (int index = 0; index < spheres.Length; index++)
         {
             spheres[index].Left = positions[index].X;
@@ -397,27 +406,23 @@ internal sealed class DesktopControls : IDisposable
     }
 
     // Space the shortcuts evenly across the semicircle.
-    internal static Point[] Arrange(Rect sprite, Rect area, int count, double orbSize = DefaultOrbSize, double spread = 1)
+    internal static Point[] Arrange(Rect sprite, Rect area, int count, double orbSize = DefaultOrbSize,
+        double spread = 1, double offsetFromPet = DefaultSphereOffset)
     {
         if (count == 0) return [];
         double halfOrb = orbSize / 2;
         Point center = new(sprite.Left + sprite.Width / 2, sprite.Top + sprite.Height / 2);
         double fullStep = count <= 1 ? 0 : Math.PI / (count - 1);
         double spacingRadius = count <= 1 ? 0 : (orbSize + 5) / (2 * Math.Sin(fullStep / 2));
-        double clearance = halfOrb + Gap;
-        double preferredRadius = Math.Max(spacingRadius, Math.Sqrt(sprite.Width * sprite.Width + sprite.Height * sprite.Height) / 2 + clearance);
-        double minStep = 2 * Math.Asin(Math.Min(1, (orbSize + 5) / (2 * preferredRadius)));
+        double clearance = halfOrb + offsetFromPet;
+        double spreadRadius = Math.Max(spacingRadius,
+            Math.Sqrt(sprite.Width * sprite.Width + sprite.Height * sprite.Height) / 2 + halfOrb + DefaultSphereOffset);
+        double minStep = 2 * Math.Asin(Math.Min(1, (orbSize + 5) / (2 * spreadRadius)));
         double step = Math.Min(fullStep, minStep + (fullStep - minStep) * spread);
         spacingRadius = count <= 1 ? 0 : (orbSize + 5) / (2 * Math.Sin(step / 2));
         var offsets = new double[count];
         for (int index = 0; index < count; index++)
-        {
-            double offset = (index - (count - 1) / 2d) * step;
-            offsets[index] = offset;
-            double horizontal = (sprite.Width / 2 + clearance) / Math.Max(.001, Math.Abs(Math.Sin(offset)));
-            double vertical = (sprite.Height / 2 + clearance) / Math.Max(.001, Math.Cos(offset));
-            preferredRadius = Math.Max(preferredRadius, Math.Min(horizontal, vertical));
-        }
+            offsets[index] = (index - (count - 1) / 2d) * step;
         var candidate = new Point[count];
         var best = new Point[count];
         double bestCost = double.PositiveInfinity;
@@ -426,6 +431,7 @@ internal sealed class DesktopControls : IDisposable
         {
             double direction = -Math.PI / 2 + rotation * Math.PI / 24;
             double left = 0, right = 0, top = 0, bottom = 0;
+            double preferredRadius = spacingRadius;
             for (int index = 0; index < count; index++)
             {
                 double angle = direction + offsets[index];
@@ -435,6 +441,9 @@ internal sealed class DesktopControls : IDisposable
                 right = index == 0 ? unit.X : Math.Max(right, unit.X);
                 top = index == 0 ? unit.Y : Math.Min(top, unit.Y);
                 bottom = index == 0 ? unit.Y : Math.Max(bottom, unit.Y);
+                double horizontal = (sprite.Width / 2 + clearance) / Math.Max(.001, Math.Abs(unit.X));
+                double vertical = (sprite.Height / 2 + clearance) / Math.Max(.001, Math.Abs(unit.Y));
+                preferredRadius = Math.Max(preferredRadius, Math.Min(horizontal, vertical));
             }
 
             double radius = Math.Max(0, Math.Min(preferredRadius, Math.Min(

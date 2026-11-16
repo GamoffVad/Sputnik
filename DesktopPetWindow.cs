@@ -124,6 +124,7 @@ internal sealed class DesktopPetWindow : Window
     }
 
     internal void PositionPanel(Window panel, string section) => controls.PositionPanel(panel, section);
+    internal void ShowFavoriteSpheres() => controls.ShowSpheres();
     internal void PositionBubble(Window bubble) => controls.PositionBubble(bubble);
     internal void WatchQuickChat(QuickChatWindow window) => controls.WatchQuickChat(window);
     internal void SetNotesChecked(bool visible) => controls.SetNotesChecked(visible);
@@ -167,6 +168,8 @@ internal sealed class DesktopPetWindow : Window
         controls.SetSphereSize(DesktopControls.DefaultOrbSize * ReadScale("sphereScale"));
         controls.SetSphereSpread(workspace?["sphereSpread"] is JsonValue spread && spread.TryGetValue<double>(out double spacingPercent)
             ? Compatibility.Clamp(spacingPercent, 0, 100) / 100 : 1);
+        controls.SetSphereOffset(workspace?["sphereOffset"] is JsonValue offset && offset.TryGetValue<double>(out double distance)
+            ? Compatibility.Clamp(distance, 0, 80) : DesktopControls.DefaultSphereOffset);
         controls.SetFavorites(favorites);
 
         double ReadScale(string name) => workspace?[name] is JsonValue value && value.TryGetValue<double>(out double percent)

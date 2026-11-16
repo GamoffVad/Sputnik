@@ -143,6 +143,7 @@ public partial class App : Application
     }
 
     internal void RefreshPet() => pet?.UpdateFromStore();
+    internal void PreviewFavoriteSpheres() => pet?.ShowFavoriteSpheres();
 
     internal static JsonObject ReadHotkeys() => File.Exists(HotkeysFile)
         ? JsonNode.Parse(File.ReadAllText(HotkeysFile)) as JsonObject ?? new()

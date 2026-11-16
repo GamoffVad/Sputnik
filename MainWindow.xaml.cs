@@ -159,6 +159,9 @@ public partial class MainWindow : Window
                     item?["name"]?.ToString().Trim() ?? "", item?["template"]?.ToString().Trim() ?? "")).ToArray());
                 return null;
             case "pets": return PetPackages.Installed(Pets);
+            case "previewFavoriteSpheres":
+                if (IsActive) (Application.Current as App)?.PreviewFavoriteSpheres();
+                return null;
             case "save":
                 var workspace = payload!.AsObject();
                 if (workspace["font"]?.ToString() is { } font &&
