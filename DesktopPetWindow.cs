@@ -15,15 +15,30 @@ namespace Sputnik;
 internal sealed class DesktopPetWindow : Window
 {
     private const double DefaultPetSize = 230;
+    private sealed record AnimationSheet(string File, int Frames);
     private sealed class AnimationClip
     {
         public required string Name { get; init; }
-        public required string File { get; init; }
+        public string File { get; init; } = "";
+        public AnimationSheet[]? Sheets { get; init; }
         public int FrameWidth { get; init; }
         public int FrameHeight { get; init; }
         public int Columns { get; init; } = 1;
         public int FrameCount { get; init; }
         public int Fps { get; init; }
+
+        public (string File, int Index, string? Next) Locate(int index)
+        {
+            if (Sheets is null) return (File, index, null);
+            for (int sheet = 0; sheet < Sheets.Length; sheet++)
+            {
+                var part = Sheets[sheet];
+                if (index < part.Frames)
+                    return (part.File, index, Sheets.ElementAtOrDefault(sheet + 1)?.File);
+                index -= part.Frames;
+            }
+            throw new InvalidDataException("В PNG-листах не хватает кадров питомца.");
+        }
     }
 
     private sealed class Pet
@@ -47,10 +62,13 @@ internal sealed class DesktopPetWindow : Window
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Queue<AnimationClip> upcoming = new();
     private readonly HashSet<AnimationClip> unavailable = new();
-    private readonly Dictionary<AnimationClip, BitmapSource> bundledSheets = new();
+    private readonly Dictionary<string, BitmapSource> bundledSheets = new();
     private Pet? active;
     private AnimationClip? current;
     private BitmapSource? sheet;
+    private string? sheetFile;
+    private string? preloadedFile;
+    private Task<BitmapSource?>? preloaded;
     private string root = Assets;
     private int lastFrame = -1;
     private bool paused;
@@ -200,7 +218,7 @@ internal sealed class DesktopPetWindow : Window
 
     private void ResizePet(double scale)
     {
-        preferredSize = DefaultPetSize * scale * Compatibility.Clamp(active?.DisplayScale ?? 1, 0.75, 1.5);
+        preferredSize = DefaultPetSize * scale * Compatibility.Clamp(active?.DisplayScale ?? 1, 0.75, 1.6);
         if (IsLoaded) ConstrainToScreen();
     }
 
@@ -256,6 +274,10 @@ internal sealed class DesktopPetWindow : Window
         unavailable.Clear();
         bundledSheets.Clear();
         current = null;
+        sheet = null;
+        sheetFile = null;
+        preloaded = null;
+        preloadedFile = null;
         pinned = null;
         idle.ScaleY = 1;
         if (!PlayNext() && selected.Id != "hudi")
@@ -287,12 +309,15 @@ internal sealed class DesktopPetWindow : Window
             var next = upcoming.Dequeue();
             try
             {
-                sheet = GetSheet(next);
+                var first = next.Locate(0);
+                sheet = GetSheet(first.File, next.Sheets is not null);
+                sheetFile = first.File;
                 current = next;
                 lastFrame = -1;
                 elapsed.Restart();
                 if (paused) elapsed.Stop();
                 ShowFrame(0);
+                PreloadSheet(first.Next ?? upcoming.FirstOrDefault()?.Locate(0).File);
                 return true;
             }
             catch (Exception error) when (error is IOException or NotSupportedException or ArgumentException or FormatException or InvalidOperationException)
@@ -303,19 +328,44 @@ internal sealed class DesktopPetWindow : Window
         return false;
     }
 
-    private BitmapSource GetSheet(AnimationClip clip)
+    private BitmapSource GetSheet(string file, bool segmented)
     {
-        if (bundledSheets.TryGetValue(clip, out var cached)) return cached;
+        if (bundledSheets.TryGetValue(file, out var cached)) return cached;
+        var bitmap = preloadedFile == file && preloaded?.Status == TaskStatus.RanToCompletion
+            ? preloaded.Result : null;
+        bitmap ??= ReadSheet(Path.Combine(root, file));
+        if (root == Assets || segmented)
+        {
+            if (segmented && bundledSheets.Count >= 2)
+                bundledSheets.Remove(bundledSheets.Keys.First(key => key != sheetFile));
+            bundledSheets.Add(file, bitmap);
+        }
+        return bitmap;
+    }
 
-        using var stream = System.IO.File.OpenRead(Path.Combine(root, clip.File));
+    internal static BitmapSource ReadSheet(string file)
+    {
+        using var stream = System.IO.File.OpenRead(file);
         var bitmap = new BitmapImage();
         bitmap.BeginInit();
         bitmap.CacheOption = BitmapCacheOption.OnLoad;
         bitmap.StreamSource = stream;
         bitmap.EndInit();
         bitmap.Freeze();
-        if (root == Assets) bundledSheets.Add(clip, bitmap);
         return bitmap;
+    }
+
+    private void PreloadSheet(string? file)
+    {
+        if (file is null || bundledSheets.ContainsKey(file) || preloadedFile == file) return;
+        string path = Path.Combine(root, file);
+        preloadedFile = file;
+        preloaded = Task.Run<BitmapSource?>(() =>
+        {
+            try { return ReadSheet(path); }
+            catch (Exception error) when (error is IOException or NotSupportedException or ArgumentException or FormatException or InvalidOperationException)
+            { return null; }
+        });
     }
 
     private void RenderFrame()
@@ -345,12 +395,29 @@ internal sealed class DesktopPetWindow : Window
     {
         if (index == lastFrame || current is null || sheet is null) return;
 
+        var part = current.Locate(index);
+        if (sheetFile != part.File)
+        {
+            if (preloadedFile == part.File && preloaded?.IsCompleted == false) return;
+            try
+            {
+                sheet = GetSheet(part.File, current.Sheets is not null);
+                sheetFile = part.File;
+            }
+            catch (Exception error) when (error is IOException or NotSupportedException or ArgumentException or FormatException or InvalidOperationException)
+            {
+                unavailable.Add(current);
+                if (!PlayNext() && active?.Id != "hudi") UsePet(builtins[0], Assets);
+                return;
+            }
+            PreloadSheet(part.Next ?? upcoming.FirstOrDefault()?.Locate(0).File);
+        }
         if (current.FrameWidth <= 0 || current.FrameHeight <= 0)
             sprite.Source = sheet;
         else
         {
-            int x = index % current.Columns * current.FrameWidth;
-            int y = index / current.Columns * current.FrameHeight;
+            int x = part.Index % current.Columns * current.FrameWidth;
+            int y = part.Index / current.Columns * current.FrameHeight;
             var frame = new CroppedBitmap(sheet, new Int32Rect(x, y, current.FrameWidth, current.FrameHeight));
             frame.Freeze();
             sprite.Source = frame;

@@ -8,17 +8,14 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
-using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.Wpf;
 using Microsoft.Win32;
 
 namespace Sputnik;
 
 public partial class MainWindow : Window
 {
-    private const string Origin = "https://sputnik.local";
-    private static Task<CoreWebView2Environment>? environment;
     private readonly string data = App.DataDirectory;
     private readonly HttpClient http = new(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(60) };
     private string Store => Path.Combine(data, "workspace.json");
@@ -26,186 +23,41 @@ public partial class MainWindow : Window
     private string Pending => Path.Combine(data, "preview");
     private string Pets => Path.Combine(data, "pets");
     private string Favicons => Path.Combine(data, "site-icons");
-    private string section = "quick";
-    private bool ready;
+    private string section = "";
     private bool sending;
-    private readonly WebView2 View = new()
-    {
-        DefaultBackgroundColor = System.Drawing.Color.FromArgb(35, 41, 47),
-    };
 
     public MainWindow()
     {
         InitializeComponent();
         RoundedWindow.ApplyNativeRegion(this, Frame);
-        KeyboardNavigation.SetTabIndex(View, 0);
-        BrowserHost.Children.Add(View);
-        Loaded += InitializeBrowser;
-        Closed += (_, _) => { View.Dispose(); http.Dispose(); };
+        Closed += (_, _) => http.Dispose();
+        PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Escape) return;
+            if (e.OriginalSource is FrameworkElement { TemplatedParent: ComboBox { IsDropDownOpen: true } } ||
+                e.OriginalSource is ComboBox { IsDropDownOpen: true }) return;
+            e.Handled = true;
+            if (CloseEditor()) return;
+            Hide();
+        };
     }
 
     internal void OpenSection(string value)
     {
         section = value;
-        if (ready) View.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new { section }));
+        OpenNativeSection(value);
     }
 
-    internal void FocusSection()
-    {
-        FocusManager.SetFocusedElement(this, View);
-        View.Focus();
-    }
+    internal void FocusSection() =>
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+            new Action(() => PanelHost.MoveFocus(new TraversalRequest(FocusNavigationDirection.First))));
 
-    private void DragHeader(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void DragHeader(object sender, MouseButtonEventArgs e)
     {
         if (!e.Handled) DragMove();
     }
 
     private void HidePanel(object sender, RoutedEventArgs e) => Hide();
-
-    private static Task<CoreWebView2Environment> GetBrowserEnvironment() =>
-        environment ??= CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(App.DataDirectory, "webview"));
-
-    internal static async void WarmBrowser()
-    {
-        try { await GetBrowserEnvironment(); }
-        catch (Exception) { if (environment?.IsFaulted == true) environment = null; }
-    }
-
-    private async void InitializeBrowser(object sender, RoutedEventArgs args)
-    {
-        Loaded -= InitializeBrowser;
-        try
-        {
-            Directory.CreateDirectory(Pending);
-            Directory.CreateDirectory(Pets);
-            Directory.CreateDirectory(Favicons);
-            var env = await GetBrowserEnvironment();
-            await View.EnsureCoreWebView2Async(env);
-            var browser = View.CoreWebView2;
-            browser.SetVirtualHostNameToFolderMapping("sputnik.local", Path.Combine(AppContext.BaseDirectory, "wwwroot"), CoreWebView2HostResourceAccessKind.DenyCors);
-            browser.SetVirtualHostNameToFolderMapping("pets.sputnik.local", Pets, CoreWebView2HostResourceAccessKind.DenyCors);
-            browser.SetVirtualHostNameToFolderMapping("preview.sputnik.local", Pending, CoreWebView2HostResourceAccessKind.DenyCors);
-            // CSS masks load images using CORS. This mapping contains only cached PNG icons.
-            browser.SetVirtualHostNameToFolderMapping("icons.sputnik.local", Favicons, CoreWebView2HostResourceAccessKind.Allow);
-            browser.Settings.AreDefaultContextMenusEnabled = false;
-            browser.Settings.AreDevToolsEnabled = false;
-            browser.NavigationStarting += (_, e) => e.Cancel = !e.Uri.StartsWith(Origin + "/", StringComparison.Ordinal);
-            browser.NewWindowRequested += (_, e) => e.Handled = true;
-            browser.WebMessageReceived += OnMessage;
-            browser.ProcessFailed += (_, e) =>
-                App.WriteDiagnostic("webview", "WebView2 process failure: " + e.ProcessFailedKind);
-            browser.Navigate(Origin + "/index.html");
-        }
-        catch (Exception error)
-        {
-            if (environment?.IsFaulted == true) environment = null;
-            string message = error is WebView2RuntimeNotFoundException
-                ? "Для настроек и полного чата нужен WebView2. Запустите установщик «Спутника» повторно для восстановления WebView2."
-                : "Не удалось открыть встроенное окно. " + error.Message;
-            string? log = App.WriteDiagnostic("webview", error.ToString());
-            if (log is not null) message += $"\n\nЖурнал: {log}";
-            MessageBox.Show(this, message, "Спутник", MessageBoxButton.OK, MessageBoxImage.Error);
-            Hide();
-            Loaded += InitializeBrowser;
-        }
-    }
-
-    private async void OnMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs args)
-    {
-        if (args.Source != Origin + "/index.html")
-            return;
-
-        string? id = null;
-        try
-        {
-            var message = JsonNode.Parse(args.WebMessageAsJson)!;
-            id = message["id"]?.GetValue<string>();
-            var response = await Execute(message["action"]!.GetValue<string>(), message["payload"]);
-            View.CoreWebView2?.PostWebMessageAsJson(JsonSerializer.Serialize(new { id, ok = true, value = response }));
-        }
-        catch (Exception error)
-        {
-            View.CoreWebView2?.PostWebMessageAsJson(JsonSerializer.Serialize(new { id, ok = false, error = error.Message }));
-        }
-    }
-
-    private async Task<object?> Execute(string action, JsonNode? payload)
-    {
-        switch (action)
-        {
-            case "ready": ready = true; return section;
-            case "openSection": (Application.Current as App)?.ShowWorkspace(payload!.GetValue<string>()); return null;
-            case "desktopPlayback":
-                (Application.Current as App)?.SetPlayback(payload!["command"]!.GetValue<string>(), payload["index"]?.GetValue<int>() ?? 0);
-                return null;
-            case "desktopMotions": return (Application.Current as App)?.AnimationNames();
-            case "autoStart": return App.AutoStartEnabled();
-            case "setAutoStart": App.SetAutoStart(payload!.GetValue<bool>()); return null;
-            case "load": return Read(Store);
-            case "siteIcon": return await new SiteIcons(Favicons).Find(payload?.ToString() ?? "");
-            case "siteIconMask": return SiteIconMask.Ensure(Favicons, payload?.ToString() ?? "");
-            case "appearanceFonts": return ThemePalette.InstalledFonts;
-            case "hotkeys": return new
-            {
-                sections = DesktopControls.Sections.Select(section => new { title = section.Title, action = section.Action }),
-                bindings = App.ReadHotkeys(),
-            };
-            case "setHotkey":
-                (Application.Current as App)?.SetHotkey(payload!["section"]!.GetValue<string>(),
-                    payload["modifiers"]!.GetValue<uint>(), payload["key"]!.GetValue<uint>());
-                return null;
-            case "shareChannels":
-                return new NoteSharing(data).Load().Select(channel => new { name = channel.Name, template = channel.Template }).ToArray();
-            case "saveShareChannels":
-                new NoteSharing(data).Save(payload!.AsArray().Select(item => new NoteSharing.Channel(
-                    item?["name"]?.ToString().Trim() ?? "", item?["template"]?.ToString().Trim() ?? "")).ToArray());
-                return null;
-            case "pets": return PetPackages.Installed(Pets);
-            case "previewFavoriteSpheres":
-                if (IsActive) (Application.Current as App)?.PreviewFavoriteSpheres();
-                return null;
-            case "save":
-                var workspace = payload!.AsObject();
-                if (workspace["font"]?.ToString() is { } font &&
-                    !ThemePalette.InstalledFonts.Contains(font, StringComparer.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Выберите установленный шрифт.");
-                if (workspace["appearanceMode"]?.ToString() == "custom")
-                {
-                    var colors = workspace["customTheme"] as JsonObject;
-                    foreach (string key in new[] { "accent", "background", "surface" })
-                    {
-                        string color = colors?[key]?.ToString() ?? "";
-                        if (color.Length != 7 || color[0] != '#' || !color.Skip(1).All(Uri.IsHexDigit))
-                            throw new InvalidOperationException("Укажите цвета в формате #RRGGBB.");
-                    }
-                }
-                workspace["messages"] = Read(Store)?["messages"]?.DeepClone() ?? new JsonArray();
-                string json = workspace.ToJsonString();
-                if (json.Length > 8_000_000) throw new InvalidOperationException("Локальные данные слишком велики.");
-                Save(Store, json);
-                (Application.Current as App)?.RefreshPet();
-                return null;
-            case "selectPet":
-                var archive = Choose("Пакет питомца (*.pet)|*.pet");
-                return archive is null ? null : await Task.Run(() => PetPackages.Stage(archive, Pending, Pets));
-            case "installPet": return PetPackages.Install(payload!.GetValue<string>(), Pending, Pets);
-            case "pickApp": return Choose("Приложение Windows (*.exe)|*.exe");
-            case "open":
-                OpenTarget(payload?["kind"]?.ToString() ?? "", payload?["target"]?.ToString() ?? "");
-                return null;
-            case "getModel":
-                var saved = Read(Settings);
-                return new { url = saved?["url"]?.ToString(), model = saved?["model"]?.ToString(), hasKey = saved?["secret"] is not null };
-            case "saveModel":
-                SaveModel(payload!);
-                return null;
-            case "listModels": return await ListModels(payload);
-            case "testModel": return await Send(payload, new JsonArray(new JsonObject { ["role"] = "user", ["content"] = "Ответь одним словом: OK." }), true);
-            case "chat": return await SendChat(payload!.GetValue<string>());
-            default: throw new InvalidOperationException("Неизвестное действие.");
-        }
-    }
 
     internal async Task<string> SendChat(string text)
     {
@@ -237,7 +89,7 @@ public partial class MainWindow : Window
         }
         messages.Add(new JsonObject { ["role"] = role, ["content"] = text });
         Save(Store, workspace.ToJsonString());
-        if (ready) View.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new { history = messages }));
+        RefreshChatHistory(messages);
         return messages;
     }
 
@@ -306,7 +158,9 @@ public partial class MainWindow : Window
         return (uri, key);
     }
 
-    private async Task<object> ListModels(JsonNode? draft)
+    private sealed record ModelCatalog(string[] Models, string? Url);
+
+    private async Task<ModelCatalog> ListModels(JsonNode? draft)
     {
         var (uri, key) = ModelConnection(draft, Read(Settings));
         var bases = uri.AbsolutePath == "/" ? new[] { uri, new Uri(uri, "v1") } : new[] { uri };
@@ -334,7 +188,7 @@ public partial class MainWindow : Window
                 .Select(model => model["id"] is JsonValue value && value.TryGetValue<string>(out var id) ? id : null)
                 .OfType<string>().Where(id => !string.IsNullOrWhiteSpace(id))
                 .Distinct(StringComparer.Ordinal).ToArray();
-            return new { models = ids, url = baseUri == uri ? null : baseUri.AbsoluteUri };
+            return new ModelCatalog(ids, baseUri == uri ? null : baseUri.AbsoluteUri);
         }
         throw new InvalidOperationException("Сервер не вернул каталог моделей в формате API. Проверьте базовый URL (например, http://localhost:11434/v1) или укажите ID вручную.");
     }

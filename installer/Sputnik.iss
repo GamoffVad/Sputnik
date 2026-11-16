@@ -1,4 +1,4 @@
-﻿#ifndef AppVersion
+#ifndef AppVersion
   #error AppVersion must be passed with /DAppVersion
 #endif
 #ifndef PublishDir
@@ -6,9 +6,6 @@
 #endif
 #ifndef InstallerOutput
   #error InstallerOutput must point to the destination directory
-#endif
-#ifndef WebViewInstaller
-  #error WebViewInstaller must point to the Microsoft WebView2 offline installer
 #endif
 #ifdef LegacyArchitecture
   #ifndef NetFrameworkInstaller
@@ -89,16 +86,12 @@ russian.DesktopShortcut=Создать ярлык на рабочем столе
 english.DesktopShortcut=Create a desktop shortcut
 russian.RunSputnik=Запустить «Спутник»
 english.RunSputnik=Launch Sputnik
-russian.MissingWebView=Не удалось установить WebView2. Питомец и заметки доступны. Для настроек и полного чата повторите установку Спутника.
-english.MissingWebView=WebView2 could not be installed. The pet and sticky notes still work. Run setup again to repair WebView2 to enable settings and full chat.
 russian.ExistingLocation=Спутник уже установлен в %1. Для обновления используйте эту папку.
 english.ExistingLocation=Sputnik is already installed in %1. Use this folder to update it.
 russian.OpenLogs=Журналы установки
 english.OpenLogs=Setup logs
 russian.Running=Закройте питомца через пункт «Закрыть питомца» в его меню, затем повторите установку. Журнал находится в %1.
 english.Running=Choose Quit pet from the pet menu, then run setup again. The log is in %1.
-russian.InstallingWebView=Установка встроенного компонента WebView2…
-english.InstallingWebView=Installing the bundled WebView2 component…
 #ifdef LegacyArchitecture
 russian.InstallingFramework=Установка .NET Framework 4.8…
 english.InstallingFramework=Installing .NET Framework 4.8…
@@ -111,14 +104,17 @@ english.FrameworkRestart=Restart Windows to finish installing .NET Framework 4.8
 [Files]
 #ifdef LegacyArchitecture
 Source: "{#NetFrameworkInstaller}"; DestName: "NetFramework48Setup.exe"; Flags: dontcopy
-Source: "{#WebViewInstaller}"; DestName: "WebView2Runtime109Setup.exe"; Flags: dontcopy solidbreak
-#else
-Source: "{#WebViewInstaller}"; DestName: "MicrosoftEdgeWebView2RuntimeInstallerX64.exe"; Flags: dontcopy
 #endif
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs solidbreak
 
 [InstallDelete]
 Type: files; Name: "{app}\wwwroot\assets\hudi.png"
+Type: files; Name: "{app}\Microsoft.Web.WebView2.*.dll"
+Type: files; Name: "{app}\WebView2Loader.dll"
+Type: files; Name: "{app}\wwwroot\index.html"
+Type: files; Name: "{app}\wwwroot\app.js"
+Type: files; Name: "{app}\wwwroot\style.css"
+Type: files; Name: "{app}\wwwroot\assets\sand-watchman-clean\clip-?.png"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; Flags: unchecked
@@ -132,7 +128,6 @@ Filename: "{app}\Sputnik.exe"; Parameters: "--desktop-only"; WorkingDir: "{app}"
 
 [Code]
 const
-  EdgeRuntimeKey = 'Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
   UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{#AppKey}_is1';
   PetMutex = 'Local\Sputnik.Desktop';
@@ -340,58 +335,11 @@ begin
       WriteInstallLog('Could not copy the detailed log. Original: ' + SourceLog);
 end;
 
-function WebViewRegistered(Root: Integer): Boolean;
-var
-  Version: String;
-#ifdef LegacyArchitecture
-  PackedVersion: Int64;
-#endif
-begin
-  Result := RegQueryStringValue(Root, EdgeRuntimeKey, 'pv', Version) and
-            (Version <> '') and (Version <> '0.0.0.0');
-#ifdef LegacyArchitecture
-  Result := Result and StrToVersion(Version, PackedVersion) and
-    (ComparePackedVersion(PackedVersion, PackVersionComponents(109, 0, 1518, 46)) >= 0);
-#endif
-end;
-
-function HasWebView: Boolean;
-begin
-  Result := WebViewRegistered(HKLM32) or WebViewRegistered(HKCU);
-  if IsWin64 and not Result then Result := WebViewRegistered(HKLM64);
-end;
-
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-  ResultCode: Integer;
 begin
   if CurStep <> ssPostInstall then Exit;
   FilesInstalled := True;
   WriteInstallLog('Sputnik application files installed.');
-  if HasWebView then
-  begin
-    WriteInstallLog('WebView2 is already installed.');
-    Exit;
-  end;
-  WriteInstallLog('Installing bundled WebView2 runtime.');
-  WizardForm.StatusLabel.Caption := CustomMessage('InstallingWebView');
-#ifdef LegacyArchitecture
-  ExtractTemporaryFile('WebView2Runtime109Setup.exe');
-  if Exec(ExpandConstant('{tmp}\WebView2Runtime109Setup.exe'),
-          '--msedgewebview --user-level --do-not-launch-msedge', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-#else
-  ExtractTemporaryFile('MicrosoftEdgeWebView2RuntimeInstallerX64.exe');
-  if Exec(ExpandConstant('{tmp}\MicrosoftEdgeWebView2RuntimeInstallerX64.exe'),
-          '/silent /install', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-#endif
-    WriteInstallLog('WebView2 offline installer exit code: ' + IntToStr(ResultCode))
-  else
-    WriteInstallLog('Could not start WebView2 offline installer: ' + IntToStr(ResultCode));
-
-  if HasWebView then Exit;
-  WriteInstallLog(CustomMessage('MissingWebView'));
-  if not WizardSilent then
-    MsgBox(CustomMessage('MissingWebView'), mbInformation, MB_OK);
 end;
 
 function InitializeUninstall: Boolean;

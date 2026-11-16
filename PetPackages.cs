@@ -13,6 +13,7 @@ internal static class PetPackages
 
     public static JsonObject Stage(string path, string pending, string library)
     {
+        Directory.CreateDirectory(pending);
         using var archive = ZipFile.OpenRead(path);
         if (archive.Entries.Count > 40 || archive.Entries.Any(entry => entry.Length > Limit) ||
             archive.Entries.Sum(entry => entry.Length) > Limit)
@@ -68,34 +69,60 @@ internal static class PetPackages
                 var clip = animations[index]?.AsObject() ?? throw new InvalidDataException("Некорректная анимация.");
                 string title = Required(clip, "name", 60);
                 if (!names.Add(title)) throw new InvalidDataException("Названия анимаций должны различаться.");
-                string file = Required(clip, "file", 160);
-                if (!Regex.IsMatch(file, @"\A(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.png\z", RegexOptions.IgnoreCase) ||
-                    !entries.TryGetValue(file, out var image))
-                    throw new InvalidDataException("Укажите корректный путь к PNG-листу.");
                 int width = Number(clip, "frameWidth", 1, 2048);
                 int height = Number(clip, "frameHeight", 1, 2048);
                 int columns = Number(clip, "columns", 1, 64);
                 int count = Number(clip, "frameCount", 1, 480);
                 int fps = Number(clip, "fps", 1, 60);
-                string asset = $"clip-{index}.png";
-                string target = Path.Combine(workspace, asset);
-                image.ExtractToFile(target);
-                using var png = File.OpenRead(target);
-                var decoder = new PngBitmapDecoder(png, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
-                var frame = decoder.Frames[0];
-                if (frame.PixelWidth > 8192 || frame.PixelHeight > 8192 ||
-                    (long)frame.PixelWidth * frame.PixelHeight > 32_000_000 ||
-                    frame.PixelWidth != width * columns ||
-                    frame.PixelHeight != height * ((count + columns - 1) / columns))
-                    throw new InvalidDataException("Размер PNG не соответствует сетке кадров.");
-                clips.Add(new JsonObject { ["name"] = title, ["file"] = asset, ["frameWidth"] = width, ["frameHeight"] = height, ["columns"] = columns, ["frameCount"] = count, ["fps"] = fps });
+                var installed = new JsonObject { ["name"] = title, ["frameWidth"] = width, ["frameHeight"] = height, ["columns"] = columns, ["frameCount"] = count, ["fps"] = fps };
+                void ExtractSheet(JsonObject source, string asset, int frames)
+                {
+                    string file = Required(source, "file", 160);
+                    if (!Regex.IsMatch(file, @"\A(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.png\z", RegexOptions.IgnoreCase) ||
+                        !entries.TryGetValue(file, out var image))
+                        throw new InvalidDataException("Укажите корректный путь к PNG-листу.");
+                    string target = Path.Combine(workspace, asset);
+                    image.ExtractToFile(target);
+                    using var png = File.OpenRead(target);
+                    var frame = new PngBitmapDecoder(png, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
+                    if (frame.PixelWidth > 8192 || frame.PixelHeight > 8192 ||
+                        (long)frame.PixelWidth * frame.PixelHeight > 32_000_000 ||
+                        frame.PixelWidth != width * columns || frame.PixelHeight != height * ((frames + columns - 1) / columns))
+                        throw new InvalidDataException("Размер PNG не соответствует сетке кадров.");
+                }
+                if (clip["sheets"] is JsonArray sheets)
+                {
+                    if (sheets.Count is < 1 or > 12) throw new InvalidDataException("Некорректное число PNG-листов.");
+                    var installedSheets = new JsonArray();
+                    int total = 0;
+                    for (int page = 0; page < sheets.Count; page++)
+                    {
+                        var source = sheets[page] as JsonObject ?? throw new InvalidDataException("Некорректный PNG-лист.");
+                        int frames = Number(source, "frames", 1, count - total);
+                        string asset = $"clip-{index}-{page}.png";
+                        ExtractSheet(source, asset, frames);
+                        installedSheets.Add(new JsonObject { ["file"] = asset, ["frames"] = frames });
+                        total += frames;
+                    }
+                    if (total != count) throw new InvalidDataException("Число кадров в PNG-листах не совпадает с анимацией.");
+                    installed["sheets"] = installedSheets;
+                }
+                else
+                {
+                    string asset = $"clip-{index}.png";
+                    ExtractSheet(clip, asset, count);
+                    installed["file"] = asset;
+                }
+                clips.Add(installed);
             }
 
             var result = new JsonObject { ["id"] = id, ["name"] = name, ["description"] = description, ["theme"] = cleanTheme, ["animations"] = clips };
-            if (manifest["displayScale"] is JsonValue value && value.TryGetValue<double>(out double scale) && scale is >= 0.75 and <= 1.5)
+            if (manifest["displayScale"] is JsonValue value && value.TryGetValue<double>(out double scale) && scale is >= 0.75 and <= 1.6)
                 result["displayScale"] = scale;
             File.WriteAllText(Path.Combine(workspace, "pet.json"), result.ToJsonString());
-            return WebPet(result, $"https://preview.sputnik.local/{token}", token);
+            var preview = (JsonObject)result.DeepClone();
+            preview["token"] = token;
+            return preview;
         }
         catch
         {
@@ -115,12 +142,13 @@ internal static class PetPackages
         if (Directory.Exists(destination))
             throw new InvalidDataException("Этот питомец уже в библиотеке.");
         Directory.Move(source, destination);
-        return WebPet(pet, $"https://pets.sputnik.local/{id}", null);
+        return pet;
     }
 
     public static JsonArray Installed(string library)
     {
         var pets = new JsonArray();
+        if (!Directory.Exists(library)) return pets;
         var bundledIds = ReadBundledIds();
         foreach (string directory in Directory.EnumerateDirectories(library))
         {
@@ -128,18 +156,9 @@ internal static class PetPackages
             if (!File.Exists(file)) continue;
             var pet = JsonNode.Parse(File.ReadAllText(file))!.AsObject();
             if (pet["id"]?.GetValue<string>() is string id && bundledIds.Contains(id)) continue;
-            pets.Add(WebPet(pet, $"https://pets.sputnik.local/{pet["id"]}", null));
+            pets.Add(pet);
         }
         return pets;
-    }
-
-    private static JsonObject WebPet(JsonObject pet, string url, string? token)
-    {
-        var result = (JsonObject)pet.DeepClone();
-        if (token is not null) result["token"] = token;
-        foreach (var clip in result["animations"]!.AsArray())
-            clip!["file"] = url + "/" + clip["file"]!.ToString();
-        return result;
     }
 
     private static bool IsBundled(string id) => ReadBundledIds().Contains(id);

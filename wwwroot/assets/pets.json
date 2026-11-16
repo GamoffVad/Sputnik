@@ -165,50 +165,95 @@
     "animations": [
       {
         "name": "На посту",
-        "file": "assets/sand-watchman-clean/clip-0.png",
-        "frameWidth": 512,
-        "frameHeight": 512,
-        "columns": 12,
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
         "frameCount": 120,
-        "fps": 24
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-0-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-0-1.png",
+            "frames": 60
+          }
+        ]
       },
       {
         "name": "Подозрительный шорох",
-        "file": "assets/sand-watchman-clean/clip-1.png",
-        "frameWidth": 512,
-        "frameHeight": 512,
-        "columns": 12,
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
         "frameCount": 120,
-        "fps": 24
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-1-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-1-1.png",
+            "frames": 60
+          }
+        ]
       },
       {
         "name": "Порыв ветра",
-        "file": "assets/sand-watchman-clean/clip-2.png",
-        "frameWidth": 512,
-        "frameHeight": 512,
-        "columns": 12,
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
         "frameCount": 120,
-        "fps": 24
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-2-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-2-1.png",
+            "frames": 60
+          }
+        ]
       },
       {
         "name": "Почтительный поклон",
-        "file": "assets/sand-watchman-clean/clip-3.png",
-        "frameWidth": 512,
-        "frameHeight": 512,
-        "columns": 12,
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
         "frameCount": 120,
-        "fps": 24
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-3-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-3-1.png",
+            "frames": 60
+          }
+        ]
       },
       {
         "name": "Задремал на посту",
-        "file": "assets/sand-watchman-clean/clip-4.png",
-        "frameWidth": 512,
-        "frameHeight": 512,
-        "columns": 12,
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
         "frameCount": 120,
-        "fps": 24
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-4-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-4-1.png",
+            "frames": 60
+          }
+        ]
       }
     ],
-    "displayScale": 1.192308
+    "displayScale": 1.538462
   }
 ]

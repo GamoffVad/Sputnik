@@ -40,13 +40,7 @@ jobs:
           New-Item -ItemType Directory -Force $out | Out-Null
           Compress-Archive -Path "$payload/*" -DestinationPath "$out/Sputnik-win-x64.zip"
           & ./installer/Prepare-Payload.ps1 -PublishDir $payload
-          $webview = Join-Path $PWD 'artifacts/MicrosoftEdgeWebView2RuntimeInstallerX64.exe'
-          Invoke-WebRequest 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile $webview
-          $signature = Get-AuthenticodeSignature -LiteralPath $webview
-          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'CN=Microsoft Corporation') {
-            throw 'The WebView2 installer signature could not be verified.'
-          }
-          & $compiler.FullName "/DAppVersion=$env:APP_VERSION" "/DVersionedOutput" "/DPublishDir=$payload" "/DInstallerOutput=$out" "/DWebViewInstaller=$webview" installer/Sputnik.iss
+          & $compiler.FullName "/DAppVersion=$env:APP_VERSION" "/DVersionedOutput" "/DPublishDir=$payload" "/DInstallerOutput=$out" installer/Sputnik.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-FileHash -LiteralPath "$out/SputnikSetup-$env:APP_VERSION-win10-win11-x64.exe"
       - name: Upload preview installer and portable build
@@ -67,7 +61,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "v$env:APP_VERSION"
-          $notes = 'Офлайн-установщик и переносимая сборка для Windows 10/11 x64. В библиотеку добавлен «Песчаный дозорный (чёткий контур)» с пятью зеркальными анимациями. .NET входит в сборку, WebView2 устанавливается из комплекта при необходимости. Повторная установка обновляет существующую копию. Логи находятся в %LOCALAPPDATA%\Sputnik.Desktop\logs.'
+          $notes = 'Офлайн-установщик и переносимая сборка для Windows 10/11 x64. В библиотеку добавлен «Песчаный дозорный (чёткий контур)» с пятью зеркальными анимациями. .NET входит в сборку. Все окна Windows работают на WPF. Повторная установка обновляет существующую копию. Логи находятся в %LOCALAPPDATA%\Sputnik.Desktop\logs.'
           $repo = $env:GITHUB_REPOSITORY
           $drafts = gh api "repos/$repo/releases" | ConvertFrom-Json
           $draft = $drafts | Where-Object { $_.draft -and $_.name -eq "Спутник $tag" } | Select-Object -First 1

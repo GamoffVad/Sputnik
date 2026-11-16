@@ -20,6 +20,7 @@ public partial class App : Application
     private StickyNotes? notes;
     private QuickChatWindow? quickChat;
     private DesktopHotkeys? hotkeys;
+    private ReminderScheduler? reminders;
     private static string HotkeysFile => Path.Combine(DataDirectory, "hotkeys.json");
     private bool exiting;
 
@@ -45,7 +46,6 @@ public partial class App : Application
         try
         {
             StartDesktop();
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new Action(Sputnik.MainWindow.WarmBrowser));
             showWait = ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) =>
                 Dispatcher.BeginInvoke(() => ShowWorkspace("quick")), null, Timeout.Infinite, false);
         }
@@ -81,6 +81,7 @@ public partial class App : Application
         pet = new DesktopPetWindow(ShowWorkspace, ExitApp);
         pet.UpdateFromStore();
         pet.Show();
+        reminders = new ReminderScheduler(DataDirectory, window => pet?.PositionPanel(window, "reminders"));
         hotkeys = new DesktopHotkeys(ShowWorkspace);
         hotkeys.Attach(new WindowInteropHelper(pet).Handle);
         hotkeys.Restore(ReadHotkeys());
@@ -160,6 +161,7 @@ public partial class App : Application
     }
 
     internal void RefreshPet() => pet?.UpdateFromStore();
+    internal void ResetReminder(string id) => reminders?.Forget(id);
     internal void PreviewFavoriteSpheres() => pet?.ShowFavoriteSpheres();
 
     internal static JsonObject ReadHotkeys() => File.Exists(HotkeysFile)
@@ -225,6 +227,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         hotkeys?.Dispose();
+        reminders?.Dispose();
         updateWait?.Unregister(null);
         updateRequest?.Dispose();
         showWait?.Unregister(null);
