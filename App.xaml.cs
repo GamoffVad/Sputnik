@@ -13,6 +13,8 @@ public partial class App : Application
     private Mutex? instance;
     private EventWaitHandle? showRequest;
     private RegisteredWaitHandle? showWait;
+    private EventWaitHandle? updateRequest;
+    private RegisteredWaitHandle? updateWait;
     private MainWindow? workspace;
     private DesktopPetWindow? pet;
     private StickyNotes? notes;
@@ -37,6 +39,37 @@ public partial class App : Application
             return;
         }
 
+        updateRequest = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Sputnik.CloseForUpdate");
+        updateWait = ThreadPool.RegisterWaitForSingleObject(updateRequest, (_, _) =>
+            Dispatcher.BeginInvoke(ExitApp), null, Timeout.Infinite, true);
+        try
+        {
+            StartDesktop();
+            showWait = ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) =>
+                Dispatcher.BeginInvoke(() => ShowWorkspace("quick")), null, Timeout.Infinite, false);
+        }
+        catch (Exception error)
+        {
+            string message = "Не удалось запустить «Спутник». " + error.Message;
+            try
+            {
+                var folder = Path.Combine(DataDirectory, "logs");
+                Directory.CreateDirectory(folder);
+                var log = Path.Combine(folder, $"startup-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.log");
+                File.WriteAllText(log, $"{DateTimeOffset.Now:O}{Environment.NewLine}{error}");
+                message += $"{Environment.NewLine}{Environment.NewLine}Журнал запуска: {log}";
+            }
+            catch (Exception logError) when (logError is IOException or UnauthorizedAccessException)
+            {
+                message += $"{Environment.NewLine}{Environment.NewLine}Не удалось записать журнал: {logError.Message}";
+            }
+            MessageBox.Show(message, "Спутник", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+        }
+    }
+
+    private void StartDesktop()
+    {
         Directory.CreateDirectory(DataDirectory);
         pet = new DesktopPetWindow(ShowWorkspace, ExitApp);
         pet.UpdateFromStore();
@@ -44,8 +77,6 @@ public partial class App : Application
         hotkeys = new DesktopHotkeys(ShowWorkspace);
         hotkeys.Attach(new WindowInteropHelper(pet).Handle);
         hotkeys.Restore(ReadHotkeys());
-        showWait = ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) =>
-            Dispatcher.BeginInvoke(() => ShowWorkspace("quick")), null, Timeout.Infinite, false);
         if (!File.Exists(Path.Combine(DataDirectory, Preference)))
         {
             try { SetAutoStart(true); }
@@ -127,7 +158,7 @@ public partial class App : Application
         {
             string temp = HotkeysFile + ".tmp";
             File.WriteAllText(temp, settings.ToJsonString());
-            File.Move(temp, HotkeysFile, overwrite: true);
+            Compatibility.ReplaceFile(temp, HotkeysFile);
         }
         catch
         {
@@ -155,7 +186,7 @@ public partial class App : Application
         string preference = Path.Combine(DataDirectory, Preference);
         if (enabled)
         {
-            string executable = Environment.ProcessPath ?? throw new IOException("Не найден путь к исполняемому файлу.");
+            string executable = Compatibility.ProcessPath ?? throw new IOException("Не найден путь к исполняемому файлу.");
             string command = $"\"{executable}\" --desktop-only";
             if (!Equals(key.GetValue("Sputnik"), command)) key.SetValue("Sputnik", command);
             File.Delete(preference);
@@ -176,6 +207,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         hotkeys?.Dispose();
+        updateWait?.Unregister(null);
+        updateRequest?.Dispose();
         showWait?.Unregister(null);
         showRequest?.Dispose();
         instance?.Dispose();
