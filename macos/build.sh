@@ -15,6 +15,12 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "Build Sputnik for Mac on macOS with Xcode installed." >&2
   exit 1
 fi
+for tool in xcrun python3; do
+  if ! command -v "$tool" >/dev/null; then
+    echo "Required build tool is missing: $tool" >&2
+    exit 1
+  fi
+done
 
 mkdir -p "$output"
 output="$(cd "$output" && pwd)"
@@ -47,6 +53,24 @@ xcrun lipo "$executable" -verify_arch arm64 x86_64
 chmod 755 "$executable"
 
 ditto "$root/wwwroot" "$resources/wwwroot"
+python3 - "$resources/wwwroot/assets" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+assets = Path(sys.argv[1])
+catalog = assets / "pets.json"
+pets = [pet for pet in json.loads(catalog.read_text(encoding="utf-8-sig")) if pet["id"] != "hudi"]
+pets.sort(key=lambda pet: pet["id"] != "klyaksa")
+if not pets or pets[0]["id"] != "klyaksa":
+    raise SystemExit("The installer requires the Klyaksa pet")
+for pet in pets:
+    for clip in pet["animations"]:
+        if not (assets.parent / clip["file"]).is_file():
+            raise SystemExit(f"Missing packaged sprite sheet: {clip['file']}")
+catalog.write_text(json.dumps(pets, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+(assets / "hudi.png").unlink(missing_ok=True)
+PY
 iconset="$work/Sputnik.iconset"
 mkdir "$iconset"
 # Reuse the approved app icon. The Windows icon contains a 256px PNG layer.

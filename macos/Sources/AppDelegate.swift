@@ -239,6 +239,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationWillTerminate(_ notification: Notification) {
+        stickyNotes?.flush()
         browser?.dispose()
         pet?.stop()
         reminderTimer?.invalidate()
@@ -301,6 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func refreshPet() {
         guard let pet, let store else { return }
         pet.refresh(store.readWorkspace())
+        stickyNotes?.updatePalette(pet.palette)
         browser?.updatePalette(pet.palette, font: pet.fontFamily)
         if menu?.isVisible == true { buildMenu() }
         if !spheres.isEmpty { showFavorites() }
@@ -476,8 +478,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func followPet() {
         if let menu, menu.isVisible { position(menu) }
-        if let quick, quick.window.isVisible { position(quick.window) }
-        if let bubble, bubble.isVisible { position(bubble) }
+        if let quick, quick.window.isVisible { position(quick.window, besideMenu: true) }
+        if let bubble, bubble.isVisible { position(bubble, besideMenu: true) }
         layoutFavorites()
     }
 
@@ -527,9 +529,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let icon = NSImage(contentsOf: store.icons.appendingPathComponent(monochrome ? mask : file))
                     ?? NSImage(contentsOf: store.icons.appendingPathComponent(file))
                 if let icon {
-                icon.size = NSSize(width: diameter*0.57, height: diameter*0.57)
-                icon.isTemplate = monochrome
-                button.image = icon
+                    icon.size = NSSize(width: diameter*0.57, height: diameter*0.57)
+                    icon.isTemplate = monochrome
+                    button.image = icon
                 }
             }
             button.layer?.cornerRadius = diameter/2
@@ -617,7 +619,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quick?.window.orderOut(nil)
         quick = QuickPanel(palette: pet.palette, name: pet.name) { [weak self] text in self?.sendQuick(text) }
         guard let quick else { return }
-        position(quick.window)
+        position(quick.window, besideMenu: true)
         quick.window.alphaValue = 0
         NSApp.activate(ignoringOtherApps: true)
         quick.window.makeKeyAndOrderFront(nil)
@@ -690,7 +692,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.contentView = card
         panel.ignoresMouseEvents = true
         bubble = panel
-        position(panel)
+        position(panel, besideMenu: true)
         panel.orderFrontRegardless()
         if !wait {
             DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in

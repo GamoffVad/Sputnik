@@ -68,7 +68,9 @@ final class MacStickyNotes {
 
     private func saveSoon() {
         pendingSave?.cancel()
-        let save = DispatchWorkItem { [weak self] in self?.flush() }
+        let save = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated { self?.flush() }
+        }
         pendingSave = save
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: save)
     }
@@ -109,13 +111,17 @@ private final class StickyEditor: NSTextView {
         point.x -= textContainerOrigin.x
         point.y -= textContainerOrigin.y
         let glyph = layoutManager.glyphIndex(for: point, in: textContainer)
+        guard glyph < layoutManager.numberOfGlyphs else {
+            super.mouseDown(with: event)
+            return
+        }
         let hit = layoutManager.boundingRect(forGlyphRange: NSRange(location: glyph, length: 1), in: textContainer)
         let index = layoutManager.characterIndexForGlyph(at: glyph)
         if hit.contains(point), index < textStorage.length {
             let range = NSRange(location: index, length: 1)
-            let current = (string as NSString).substring(with: range)
-            if current == "☐" || current == "☑" {
-                let next = current == "☐" ? "☑" : "☐"
+            let current = (string as NSString).character(at: index)
+            if current == 0x2610 || current == 0x2611 {
+                let next = current == 0x2610 ? "☑" : "☐"
                 if shouldChangeText(in: range, replacementString: next) {
                     textStorage.replaceCharacters(in: range, with: next)
                     didChangeText()
@@ -196,9 +202,12 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
 
         let stack = NSStackView(views: [header, swatches, scroll, formats])
         stack.orientation = .vertical
-        stack.alignment = .width
+        stack.alignment = .leading
         stack.spacing = 0
         embed(stack, in: card)
+        for view in [header, swatches, scroll, formats] {
+            view.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        }
 
         header.wantsLayer = true
         let add = button("plus", "Новая заметка") { [weak self] in self?.create?() }
@@ -246,6 +255,7 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
         scroll.documentView = editor
         scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
         editor.frame = CGRect(x: 0, y: 0, width: 320, height: 160)
+        editor.font = .systemFont(ofSize: 14)
         editor.isVerticallyResizable = true
         editor.isHorizontallyResizable = false
         editor.autoresizingMask = [.width]

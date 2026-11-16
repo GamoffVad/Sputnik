@@ -271,7 +271,7 @@ enum PetArchive {
     }
 
     private static func matches(_ value: String, _ expression: String) -> Bool {
-        value.range(of: expression, options: .regularExpression)?.count == value.count
+        value.range(of: expression, options: .regularExpression) == value.startIndex..<value.endIndex
     }
 
     private static func field(_ object: [String: Any], _ key: String, limit: Int) throws -> String {
