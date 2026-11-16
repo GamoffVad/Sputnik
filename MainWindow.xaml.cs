@@ -189,6 +189,7 @@ public partial class MainWindow : Window
             case "saveModel":
                 SaveModel(payload!);
                 return null;
+            case "listModels": return await ListModels(payload);
             case "testModel": return await Send(payload, new JsonArray(new JsonObject { ["role"] = "user", ["content"] = "Ответь одним словом: OK." }), true);
             case "chat": return await SendChat(payload!.GetValue<string>());
             default: throw new InvalidOperationException("Неизвестное действие.");
@@ -274,10 +275,16 @@ public partial class MainWindow : Window
     private (Uri, string, string?) Model(JsonNode? draft)
     {
         var saved = Read(Settings);
-        string url = (draft?["url"] ?? saved?["url"])?.ToString().Trim() ?? "";
         string model = (draft?["model"] ?? saved?["model"])?.ToString().Trim() ?? "";
-        if (url.Length == 0 || model.Length == 0)
+        if (model.Length == 0)
             throw new InvalidOperationException("Укажите базовый URL и ID модели в настройках.");
+        var (uri, key) = ModelConnection(draft, saved);
+        return (uri, model, key);
+    }
+
+    private static (Uri, string?) ModelConnection(JsonNode? draft, JsonNode? saved)
+    {
+        string url = (draft?["url"] ?? saved?["url"])?.ToString().Trim() ?? "";
         var uri = HttpUri(url);
         if (!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
             throw new InvalidOperationException("Базовый URL должен быть без параметров и фрагмента.");
@@ -285,7 +292,40 @@ public partial class MainWindow : Window
         bool sameProvider = saved?["url"]?.ToString() == uri.AbsoluteUri;
         if (string.IsNullOrEmpty(key) && sameProvider && draft?["clearKey"]?.GetValue<bool>() != true && saved?["secret"] is JsonValue encrypted)
             key = Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(encrypted.ToString()), null, DataProtectionScope.CurrentUser));
-        return (uri, model, key);
+        return (uri, key);
+    }
+
+    private async Task<object> ListModels(JsonNode? draft)
+    {
+        var (uri, key) = ModelConnection(draft, Read(Settings));
+        var bases = uri.AbsolutePath == "/" ? new[] { uri, new Uri(uri, "v1") } : new[] { uri };
+        foreach (var baseUri in bases)
+        {
+            bool claude = baseUri.GetLeftPart(UriPartial.Authority) == "https://api.anthropic.com" && baseUri.AbsolutePath.TrimEnd('/') == "/v1";
+            using var request = new HttpRequestMessage(HttpMethod.Get,
+                new Uri(baseUri.AbsoluteUri.TrimEnd('/') + (claude ? "/models?limit=1000" : "/models")));
+            if (claude) request.Headers.Add("anthropic-version", "2026-10-21");
+            if (!string.IsNullOrEmpty(key))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            using var result = await http.SendAsync(request);
+            if (!result.IsSuccessStatusCode)
+            {
+                if (result.StatusCode == System.Net.HttpStatusCode.NotFound && baseUri != bases[bases.Length - 1])
+                    continue;
+                throw new InvalidOperationException($"Список моделей недоступен (HTTP {(int)result.StatusCode}). Проверьте URL и ключ или укажите ID вручную.");
+            }
+            JsonNode? response;
+            try { response = await result.Content.ReadFromJsonAsync<JsonNode>(); }
+            catch (JsonException) { response = null; }
+            var models = response is JsonObject catalog ? catalog["data"] as JsonArray : response as JsonArray;
+            if (models is null) continue;
+            var ids = models.OfType<JsonObject>()
+                .Select(model => model["id"] is JsonValue value && value.TryGetValue<string>(out var id) ? id : null)
+                .OfType<string>().Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal).ToArray();
+            return new { models = ids, url = baseUri == uri ? null : baseUri.AbsoluteUri };
+        }
+        throw new InvalidOperationException("Сервер не вернул каталог моделей в формате API. Проверьте базовый URL (например, http://localhost:11434/v1) или укажите ID вручную.");
     }
 
     private async Task<string> Send(JsonNode? draft, JsonArray messages, bool testing)
@@ -302,7 +342,9 @@ public partial class MainWindow : Window
         using var result = await http.SendAsync(request);
         if (!result.IsSuccessStatusCode)
             throw new InvalidOperationException($"Модель вернула HTTP {(int)result.StatusCode}. Проверьте URL, модель и ключ.");
-        var response = await result.Content.ReadFromJsonAsync<JsonNode>();
+        JsonNode? response;
+        try { response = await result.Content.ReadFromJsonAsync<JsonNode>(); }
+        catch (JsonException) { throw new InvalidOperationException("Сервер вернул ответ в формате, отличном от JSON. Проверьте базовый URL API."); }
         string? reply = response?["choices"]?[0]?["message"]?["content"]?.ToString();
         if (string.IsNullOrWhiteSpace(reply))
             throw new InvalidOperationException("Модель вернула пустой ответ.");

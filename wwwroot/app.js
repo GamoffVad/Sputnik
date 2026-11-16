@@ -1,6 +1,7 @@
 import {bindDatePicker,bindTimePicker,formatDate,formatTime,pickerField} from './components/date-time-pickers.js';
 import {bindColorPicker} from './components/color-picker.js';
 import {bindFontDropdown} from './components/font-dropdown.js';
+import {openPicker} from './components/picker-popover.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const main = $('#main');
@@ -387,11 +388,51 @@ function desktopQuick() {
   const history=chatFeed();
   return head('Быстрый чат',button('Полный чат','class="subtle" data-section="chat"'))+history.markup+history.bar+chatStatus()+composer();
 }
+const modelProviders = [
+  ['OpenAI', 'https://api.openai.com/v1'],
+  ['Claude (Anthropic)', 'https://api.anthropic.com/v1'],
+  ['Google Gemini', 'https://generativelanguage.googleapis.com/v1beta/openai'],
+  ['DeepSeek', 'https://api.deepseek.com/v1'],
+  ['OpenRouter', 'https://openrouter.ai/api/v1'],
+  ['Grok (xAI)', 'https://api.x.ai/v1'],
+  ['Mistral AI', 'https://api.mistral.ai/v1'],
+  ['Groq', 'https://api.groq.com/openai/v1'],
+  ['Kimi (Moonshot AI)', 'https://api.moonshot.ai/v1'],
+  ['Together AI', 'https://api.together.ai/v1'],
+  ['Cerebras', 'https://api.cerebras.ai/v1'],
+  ['Ollama (локально)', 'http://localhost:11434/v1'],
+  ['LM Studio (локально)', 'http://localhost:1234/v1'],
+];
+function modelProviderFor(url) {
+  const address=url?.trim().replace(/\/+$/,'');
+  return modelProviders.find(([,preset])=>preset===address)?.[1]??(address?'custom':'');
+}
+function modelSettings() {
+  const provider=modelProviderFor(model.url);
+  return `<section class="panel"><h2>Подключение LLM</h2><form id="model-form" class="form">
+    <label>Провайдер<select name="provider">
+      <option value="" disabled ${provider?'':'selected'}>Выберите провайдера</option>
+      ${modelProviders.map(([name,url])=>`<option value="${url}" ${provider===url?'selected':''}>${name}</option>`).join('')}
+      <option value="custom" ${provider==='custom'?'selected':''}>Другой провайдер</option>
+    </select></label>
+    <label>Базовый URL<input name="url" type="url" placeholder="http://localhost:11434/v1" value="${escape(model.url)}" required></label>
+    <label>API-ключ<input name="key" type="password" autocomplete="off" placeholder="${model.hasKey?'Ключ сохранён':'Введите ключ, если нужен'}"></label>
+    <div class="toggles"><label><input name="clearKey" type="checkbox">Удалить сохранённый ключ</label></div>
+    <div class="field model-picker" data-picker-field>
+      <span id="model-label">ID модели</span>
+      <button class="model-trigger" type="button" id="model-picker" aria-labelledby="model-label model-choice" aria-expanded="false" aria-controls="model-options"><span id="model-choice">Выберите модель</span></button>
+      <input type="hidden" name="model">
+      <div class="picker-popover model-popover" id="model-options" hidden></div>
+    </div>
+    <label id="manual-model" hidden>ID модели вручную<input name="manualModel" disabled></label>
+    <div class="actions model-actions"><button type="button" id="test-model">Проверить подключение</button><button class="primary">Сохранить</button></div>
+    <p id="model-status" role="status"></p></form></section>`;
+}
 function settings(contentOnly = false) {
   const links=[['pets','Питомцы'],['theme','Оформление'],['model','Администрирование']];
   let content;
   if(tab==='theme') content=appearancePage();
-  else if(tab==='model') content='<section class="panel"><h2>Подключение LLM</h2><form id="model-form" class="form"><label>Базовый URL<input name="url" type="url" placeholder="http://localhost:11434/v1" value="'+escape(model.url)+'" required></label><label>ID модели<input name="model" value="'+escape(model.model)+'" required></label><label>API-ключ<input name="key" type="password" autocomplete="off" placeholder="'+(model.hasKey?'Ключ сохранён':'Введите ключ, если нужен')+'"></label><div class="toggles"><label><input name="clearKey" type="checkbox">Удалить сохранённый ключ</label></div><div class="actions"><button type="button" id="test-model">Проверить подключение</button><button class="primary">Сохранить</button></div><p id="model-status" role="status"></p></form></section>';
+  else if(tab==='model') content=modelSettings();
   else content=petList();
   return contentOnly?content:head('Настройки')+'<div class="tabs" role="tablist" aria-label="Настройки">'+links.map(([key,label])=>button(label,'role="tab" aria-selected="'+(tab===key)+'" data-setting="'+key+'"')).join('')+'</div>'+content;
 }
@@ -522,6 +563,7 @@ function render() {
   main.innerHTML=pages[route]();
   bindPetList();
   bindAppearance();
+  bindModelSettings();
   draw($('#active-sprite'),activePet().animations[motion],true);
   for(const feed of main.querySelectorAll('.feed')) feed.scrollTop=feed.scrollHeight;
   showNotice();
@@ -543,6 +585,7 @@ function renderSection() {
   main.innerHTML=(pages[desktopSection]??pages.quick)();
   bindPetList();
   bindAppearance();
+  bindModelSettings();
   showNotice();
 }
 
@@ -899,7 +942,96 @@ async function send(form) {
   catch(error){chatError=error.message;}
   finally{busy=false;pageNumbers.delete('chat');render();}
 }
-const modelValues=form=>Object.fromEntries([...new FormData(form)].map(([k,v])=>[k,k==='clearKey'?true:v]));
+function modelValues(form) {
+  const {url,key,model,manualModel,clearKey}=Object.fromEntries(new FormData(form));
+  return {url,key,model:manualModel?.trim()??model,clearKey:clearKey!==undefined};
+}
+function bindModelSettings() {
+  const form=$('#model-form',main);
+  if(!form)return;
+  const {url,key,provider,clearKey,model:selection,manualModel}=form.elements;
+  const manualLabel=$('#manual-model',form),control=$('#model-picker',form),choice=$('#model-choice',form);
+  let address=url.value.trim();
+  function choose(id='',manual=false) {
+    selection.value=id;
+    choice.textContent=manual?'Указать ID вручную':id||'Выберите модель';
+    manualLabel.hidden=!manual;
+    manualModel.disabled=!manual;
+    manualModel.required=manual;
+  }
+  function changeAddress() {
+    const next=url.value.trim();
+    if(next===address)return;
+    if(address)key.value='';
+    address=next;
+    clearKey.checked=false;
+    key.placeholder=address===model.url&&model.hasKey?'Ключ сохранён':'Введите ключ, если нужен';
+    manualModel.value='';
+    choose();
+    $('#model-status',form).textContent='';
+  }
+  provider.addEventListener('change',()=>{
+    if(provider.value==='custom') {url.focus();return;}
+    if(modelProviderFor(address)!==provider.value)url.value=provider.value;
+    changeAddress();
+  });
+  url.addEventListener('input',()=>{changeAddress();provider.value=modelProviderFor(address);});
+  choose(model.model);
+  control.onclick=()=>openPicker(control,async(panel,close)=>{
+    panel.innerHTML='<input aria-label="Поиск модели" placeholder="Найти модель"><p role="status"></p><div class="model-options" role="group" aria-label="Доступные модели"></div><button type="button" class="model-option">Указать ID вручную</button>';
+    const search=$('input',panel),status=$('[role="status"]',panel),list=$('.model-options',panel);
+    const manual=panel.lastElementChild;
+    let ids=[];
+    function draw() {
+      const query=search.value.trim().toLocaleLowerCase();
+      const matches=ids.filter(id=>id.toLocaleLowerCase().includes(query));
+      list.replaceChildren(...matches.map(id=>{
+        const option=document.createElement('button');
+        option.type='button';
+        option.className='model-option';
+        option.textContent=id;
+        option.title=id;
+        option.setAttribute('aria-pressed',String(selection.value===id&&manualModel.disabled));
+        option.onclick=()=>{choose(id);close();};
+        return option;
+      }));
+      if(ids.length) status.textContent=matches.length?'':'Модели не найдены.';
+    }
+    manual.onclick=()=>{choose('',true);close(false);manualModel.focus();};
+    search.oninput=draw;
+    panel.onkeydown=event=>{
+      if(event.target===search&&event.key==='Enter')event.preventDefault();
+      if(!['ArrowDown','ArrowUp'].includes(event.key))return;
+      const buttons=Array.from(panel.querySelectorAll('button'));
+      const index=buttons.indexOf(document.activeElement)+(event.key==='ArrowDown'?1:-1);
+      event.preventDefault();
+      (buttons[index]??search).focus();
+    };
+    search.focus({preventScroll:true});
+    if(!address||!url.validity.valid||!/^https?:\/\//i.test(address)){
+      status.textContent='Укажите базовый URL для загрузки моделей.';
+      return;
+    }
+    status.textContent='Загрузка списка моделей…';
+    const credentials=modelValues(form);
+    try {
+      const result=await call('listModels',{url:credentials.url,key:credentials.key,clearKey:credentials.clearKey});
+      if(!status.isConnected||address!==credentials.url.trim())return;
+      if(result.url) {
+        url.value=address=result.url;
+        provider.value=modelProviderFor(address);
+        const needsKey=!key.value&&credentials.url===model.url&&model.hasKey&&!credentials.clearKey;
+        if(needsKey) $('#model-status',form).textContent='Уточнён адрес API. Введите ключ для этого URL перед сохранением.';
+        key.placeholder='Введите ключ, если нужен';
+      }
+      ids=result.models;
+      status.textContent=ids.length?'':'Сервер не вернул модели.';
+      draw();
+    } catch(error) {
+      if(status.isConnected)status.textContent=error.message;
+    }
+  });
+}
 document.addEventListener('submit',event=>{
   const form=event.target;
   if(form.matches('.compose')){event.preventDefault();send(form);}

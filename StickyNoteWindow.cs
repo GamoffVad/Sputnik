@@ -17,7 +17,6 @@ internal sealed class StickyNoteWindow : Window
 {
     internal const double MinimumWidth = 310, MinimumHeight = 185;
     private const string PinIcon = "M7 3H15L13 6V10L16 13H6L9 10V6Z M11 13V18";
-    private const string UnpinIcon = "M7 3H15L13 6V9 M9 7V10L6 13H15 M11 13V18 M3 3L18 18";
     private readonly RichTextBox editor = new();
     private readonly TextBlock placeholder;
     private readonly DispatcherTimer autosave = new() { Interval = TimeSpan.FromMilliseconds(280) };
@@ -34,7 +33,7 @@ internal sealed class StickyNoteWindow : Window
     ];
 
     public StickyNoteWindow(StickyNoteContent.BlockData[] content, Action create, Action<StickyNoteContent.BlockData[]> save, Action delete,
-        string? color, Action<string?> saveColor, Func<NoteSharing.Channel[]> channels, Action sharingSettings)
+        string? color, Action<string?> saveColor, bool pinned, Action<bool> savePin, Func<NoteSharing.Channel[]> channels, Action sharingSettings)
     {
         this.save = save;
         Title = "Заметка Спутника";
@@ -45,7 +44,7 @@ internal sealed class StickyNoteWindow : Window
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
-        Topmost = true;
+        Topmost = pinned;
         this.UseTheme(FontFamilyProperty, "Font");
         var layout = new DockPanel();
         var frame = new Border { Child = layout, BorderThickness = new Thickness(1) };
@@ -77,6 +76,28 @@ internal sealed class StickyNoteWindow : Window
         var share = Button(Glyph("M6 10L13 5 M6 11L13 16 M5 8A2 2 0 1 0 5 12A2 2 0 1 0 5 8 M15 2A2 2 0 1 0 15 6A2 2 0 1 0 15 2 M15 14A2 2 0 1 0 15 18A2 2 0 1 0 15 14", "AccentInk"), "Поделиться заметкой", () => { }, 36, header: true);
         DockPanel.SetDock(share, Dock.Right);
         header.Children.Add(share);
+        var pin = Button(Glyph(PinIcon, "AccentInk"), "Закрепить поверх окон", () => { }, 30, header: true);
+        var pinBadge = new Border { Child = pin, CornerRadius = new CornerRadius(7), Margin = new Thickness(1, 3, 1, 3) };
+        pin.Height = 33;
+        DockPanel.SetDock(pinBadge, Dock.Right);
+        header.Children.Add(pinBadge);
+        void UpdatePin()
+        {
+            if (Topmost) pinBadge.UseTheme(Border.BackgroundProperty, "Ink");
+            else pinBadge.Background = Brushes.Transparent;
+            pin.Content = Glyph(PinIcon, Topmost ? "Surface" : "AccentInk");
+            string action = Topmost ? "Снять закрепление" : "Закрепить поверх окон";
+            pin.ToolTip = action;
+            AutomationProperties.SetName(pin, action);
+        }
+        pin.Click += (_, _) =>
+        {
+            Topmost = !Topmost;
+            UpdatePin();
+            Activate();
+            savePin(Topmost);
+        };
+        UpdatePin();
         var heading = new TextBlock { Text = "Заметка", FontSize = 13, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
         heading.UseTheme(TextBlock.ForegroundProperty, "AccentInk");
         header.Children.Add(heading);
@@ -117,17 +138,6 @@ internal sealed class StickyNoteWindow : Window
         };
         menuPanel.Children.Add(colorRow);
         var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var pin = Button(Glyph(UnpinIcon), "Снять закрепление", () => { }, 34);
-        pin.Click += (_, _) =>
-        {
-            Topmost = !Topmost;
-            pin.Content = Glyph(Topmost ? UnpinIcon : PinIcon);
-            string action = Topmost ? "Снять закрепление" : "Закрепить поверх окон";
-            pin.ToolTip = action;
-            AutomationProperties.SetName(pin, action);
-            menu.IsOpen = false;
-        };
-        actions.Children.Add(pin);
         actions.Children.Add(Button(Glyph("M3 5H17 M7 5V3H13V5 M5 5L6 17H14L15 5 M8 8V14 M12 8V14"), "Удалить заметку", () =>
         {
             delete();

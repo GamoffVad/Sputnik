@@ -176,6 +176,19 @@ dialog .page-head{margin-bottom:18px}
 .chat-error{color:#ffc4b4}
 .compact:has(.chat-window) .feedback{bottom:75px}
 .field{display:grid;gap:4px;font-size:13px;color:var(--soft);min-width:0}
+.model-picker{position:relative}
+.model-trigger{display:block;width:100%;padding-inline-end:28px;text-align:left;background:var(--background);color:var(--field-ink);position:relative}
+.compact .model-trigger{padding-inline-end:28px}
+.model-trigger::after{content:'';position:absolute;inset-inline-end:13px;top:50%;border:solid var(--soft);border-width:0 1.5px 1.5px 0;width:6px;height:6px;transform:translateY(-70%) rotate(45deg)}
+.model-trigger span,.model-option{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.model-picker .model-popover{top:auto;bottom:calc(100% + 5px);width:100%;display:grid;gap:5px}
+.model-popover p:empty,.model-options:empty,#model-status:empty{display:none}
+.model-popover p{overflow-wrap:anywhere}
+.model-options{display:grid;gap:2px;max-height:min(176px,35vh);overflow:auto;overscroll-behavior:contain}
+.model-option{width:100%;text-align:left;min-width:0}
+.model-option[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+.model-actions{flex-wrap:nowrap}
+.model-actions button{min-width:0}
 .appearance-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .color-trigger{display:flex;align-items:center;gap:6px;text-align:left;background:var(--background);color:var(--field-ink);white-space:nowrap}
 .color-trigger i{width:13px;height:13px;border:1px solid var(--line);border-radius:3px;flex:none}

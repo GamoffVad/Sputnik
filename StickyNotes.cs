@@ -9,7 +9,7 @@ namespace Sputnik;
 internal sealed class StickyNotes(string directory, Action<Window> position, Action settings)
 {
     internal sealed record Note(string Id, StickyNoteContent.BlockData[] Content, double? Left = null, double? Top = null,
-        string? Color = null, double? Width = null, double? Height = null);
+        string? Color = null, double? Width = null, double? Height = null, bool Pinned = false);
     private readonly string path = Path.Combine(directory, "notes.json");
     private readonly List<Note> notes = Load(directory);
     private readonly Dictionary<string, StickyNoteWindow> windows = [];
@@ -63,6 +63,12 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             int index = notes.FindIndex(item => item.Id == note.Id);
             if (index < 0) return;
             notes[index] = notes[index] with { Color = color };
+            Save();
+        }, note.Pinned, pinned =>
+        {
+            int index = notes.FindIndex(item => item.Id == note.Id);
+            if (index < 0) return;
+            notes[index] = notes[index] with { Pinned = pinned };
             Save();
         }, sharing.Load, settings);
         position(window);
