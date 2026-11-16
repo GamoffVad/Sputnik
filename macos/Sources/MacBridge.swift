@@ -82,6 +82,9 @@ enum MacBridge {
             let settings = try model(values, store: store)
             try writeKey(settings.key)
             try store.writeSettings(["url":settings.base.absoluteString, "model":settings.model], name: "model.json")
+        case "listModels":
+            let (base, key) = try modelConnection(values, saved: store.readSettings("model.json"))
+            return try await listModels(base: base, key: key)
         case "testModel":
             let settings = try model(values, store: store)
             _ = try await send(settings, messages: [["role":"user", "content":"Ответь одним словом: OK."]])
@@ -93,15 +96,13 @@ enum MacBridge {
         case "siteIconMask":
             return try iconMask(payload as? String ?? "", store: store)
         case "shareChannels":
-            return store.readSettings("share.json")["channels"] ?? [
-                ["name":"Почта", "template":"mailto:?body={text}"],
-                ["name":"Telegram", "template":"tg://msg?text={text}"]
-            ]
+            return StickyShareChannel.load(from: store.dataDirectory.appendingPathComponent("share.json"))
+                .map { ["name": $0.name, "template": $0.template] }
         case "saveShareChannels":
             guard let channels = payload as? [[String: String]], channels.count <= 32 else {
                 throw MacError("Можно сохранить до 32 способов отправки.")
             }
-            try store.writeSettings(["channels":channels], name:"share.json")
+            try store.writeSettings(["schemaVersion": 2, "channels": channels], name:"share.json")
         case "hotkeys":
             return ["sections": AppDelegate.sections.map { ["title": $0.label, "action": $0.id] },
                     "bindings": app.hotkeyBindings()]
@@ -171,17 +172,48 @@ enum MacBridge {
 
     private static func model(_ draft: [String: Any], store: MacStore) throws -> Model {
         let saved = store.readSettings("model.json")
-        let url = (draft["url"] ?? saved["url"]) as? String ?? ""
         let model = ((draft["model"] ?? saved["model"]) as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !url.isEmpty, !model.isEmpty, model.count <= 500 else {
+        guard !model.isEmpty, model.count <= 500 else {
             throw MacError("Укажите базовый URL и ID модели в настройках.")
         }
+        let (base, key) = try modelConnection(draft, saved: saved)
+        return (base, model, key)
+    }
+
+    private static func modelConnection(_ draft: [String: Any], saved: [String: Any]) throws -> (URL, String?) {
+        let url = (draft["url"] ?? saved["url"]) as? String ?? ""
         let base = try httpURL(url)
         guard base.query == nil, base.fragment == nil else { throw MacError("Базовый URL должен быть без параметров и фрагмента.") }
         let freshKey = (draft["key"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let savedKey = base.absoluteString == (saved["url"] as? String) ? readKey() : nil
         let key = draft["clearKey"] as? Bool == true ? nil : freshKey.isEmpty ? savedKey : freshKey
-        return (base, model, key)
+        return (base, key)
+    }
+
+    private static func listModels(base: URL, key: String?) async throws -> [String: Any] {
+        let bases = base.path.isEmpty || base.path == "/" ? [base, base.appendingPathComponent("v1")] : [base]
+        for candidate in bases {
+            var request = URLRequest(url: candidate.appendingPathComponent("models"))
+            if let key { request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization") }
+            let (data, response) = try await session.data(for: request)
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            guard (200...299).contains(status) else {
+                if status == 404, candidate != bases.last { continue }
+                throw MacError("Список моделей недоступен (HTTP \(status)). Проверьте URL и ключ или укажите ID вручную.")
+            }
+            guard let result = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                  let models = result["data"] as? [Any] else { continue }
+            var seen = Set<String>()
+            let ids = models.compactMap { item -> String? in
+                guard let id = (item as? [String: Any])?["id"] as? String,
+                      !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, seen.insert(id).inserted else { return nil }
+                return id
+            }
+            var reply: [String: Any] = ["models": ids]
+            if candidate != base { reply["url"] = candidate.absoluteString }
+            return reply
+        }
+        throw MacError("Сервер не вернул каталог моделей в формате API. Проверьте базовый URL (например, http://localhost:11434/v1) или укажите ID вручную.")
     }
 
     private static func readKey() -> String? {

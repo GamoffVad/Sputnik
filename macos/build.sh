@@ -125,7 +125,6 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>CFBundleShortVersionString</key><string>$version</string>
   <key>CFBundleVersion</key><string>$build_number</string>
   <key>LSMinimumSystemVersion</key><string>$minimum_version</string>
-  <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSAppTransportSecurity</key>
   <dict>

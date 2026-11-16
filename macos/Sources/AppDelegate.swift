@@ -8,7 +8,14 @@ struct SputnikMain {
     @MainActor static func main() {
         let application = NSApplication.shared
         let delegate = AppDelegate(smokeTest: CommandLine.arguments.contains("--smoke-test"))
-        application.setActivationPolicy(.accessory)
+        application.setActivationPolicy(.regular)
+        let menuBar = NSMenu()
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu(title: "Спутник")
+        appMenu.addItem(withTitle: "Завершить Спутник", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q").target = application
+        appItem.submenu = appMenu
+        menuBar.addItem(appItem)
+        application.mainMenu = menuBar
         application.delegate = delegate
         withExtendedLifetime(delegate) { application.run() }
     }
@@ -219,6 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let self else { return }
                     do {
                         try await prepareSmokeTest(store: store, server: server, pet: pet)
+                        try await MacStickyNotes.verifyMultipleNotes(in: store.dataDirectory, palette: pet.palette)
                         openSection("pets")
                     } catch {
                         finishSmokeTest(false, error.localizedDescription)
@@ -252,8 +260,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let stickyNotes else { return .terminateNow }
+        stickyNotes.flush { NSApp.reply(toApplicationShouldTerminate: true) }
+        return .terminateLater
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
-        stickyNotes?.flush()
         hotkeys?.stop()
         browser?.dispose()
         pet?.stop()
@@ -441,7 +454,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         let heading = value as? String
                         let imported = self?.testedPetImport == true ? ", imported five Knight Watchman animations" : ""
                         self?.finishSmokeTest(heading == "Питомцы",
-                            error?.localizedDescription ?? heading.map { "decoded bundled Sand Watchman sprite, served five animations, received bridge actions, rendered \($0)\(imported)" } ?? "Пустая панель")
+                            error?.localizedDescription ?? heading.map { "decoded Sand Watchman, opened and saved three notes, rendered \($0)\(imported)" } ?? "Пустая панель")
                     }
                 }
             }

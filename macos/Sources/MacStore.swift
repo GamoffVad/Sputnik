@@ -136,9 +136,14 @@ enum PetArchive {
 
     static func stage(_ source: URL, at directory: URL, library: URL, builtins: URL) throws -> [String: Any] {
         let fm = FileManager.default
-        guard source.pathExtension.lowercased() == "pet",
-              let length = try source.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]).fileSize,
-              length <= maximum + 1024 * 1024 else { throw MacError("Выберите пакет питомца размером до 96 МБ.") }
+        guard source.pathExtension.lowercased() == "pet" else {
+            throw MacError("Выберите файл питомца с расширением .pet. Образ установщика .dmg здесь не открывается.")
+        }
+        let info = try source.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+        guard info.isRegularFile == true, let length = info.fileSize else {
+            throw MacError("Не удалось прочитать файл .pet. Скачайте его полностью и откройте снова.")
+        }
+        guard length <= maximum + 1024 * 1024 else { throw MacError("Размер файла .pet превышает допустимый предел.") }
         try fm.createDirectory(at: directory, withIntermediateDirectories: false, attributes: nil)
         do {
             let archive = directory.appendingPathComponent("source.zip")

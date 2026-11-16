@@ -2,7 +2,7 @@ import AppKit
 import ImageIO
 import UniformTypeIdentifiers
 
-private struct StickyRecord: Codable {
+private struct StickyRecord: Codable, Sendable {
     var id = UUID()
     var content: Data?
     var frame: CGRect?
@@ -10,22 +10,29 @@ private struct StickyRecord: Codable {
     var pinned = true
 }
 
-private struct StickyShareChannel: Decodable {
+struct StickyShareChannel: Decodable, Equatable {
     let name: String
     let template: String
 
-    private static let defaults = [
+    private static let legacyDefaults = [
         StickyShareChannel(name: "Почта", template: "mailto:?body={text}"),
         StickyShareChannel(name: "Telegram", template: "tg://msg?text={text}"),
+    ]
+    private static let defaults = legacyDefaults + [
+        StickyShareChannel(name: "MAX", template: "https://max.ru/:share?text={text}"),
     ]
     private static let schemes: Set<String> = ["https", "mailto", "tg", "max", "whatsapp", "viber", "sms"]
     private static let unreserved = CharacterSet(charactersIn:
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 
     static func load(from url: URL) -> [StickyShareChannel] {
-        struct Settings: Decodable { let channels: [StickyShareChannel] }
+        struct Settings: Decodable {
+            let schemaVersion: Int?
+            let channels: [StickyShareChannel]
+        }
         guard let data = try? Data(contentsOf: url),
               let settings = try? JSONDecoder().decode(Settings.self, from: data) else { return defaults }
+        if settings.schemaVersion == nil, settings.channels == legacyDefaults { return defaults }
         return Array(settings.channels.prefix(32))
     }
 
@@ -60,6 +67,7 @@ final class MacStickyNotes {
     private var records: [StickyRecord]
     private var cards: [UUID: StickyCard] = [:]
     private var pendingSave: DispatchWorkItem?
+    private let saveQueue = DispatchQueue(label: "com.gamoffvad.sputnik.sticky-notes")
 
     var isVisible: Bool { cards.values.contains { $0.window.isVisible } }
 
@@ -100,14 +108,19 @@ final class MacStickyNotes {
         cards.values.forEach { $0.updatePalette(palette) }
     }
 
-    func flush() {
+    func flush(completion: (@MainActor @Sendable () -> Void)? = nil) {
         pendingSave?.cancel()
         pendingSave = nil
         records = records.map { cards[$0.id]?.snapshot() ?? $0 }
-        do {
-            try JSONEncoder().encode(records).write(to: location, options: .atomic)
-        } catch {
-            NSLog("Sputnik sticky notes: %@", error.localizedDescription)
+        let snapshot = records
+        let target = location
+        saveQueue.async {
+            do {
+                try JSONEncoder().encode(snapshot).write(to: target, options: .atomic)
+            } catch {
+                NSLog("Sputnik sticky notes: %@", error.localizedDescription)
+            }
+            if let completion { DispatchQueue.main.async { completion() } }
         }
     }
 
@@ -118,6 +131,24 @@ final class MacStickyNotes {
         }
         pendingSave = save
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: save)
+    }
+
+    static func verifyMultipleNotes(in directory: URL, palette: SputnikPalette) async throws {
+        let notes = MacStickyNotes(dataDirectory: directory)
+        notes.show(palette: palette)
+        guard let first = notes.cards.values.first else { throw MacError("Не открылась тестовая заметка.") }
+        first.create?()
+        first.create?()
+        guard notes.cards.count == 3, notes.cards.values.allSatisfy({ $0.window.isVisible }) else {
+            throw MacError("Не открылись три тестовые заметки.")
+        }
+        notes.toggle(palette: palette)
+        guard !notes.isVisible else { throw MacError("Тестовые заметки не скрылись.") }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            notes.flush { continuation.resume() }
+        }
+        let saved = try JSONDecoder().decode([StickyRecord].self, from: Data(contentsOf: notes.location))
+        guard saved.count == 3 else { throw MacError("Не сохранились три тестовые заметки.") }
     }
 
     @discardableResult
@@ -194,6 +225,7 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     var shareChannels: (() -> [StickyShareChannel])?
 
     private var record: StickyRecord
+    private var contentDirty = false
     private let editor = StickyEditor()
     private let header = StickyHeader()
     private let heading = NSTextField(labelWithString: "Заметка")
@@ -544,16 +576,23 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
 
     func snapshot() -> StickyRecord {
         record.frame = window.frame
-        if let text = editor.textStorage, text.length > 0 {
-            record.content = text.rtfd(from: NSRange(location: 0, length: text.length),
-                                       documentAttributes: [.documentType: NSAttributedString.DocumentType.rtfd])
-        } else {
-            record.content = nil
+        if contentDirty, let text = editor.textStorage {
+            if text.length == 0 {
+                record.content = nil
+                contentDirty = false
+            } else if let data = text.rtfd(from: NSRange(location: 0, length: text.length),
+                                           documentAttributes: [.documentType: NSAttributedString.DocumentType.rtfd]) {
+                record.content = data
+                contentDirty = false
+            }
         }
         return record
     }
 
-    func textDidChange(_ notification: Notification) { didEdit?() }
+    func textDidChange(_ notification: Notification) {
+        contentDirty = true
+        didEdit?()
+    }
     func windowDidMove(_ notification: Notification) { didEdit?() }
     func windowDidResize(_ notification: Notification) { didEdit?() }
 }

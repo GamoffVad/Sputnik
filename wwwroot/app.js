@@ -395,11 +395,22 @@ function desktopQuick() {
   const history=chatFeed();
   return head('Быстрый чат',button('Полный чат','class="subtle" data-section="chat"'))+history.markup+history.bar+chatStatus()+composer();
 }
+function modelSettings() {
+  return `<section class="panel"><h2>Подключение LLM</h2><form id="model-form" class="form">
+    <label>Базовый URL<input name="url" type="url" placeholder="http://localhost:11434/v1" value="${escape(model.url)}" required></label>
+    <label>API-ключ<input name="key" type="password" autocomplete="off" placeholder="${model.hasKey?'Ключ сохранён':'Введите ключ, если нужен'}"></label>
+    <div class="toggles"><label><input name="clearKey" type="checkbox">Удалить сохранённый ключ</label></div>
+    <label>ID модели<select name="model" aria-describedby="model-list-status" required></select></label>
+    <label id="manual-model" hidden>ID модели вручную<input name="manualModel" disabled></label>
+    <p id="model-list-status" role="status"></p>
+    <div class="actions"><button type="button" id="reload-models">Обновить список</button><button type="button" id="test-model">Проверить подключение</button><button class="primary">Сохранить</button></div>
+    <p id="model-status" role="status"></p></form></section>`;
+}
 function settings(contentOnly = false) {
   const links=[['pets','Питомцы'],['theme','Оформление'],['model','Администрирование']];
   let content;
   if(tab==='theme') content=appearancePage();
-  else if(tab==='model') content='<section class="panel"><h2>Подключение LLM</h2><form id="model-form" class="form"><label>Базовый URL<input name="url" type="url" placeholder="http://localhost:11434/v1" value="'+escape(model.url)+'" required></label><label>ID модели<input name="model" value="'+escape(model.model)+'" required></label><label>API-ключ<input name="key" type="password" autocomplete="off" placeholder="'+(model.hasKey?'Ключ сохранён':'Введите ключ, если нужен')+'"></label><div class="toggles"><label><input name="clearKey" type="checkbox">Удалить сохранённый ключ</label></div><div class="actions"><button type="button" id="test-model">Проверить подключение</button><button class="primary">Сохранить</button></div><p id="model-status" role="status"></p></form></section>';
+  else if(tab==='model') content=modelSettings();
   else content=petList();
   return contentOnly?content:head('Настройки')+'<div class="tabs" role="tablist" aria-label="Настройки">'+links.map(([key,label])=>button(label,'role="tab" aria-selected="'+(tab===key)+'" data-setting="'+key+'"')).join('')+'</div>'+content;
 }
@@ -530,6 +541,7 @@ function render() {
   main.innerHTML=pages[route]();
   bindPetList();
   bindAppearance();
+  bindModelSettings();
   draw($('#active-sprite'),activePet().animations[motion],true);
   for(const feed of main.querySelectorAll('.feed')) feed.scrollTop=feed.scrollHeight;
   showNotice();
@@ -551,6 +563,7 @@ function renderSection() {
   main.innerHTML=(pages[desktopSection]??pages.quick)();
   bindPetList();
   bindAppearance();
+  bindModelSettings();
   showNotice();
 }
 
@@ -907,7 +920,80 @@ async function send(form) {
   catch(error){chatError=error.message;}
   finally{busy=false;pageNumbers.delete('chat');render();}
 }
-const modelValues=form=>Object.fromEntries([...new FormData(form)].map(([k,v])=>[k,k==='clearKey'?true:v]));
+function modelValues(form) {
+  const {url,key,model,manualModel,clearKey}=Object.fromEntries(new FormData(form));
+  return {url,key,model:manualModel?.trim()??model,clearKey:clearKey!==undefined};
+}
+function bindModelSettings() {
+  const form=$('#model-form',main);
+  if(!form)return;
+  const {url,key,clearKey,model:select,manualModel}=form.elements;
+  const manualLabel=$('#manual-model',form),status=$('#model-list-status',form);
+  const manual=new Option('Указать ID вручную','__sputnik_manual__');
+  let revision=0,timer,provider=url.value.trim();
+  function syncManual() {
+    const active=select.selectedOptions[0]===manual;
+    manualLabel.hidden=!active;
+    manualModel.disabled=!active;
+    manualModel.required=active;
+  }
+  function showModels(ids, selected='', manually=false) {
+    const placeholder=new Option('Выберите модель','');
+    placeholder.disabled=true;
+    const names=[...new Set(ids)];
+    if(selected&&!manually&&!names.includes(selected))names.unshift(selected);
+    select.replaceChildren(placeholder,...names.map(id=>new Option(id,id)),manual);
+    if(manually)manual.selected=true;
+    else select.value=selected;
+    syncManual();
+  }
+  function refresh(delay=0) {
+    clearTimeout(timer);
+    const latest=++revision;
+    if(!url.validity.valid||!/^https?:\/\//i.test(url.value.trim())){
+      status.textContent='Укажите базовый URL для загрузки моделей.';
+      return;
+    }
+    status.textContent='Загрузка списка моделей…';
+    timer=setTimeout(async()=>{
+      if(!form.isConnected)return;
+      const credentials=modelValues(form);
+      try {
+        const result=await call('listModels',{url:credentials.url,key:credentials.key,clearKey:credentials.clearKey});
+        if(latest!==revision||!form.isConnected)return;
+        if(result.url) {
+          provider=result.url;
+          url.value=result.url;
+        }
+        const manually=select.selectedOptions[0]===manual;
+        showModels(result.models,manually?'':select.value,manually);
+        const reenterKey=result.url&&!key.value&&credentials.url===model.url&&model.hasKey&&!credentials.clearKey;
+        status.textContent=reenterKey?'Уточнён адрес API. Введите ключ для этого URL перед сохранением.':
+          result.models.length?'':'Сервер не вернул модели. Укажите ID вручную.';
+      } catch(error) {
+        if(latest===revision&&form.isConnected)status.textContent=error.message;
+      }
+    },delay);
+  }
+  select.addEventListener('change',syncManual);
+  url.addEventListener('input',()=>{
+    const next=url.value.trim();
+    if(next===provider)return;
+    if(provider)key.value='';
+    provider=next;
+    manualModel.value='';
+    showModels([]);
+    clearTimeout(timer);
+    revision++;
+    status.textContent='';
+  });
+  url.addEventListener('change',()=>refresh());
+  key.addEventListener('input',()=>refresh(450));
+  clearKey.addEventListener('change',()=>refresh());
+  $('#reload-models',form).addEventListener('click',()=>refresh());
+  showModels([],model.model??'');
+  refresh();
+}
 document.addEventListener('submit',event=>{
   const form=event.target;
   if(form.matches('.compose')){event.preventDefault();send(form);}
