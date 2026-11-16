@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-version="${1:-0.1.0}"
+version="${1:-0.1.1}"
 output="${2:-$root/artifacts/macos}"
 build_number="${GITHUB_RUN_NUMBER:-1}"
 minimum_version="13.0"
@@ -129,8 +129,12 @@ cat > "$app/Contents/Info.plist" <<PLIST
 PLIST
 plutil -lint "$app/Contents/Info.plist"
 
-# Ad hoc signing is sufficient for test builds; it does not supply an Apple Developer ID.
-codesign --force --sign - "$app"
+sign_identity="${SPUTNIK_SIGN_IDENTITY:-}"
+if [[ -n "$sign_identity" ]]; then
+  codesign --force --sign "$sign_identity" --options runtime --timestamp "$app"
+else
+  codesign --force --sign - "$app"
+fi
 codesign --verify --strict --verbose=2 "$app"
 if [[ "${SPUTNIK_SMOKE_TEST:-0}" == 1 ]]; then
   SPUTNIK_TEST_PET="$root/pets/knight-watchman.pet" "$executable" --smoke-test
@@ -140,6 +144,10 @@ ln -s /Applications "$volume/Applications"
 filename="SputnikSetup-$version-macos-universal.dmg"
 hdiutil create -quiet -fs HFS+ -format UDZO -volname "Sputnik $version" \
   -srcfolder "$volume" "$work/$filename"
+if [[ -n "$sign_identity" ]]; then
+  codesign --sign "$sign_identity" --timestamp "$work/$filename"
+  codesign --verify --strict --verbose=2 "$work/$filename"
+fi
 hdiutil verify -quiet "$work/$filename"
 mv -f "$work/$filename" "$output/$filename"
 (

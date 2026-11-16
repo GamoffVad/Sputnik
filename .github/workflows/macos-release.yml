@@ -20,7 +20,7 @@ on:
       version:
         description: Version without v
         required: true
-        default: '0.1.0'
+        default: '0.1.1'
         type: string
       publish:
         description: Publish the disk image as a macOS prerelease
@@ -33,9 +33,10 @@ permissions:
 jobs:
   build:
     runs-on: macos-26-intel
-    timeout-minutes: 20
+    timeout-minutes: 45
     outputs:
       version: ${{ steps.version.outputs.number }}
+      distribution: ${{ steps.version.outputs.distribution }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,8 +46,9 @@ jobs:
         shell: bash
         env:
           INPUT_VERSION: ${{ inputs.version }}
+          PUBLISH: ${{ startsWith(github.ref, 'refs/tags/macos-v') || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
         run: |
-          version="${INPUT_VERSION:-0.1.0}"
+          version="${INPUT_VERSION:-0.1.1}"
           if [[ "$GITHUB_REF" == refs/tags/macos-v* ]]; then
             version="${GITHUB_REF#refs/tags/macos-v}"
           fi
@@ -55,12 +57,80 @@ jobs:
             exit 2
           fi
           echo "number=$version" >> "$GITHUB_OUTPUT"
+          echo "distribution=$PUBLISH" >> "$GITHUB_OUTPUT"
+      - name: Configure Developer ID signing
+        if: steps.version.outputs.distribution == 'true'
+        shell: bash
+        env:
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          : "${MACOS_CERTIFICATE_BASE64:?Set the Developer ID Application P12 secret}"
+          : "${MACOS_CERTIFICATE_PASSWORD:?Set the Developer ID P12 password secret}"
+          : "${APPLE_TEAM_ID:?Set the Apple Developer Team ID secret}"
+          keychain="$RUNNER_TEMP/sputnik-signing.keychain-db"
+          certificate="$(mktemp "$RUNNER_TEMP/sputnik-cert.XXXXXX")"
+          trap 'rm -f "$certificate"' EXIT
+          keychain_password="$(openssl rand -hex 32)"
+          printf '%s' "$MACOS_CERTIFICATE_BASE64" | base64 -D > "$certificate"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$certificate" -k "$keychain" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain"
+          security list-keychains -d user -s "$keychain" "$HOME/Library/Keychains/login.keychain-db"
+          identity="$(security find-identity -v -p codesigning "$keychain" | awk -v team="($APPLE_TEAM_ID)" '/Developer ID Application:/ && index($0, team) {print $2; exit}')"
+          if [[ ! "$identity" =~ ^[[:xdigit:]]{40}$ ]]; then
+            echo "No valid Developer ID Application identity for the configured Apple team." >&2
+            exit 1
+          fi
+          echo "SPUTNIK_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
       - name: Build and smoke-test universal app
         shell: bash
         env:
           APP_VERSION: ${{ steps.version.outputs.number }}
           SPUTNIK_SMOKE_TEST: '1'
         run: bash macos/build.sh "$APP_VERSION"
+      - name: Notarize and staple the distribution
+        if: steps.version.outputs.distribution == 'true'
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.version.outputs.number }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          set -euo pipefail
+          : "${APPLE_ID:?Set the Apple ID secret}"
+          : "${APPLE_APP_SPECIFIC_PASSWORD:?Set the app-specific password secret}"
+          cd artifacts/macos
+          dmg="SputnikSetup-$APP_VERSION-macos-universal.dmg"
+          result="$RUNNER_TEMP/sputnik-notarization.json"
+          submit_status=0
+          xcrun notarytool submit "$dmg" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" --wait --timeout 25m --output-format json > "$result" || submit_status=$?
+          if [[ "$submit_status" != 0 || "$(jq -r '.status' "$result")" != Accepted ]]; then
+            submission="$(jq -r '.id // empty' "$result")"
+            if [[ -n "$submission" ]]; then
+              xcrun notarytool log "$submission" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+                --password "$APPLE_APP_SPECIFIC_PASSWORD"
+            fi
+            echo "Apple notarization did not succeed." >&2
+            exit 1
+          fi
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          shasum -a 256 "$dmg" > "$dmg.sha256"
+      - name: Remove temporary signing keychain
+        if: always() && steps.version.outputs.distribution == 'true'
+        shell: bash
+        run: |
+          keychain="$RUNNER_TEMP/sputnik-signing.keychain-db"
+          if [[ -f "$keychain" ]]; then
+            security delete-keychain "$keychain"
+          fi
       - name: Upload disk image and checksum
         uses: actions/upload-artifact@v4
         with:
@@ -88,16 +158,24 @@ jobs:
         shell: bash
         env:
           APP_VERSION: ${{ needs.build.outputs.version }}
+          DISTRIBUTION: ${{ needs.build.outputs.distribution }}
         run: |
           sw_vers
           uname -m
           dmg="SputnikSetup-$APP_VERSION-macos-universal.dmg"
           (cd release && shasum -a 256 --check "$dmg.sha256")
+          if [[ "$DISTRIBUTION" == true ]]; then
+            xcrun stapler validate "release/$dmg"
+            spctl --assess --type open --context context:primary-signature --verbose=2 "release/$dmg"
+          fi
           mount_point="$(mktemp -d)"
           trap 'hdiutil detach "$mount_point" -quiet || true; rmdir "$mount_point"' EXIT
           hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "release/$dmg"
           app="$mount_point/Sputnik.app"
           codesign --verify --strict --verbose=2 "$app"
+          if [[ "$DISTRIBUTION" == true ]]; then
+            spctl --assess --type execute --verbose=2 "$app"
+          fi
           "$app/Contents/MacOS/Sputnik" --smoke-test
 
   publish:
@@ -120,10 +198,11 @@ jobs:
         run: |
           tag="macos-v$APP_VERSION"
           dmg="SputnikSetup-$APP_VERSION-macos-universal.dmg"
-          notes="Предварительная версия для macOS 13 и новее, Apple Silicon и Intel. Откройте DMG и перенесите Sputnik в «Программы». Использована локальная подпись ad hoc. Нотаризация Apple отсутствует."
+          notes="Предварительная версия для macOS 13 и новее, Apple Silicon и Intel. Откройте DMG и перенесите Sputnik в «Программы». Приложение подписано сертификатом Developer ID и нотарифицировано Apple."
           (cd release && sha256sum --check "$dmg.sha256")
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$tag" "release/$dmg" "release/$dmg.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+            echo "Release $tag already exists. Publish this build under a new version." >&2
+            exit 1
           else
             gh release create "$tag" "release/$dmg" "release/$dmg.sha256" --target "$GITHUB_SHA" \
               --title "Спутник $APP_VERSION для macOS" --notes "$notes" --prerelease --latest=false \
