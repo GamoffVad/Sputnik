@@ -319,7 +319,8 @@ internal sealed class DesktopControls : IDisposable
         {
             "context" => (270d, 456d),
             "sticky" => (340d, 320d),
-            "motion" => (340d, 315d),
+            "motion" => (470d, 126d + 34d * Math.Max(1, Math.Ceiling(
+                ((pet as DesktopPetWindow)?.AnimationCount ?? 0) / (area.Width >= 410 ? 2d : 1d)))),
             "manage" => (394d, 390d),
             "theme" => (394d, 418d),
             "pets" => (394d, 340d),

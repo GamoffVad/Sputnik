@@ -497,13 +497,13 @@ function render() {
 }
 
 function renderSection() {
-  const movements=pageOf(desktopMotions.map((name,index)=>({name,index})),'motion',innerHeight<270?3:5,({name,index})=>button(name,'class="list-row truncate" data-playback="clip" data-index="'+index+'"','play'));
+  const movements=desktopMotions.map((name,index)=>button(name,'class="list-row truncate" data-playback="clip" data-index="'+index+'"','play')).join('');
   const pages={
     notes:notesPage,favorites:favoritesPage,reminders:remindersPage,
     pets:()=>head('Питомцы')+petList(),
     chat:desktopChat,
     quick:desktopQuick,
-    motion:()=>head('Движения','<div class="motion-toolbar" role="group" aria-label="Управление воспроизведением">'+iconAction('Случайный порядок','shuffle','class="primary" data-playback="shuffle"')+iconAction('Пауза','pause','data-playback="pause"')+iconAction('Продолжить','play','data-playback="resume"')+'</div>')+'<div class="list motion-list">'+movements.markup+'</div>'+movements.bar,
+    motion:()=>head('Движения','<div class="motion-toolbar" role="group" aria-label="Управление воспроизведением">'+iconAction('Случайный порядок','shuffle','class="primary" data-playback="shuffle"')+iconAction('Пауза','pause','data-playback="pause"')+iconAction('Продолжить','play','data-playback="resume"')+'</div>')+'<div class="list motion-list">'+movements+'</div>',
     manage:()=>head('Управление')+'<section class="panel toggles"><label><input type="checkbox" id="autostart" '+(autoStart?'checked':'')+'>Запускать питомца при входе в Windows</label></section>'+button('Горячие клавиши','id="manage-hotkeys"','settings'),
     theme:()=>head('Внешний вид')+settings(true),
     model:()=>head('Модель и API')+settings(true),

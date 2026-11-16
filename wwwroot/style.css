@@ -211,7 +211,9 @@ dialog .page-head{margin-bottom:18px}
 .desktop-scale input::-webkit-slider-thumb{appearance:none;width:15px;height:15px;margin-top:-5px;border:1px solid var(--surface);border-radius:50%;background:var(--accent)}
 .motion-toolbar{display:flex;gap:4px}
 .compact .motion-toolbar .favorite-action button{width:32px;height:32px}
+.compact .motion-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}
 .compact .motion-list .list-row{min-height:32px}
+@media(max-width:390px){.compact .motion-list{grid-template-columns:minmax(0,1fr)}}
 #manage-hotkeys{margin-top:12px}
 .hotkey-row{min-height:41px;border-bottom:1px solid var(--line);gap:5px}
 .hotkey-row button{white-space:nowrap;flex:none}

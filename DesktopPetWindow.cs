@@ -127,6 +127,7 @@ internal sealed class DesktopPetWindow : Window
     internal void WatchQuickChat(QuickChatWindow window) => controls.WatchQuickChat(window);
     internal void SetNotesChecked(bool visible) => controls.SetNotesChecked(visible);
 
+    internal int AnimationCount => active?.Animations.Length ?? 0;
     internal string[] AnimationNames() => active?.Animations.Select(clip => clip.Name).ToArray() ?? [];
 
     internal void SetPlayback(string command, int index)
