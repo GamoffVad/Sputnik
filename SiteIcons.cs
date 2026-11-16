@@ -74,8 +74,8 @@ internal sealed class SiteIcons(string folder)
         return null;
     }
 
-    public static bool IsCachedName(string value) =>
-        value.Length == 68 && value.EndsWith(".png", StringComparison.Ordinal) && value.Take(64).All(Uri.IsHexDigit);
+    public static bool IsCachedName(string? value) =>
+        value is { Length: 68 } && value.EndsWith(".png", StringComparison.Ordinal) && value.Take(64).All(Uri.IsHexDigit);
 
     private static bool IsWeb(Uri uri) => uri.Scheme is "http" or "https" && uri.UserInfo.Length == 0;
 

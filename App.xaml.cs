@@ -163,6 +163,8 @@ public partial class App : Application
     internal void RefreshPet() => pet?.UpdateFromStore();
     internal void ResetReminder(string id) => reminders?.Forget(id);
     internal void PreviewFavoriteSpheres() => pet?.ShowFavoriteSpheres();
+    internal void PreviewAppearanceSizes(double petScale, double sphereScale, double spread, double offset, bool smoothing) =>
+        pet?.ApplyAppearanceSizes(petScale, sphereScale, spread, offset, smoothing);
 
     internal static JsonObject ReadHotkeys() => File.Exists(HotkeysFile)
         ? JsonNode.Parse(File.ReadAllText(HotkeysFile)) as JsonObject ?? new()
@@ -192,7 +194,7 @@ public partial class App : Application
 
     internal void SetPlayback(string command, int index) => pet?.SetPlayback(command, index);
 
-    internal string[] AnimationNames() => pet?.AnimationNames() ?? [];
+    internal (string Pet, (string Name, bool Enabled)[] Clips) MotionSettings() => pet?.MotionSettings() ?? ("", []);
 
     internal static bool AutoStartEnabled()
     {

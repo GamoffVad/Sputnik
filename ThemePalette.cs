@@ -52,6 +52,9 @@ internal static class ThemePalette
         Put("Ink", ink);
         Put("Muted", Mix(surface, ink, .74));
         Put("Edge", Mix(surface, accent, .36));
+        Put("Line", Mix(surface, ink, .20));
+        Put("Field", Mix(surface, ink, .045));
+        Put("Raised", Mix(surface, ink, .09));
         Put("Hover", Mix(surface, accent, .18));
         Put("AccentInk", accentInk);
         Put("AccentHover", Mix(accent, accentInk, .12));

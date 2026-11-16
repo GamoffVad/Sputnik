@@ -29,13 +29,14 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        RoundedWindow.ApplyNativeRegion(this, Frame);
+        RoundedWindow.Apply(this, Frame);
         Closed += (_, _) => http.Dispose();
         PreviewKeyDown += (_, e) =>
         {
             if (e.Key != Key.Escape) return;
-            if (e.OriginalSource is FrameworkElement { TemplatedParent: ComboBox { IsDropDownOpen: true } } ||
-                e.OriginalSource is ComboBox { IsDropDownOpen: true }) return;
+            var source = e.OriginalSource as FrameworkElement;
+            if (source is ComboBox { IsDropDownOpen: true } or DatePicker { IsDropDownOpen: true } ||
+                source?.TemplatedParent is ComboBox { IsDropDownOpen: true } or DatePicker { IsDropDownOpen: true }) return;
             e.Handled = true;
             if (CloseEditor()) return;
             Hide();
@@ -111,12 +112,23 @@ public partial class MainWindow : Window
     internal static void OpenTarget(string kind, string target)
     {
         if (kind == "site")
-            HttpUri(target);
+        {
+            if (!Uri.TryCreate(WebsiteAddress(target), UriKind.Absolute, out var website) || website.Scheme is not ("http" or "https"))
+                throw new InvalidOperationException("Браузер не может открыть этот адрес.");
+            target = website.AbsoluteUri;
+        }
         else if (kind != "app" || !Compatibility.IsFullyQualifiedPath(target) || !File.Exists(target) ||
                  !Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Выберите существующее приложение Windows (.exe).");
 
         Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+    }
+
+    private static string WebsiteAddress(string address)
+    {
+        address = address.Trim();
+        if (address.StartsWith("//", StringComparison.Ordinal)) return "https:" + address;
+        return address.IndexOf("://", StringComparison.Ordinal) >= 0 ? address : "https://" + address;
     }
 
     private static Uri HttpUri(string address)

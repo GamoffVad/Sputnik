@@ -191,9 +191,10 @@ internal sealed class DesktopControls : IDisposable
         catch (Exception error) when (error is System.IO.IOException or NotSupportedException or System.IO.FileFormatException) { return null; }
     }
 
-    public void ShowSpheres()
+    public bool ShowSpheres()
     {
-        if (spheresVisible || spheres.Length == 0) return;
+        if (spheres.Length == 0) return false;
+        if (spheresVisible) return true;
         spheresVisible = true;
         visibilityRevision++;
         FollowPet();
@@ -210,6 +211,7 @@ internal sealed class DesktopControls : IDisposable
             Animate(sphere, true, index * 24);
         }
         WatchOutside();
+        return true;
     }
 
     public void ShowMenu(string name, bool notesVisible = false)
@@ -328,13 +330,15 @@ internal sealed class DesktopControls : IDisposable
         {
             "context" => (270d, 456d),
             "sticky" => (340d, 320d),
-            "motion" => (470d, 126d + 34d * Math.Max(1, Math.Ceiling(
-                ((pet as DesktopPetWindow)?.AnimationCount ?? 0) / (area.Width >= 410 ? 2d : 1d)))),
-            "manage" => (394d, 390d),
-            "theme" => (394d, 418d),
-            "pets" => (394d, 340d),
-            "favorites" => (490d, 492d),
-            _ => (460d, 520d),
+            "motion" => (426d, Math.Min(480d, 151d + 36d * Math.Max(1, (pet as DesktopPetWindow)?.AnimationCount ?? 0))),
+            "manage" => (404d, 370d),
+            "theme" => (404d, 424d),
+            "pets" => (410d, 375d),
+            "favorites" => (454d, 410d),
+            "model" => (438d, 400d),
+            "reminders" => (438d, 348d),
+            "sharing" => (430d, 354d),
+            _ => (450d, 438d),
         };
         window.Width = Math.Min(size.Item1, area.Width);
         window.Height = Math.Min(size.Item2, area.Height);
@@ -348,10 +352,11 @@ internal sealed class DesktopControls : IDisposable
                 ? below : Compatibility.Clamp(above, area.Top, area.Bottom - window.Height);
             return;
         }
-        double right = pet.Left + pet.Width + Gap;
-        double left = pet.Left - window.Width - Gap;
+        var visible = PetBounds();
+        double right = visible.Right + Gap;
+        double left = visible.Left - window.Width - Gap;
         window.Left = Compatibility.Clamp(right + window.Width <= area.Right ? right : left, area.Left, area.Right - window.Width);
-        window.Top = Compatibility.Clamp(pet.Top + pet.Height / 2 - window.Height / 2, area.Top, area.Bottom - window.Height);
+        window.Top = Compatibility.Clamp(visible.Top + visible.Height / 2 - window.Height / 2, area.Top, area.Bottom - window.Height);
         KeepMenuClear(window, area);
     }
 
@@ -499,35 +504,41 @@ internal sealed class DesktopControls : IDisposable
 
     private Rect PetBounds()
     {
-        double width = pet.Width;
-        if (pet.Content is Image { Source: ImageSource source } && source.Width > 0 && source.Height > 0)
-            width *= Math.Min(1, source.Width / source.Height);
-        return new Rect(pet.Left + (pet.Width - width) / 2, pet.Top, width, pet.Height);
+        var frame = new Rect(pet.Left, pet.Top, pet.Width, pet.Height);
+        return pet is DesktopPetWindow sprite ? ScalePetBounds(frame, sprite.VisibleContent()) : frame;
     }
 
-    internal Rect WorkArea()
+    internal Rect WorkArea(bool atCursor = false)
     {
         var handle = new WindowInteropHelper(pet).Handle;
         if (handle == IntPtr.Zero) return SystemParameters.WorkArea;
-        IntPtr monitor = MonitorFromWindow(handle, 2);
+        IntPtr monitor;
+        if (atCursor && GetCursorPos(out var cursor)) monitor = MonitorFromPoint(cursor, 2);
+        else
+        {
+            var bounds = PetBounds();
+            var center = pet.PointToScreen(new Point(bounds.Left - pet.Left + bounds.Width / 2, bounds.Top - pet.Top + bounds.Height / 2));
+            monitor = MonitorFromPoint(new NativePoint { X = (int)Math.Round(center.X), Y = (int)Math.Round(center.Y) }, 2);
+        }
         if (!TryWorkArea(monitor, out var work)) return SystemParameters.WorkArea;
         Point top = pet.PointFromScreen(new Point(work.Left, work.Top));
         Point bottom = pet.PointFromScreen(new Point(work.Right, work.Bottom));
         return new Rect(new Point(pet.Left + top.X, pet.Top + top.Y), new Size(bottom.X - top.X, bottom.Y - top.Y));
     }
 
-    internal static bool ConstrainDrag(IntPtr window, IntPtr moveRect)
+    internal static bool ConstrainDrag(IntPtr moveRect, Rect content)
     {
-        IntPtr monitor = GetCursorPos(out var cursor) ? MonitorFromPoint(cursor, 2) : MonitorFromWindow(window, 2);
-        if (!TryWorkArea(monitor, out var work)) return false;
+        // During a drag, internal monitor edges are passable. The drop uses the selected monitor's work area.
+        Rect desktop = new(GetSystemMetrics(76), GetSystemMetrics(77), GetSystemMetrics(78), GetSystemMetrics(79));
         var frame = Marshal.PtrToStructure<NativeRect>(moveRect);
-        var fitted = ClampPetFrame(new Rect(frame.Left, frame.Top, frame.Right - frame.Left, frame.Bottom - frame.Top),
-            new Rect(work.Left, work.Top, work.Right - work.Left, work.Bottom - work.Top));
-        if (frame.Left == fitted.Left && frame.Top == fitted.Top) return false;
-        frame.Right += (int)fitted.Left - frame.Left;
-        frame.Bottom += (int)fitted.Top - frame.Top;
-        frame.Left = (int)fitted.Left;
-        frame.Top = (int)fitted.Top;
+        var fitted = ClampVisiblePet(new Rect(frame.Left, frame.Top, frame.Right - frame.Left, frame.Bottom - frame.Top),
+            desktop, content);
+        int x = (int)Math.Round(fitted.Left), y = (int)Math.Round(fitted.Top);
+        if (frame.Left == x && frame.Top == y) return false;
+        frame.Right += x - frame.Left;
+        frame.Bottom += y - frame.Top;
+        frame.Left = x;
+        frame.Top = y;
         Marshal.StructureToPtr(frame, moveRect, false);
         return true;
     }
@@ -535,6 +546,18 @@ internal sealed class DesktopControls : IDisposable
     internal static Rect ClampPetFrame(Rect frame, Rect area) =>
         new(Compatibility.Clamp(frame.Left, area.Left, Math.Max(area.Left, area.Right - frame.Width)),
             Compatibility.Clamp(frame.Top, area.Top, Math.Max(area.Top, area.Bottom - frame.Height)), frame.Width, frame.Height);
+
+    internal static Rect ScalePetBounds(Rect frame, Rect content) =>
+        new(frame.Left + frame.Width * content.X, frame.Top + frame.Height * content.Y,
+            frame.Width * content.Width, frame.Height * content.Height);
+
+    internal static Rect ClampVisiblePet(Rect frame, Rect area, Rect content)
+    {
+        var visible = ScalePetBounds(frame, content);
+        var fitted = ClampPetFrame(visible, area);
+        frame.Offset(fitted.Left - visible.Left, fitted.Top - visible.Top);
+        return frame;
+    }
 
     private static bool TryWorkArea(IntPtr monitor, out NativeRect work)
     {
@@ -745,7 +768,7 @@ internal sealed class DesktopControls : IDisposable
     [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(NativePoint point);
     [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr handle, uint flags);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr handle, out uint processId);
-    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(NativePoint point, uint flags);
     [DllImport("user32.dll")] private static extern bool GetCursorPos(out NativePoint point);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfo(IntPtr handle, ref MonitorInfo info);

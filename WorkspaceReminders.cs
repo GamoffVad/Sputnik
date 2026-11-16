@@ -43,9 +43,13 @@ public partial class MainWindow
         var page = Editor(existing is null ? "Новое напоминание" : "Изменить напоминание");
         var initial = ReminderScheduler.AsLocalTime(ReminderScheduler.Due(existing)) ?? DateTime.Now.AddMinutes(10);
         var title = Input("Название", Value(existing, "title"), 120);
-        var date = new DatePicker { SelectedDate = initial.Date };
+        var date = new DatePicker
+        {
+            SelectedDate = initial.Date, FirstDayOfWeek = DayOfWeek.Monday,
+            Language = System.Windows.Markup.XmlLanguage.GetLanguage("ru-RU")
+        };
         var time = Input("Время (ЧЧ:ММ)", initial.ToString("HH:mm", CultureInfo.InvariantCulture), 5);
-        var repeat = new ComboBox { ItemsSource = RepeatOptions.Select(option => option.Label).ToArray() };
+        var repeat = new ComboBox { MaxDropDownHeight = 325, ItemsSource = RepeatOptions.Select(option => option.Label).ToArray() };
         repeat.SelectedIndex = Math.Max(0, Array.FindIndex(RepeatOptions, option => option.Id == Value(existing, "repeat")));
         var minutes = Input("Интервал в минутах", Value(existing, "repeatMinutes", "10"), 9);
         var custom = new StackPanel();
@@ -54,8 +58,7 @@ public partial class MainWindow
         repeat.SelectionChanged += (_, _) => UpdateRepeat();
         UpdateRepeat();
         Field(page, "Название", title);
-        Field(page, "Дата", date);
-        Field(page, "Время (ЧЧ:ММ)", time);
+        Row(page, Labeled("Дата", date), Labeled("Время (ЧЧ:ММ)", time));
         Field(page, "Частота повтора", repeat);
         page.Children.Add(custom);
 

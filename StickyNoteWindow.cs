@@ -330,7 +330,7 @@ internal sealed class StickyNoteWindow : Window
 
     private CheckBox Check(bool value)
     {
-        var check = new CheckBox { IsChecked = value, Width = 17, Height = 17, Margin = new Thickness(0, 0, 7, 0), Cursor = Cursors.Hand };
+        var check = new CheckBox { IsChecked = value, Width = 17, Height = 17, MinHeight = 0, Margin = new Thickness(0, 0, 7, 0), Cursor = Cursors.Hand };
         AutomationProperties.SetName(check, "Отметить пункт");
         var box = new FrameworkElementFactory(typeof(Border), "Box");
         box.SetResourceReference(Border.BackgroundProperty, "ThemeSurface");

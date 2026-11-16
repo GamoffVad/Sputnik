@@ -43,6 +43,13 @@ public partial class MainWindow
         return text;
     }
 
+    private static TextBlock Status(double size = 12)
+    {
+        var text = Text("", "Muted", size);
+        text.SetResourceReference(StyleProperty, "SputnikStatus");
+        return text;
+    }
+
     private static TextBox Input(string label, string content = "", int max = 1800)
     {
         var input = new TextBox { Text = content, MaxLength = max };
@@ -50,23 +57,39 @@ public partial class MainWindow
         return input;
     }
 
-    private static void Field(Panel panel, string label, FrameworkElement input)
+    private static StackPanel Labeled(string label, FrameworkElement input)
     {
-        var text = Text(label, "Muted", 13);
-        text.Margin = new Thickness(0, 1, 0, 4);
-        input.Margin = new Thickness(0, 0, 0, 10);
-        panel.Children.Add(text);
-        panel.Children.Add(input);
+        var text = Text(label, "Muted", 12);
+        text.FontWeight = FontWeights.SemiBold;
+        text.Margin = new Thickness(0, 0, 0, 3);
+        AutomationProperties.SetLabeledBy(input, text);
+        var field = new StackPanel { Margin = new Thickness(0, 0, 0, 7) };
+        field.Children.Add(text);
+        field.Children.Add(input);
+        return field;
+    }
+
+    private static void Field(Panel panel, string label, FrameworkElement input) =>
+        panel.Children.Add(Labeled(label, input));
+
+    private static void Row(Panel panel, params FrameworkElement[] fields)
+    {
+        var row = new Grid();
+        foreach (var field in fields)
+        {
+            int column = row.ColumnDefinitions.Count;
+            row.ColumnDefinitions.Add(new ColumnDefinition());
+            if (column < fields.Length - 1) field.Margin = new Thickness(0, 0, 8, field.Margin.Bottom);
+            Grid.SetColumn(field, column);
+            row.Children.Add(field);
+        }
+        panel.Children.Add(row);
     }
 
     private Button Button(string label, Action action, bool primary = false)
     {
-        var button = new Button { Content = label, Margin = new Thickness(0, 0, 6, 0) };
-        if (primary)
-        {
-            button.UseTheme(BackgroundProperty, "Accent");
-            button.UseTheme(ForegroundProperty, "AccentInk");
-        }
+        var button = new Button { Content = label };
+        if (primary) button.SetResourceReference(StyleProperty, "SputnikPrimaryButton");
         button.Click += (_, _) =>
         {
             try { action(); }
@@ -90,30 +113,50 @@ public partial class MainWindow
 
     private static WrapPanel Actions(params UIElement[] actions)
     {
-        var row = new WrapPanel { Margin = new Thickness(0, 3, 0, 8) };
-        foreach (var action in actions) row.Children.Add(action);
+        var row = new WrapPanel { Margin = new Thickness(0, 4, 0, 2) };
+        foreach (var action in actions)
+        {
+            if (action is FrameworkElement element) element.Margin = new Thickness(0, 0, 6, 4);
+            row.Children.Add(action);
+        }
         return row;
     }
 
     private static void Entry(Panel panel, string title, string detail, params UIElement[] actions)
     {
-        var text = Text(title);
+        var text = Text(title, size: 13);
         text.FontWeight = FontWeights.SemiBold;
-        panel.Children.Add(text);
-        if (detail.Length > 0) panel.Children.Add(Text(detail, "Muted", 12));
-        panel.Children.Add(Actions(actions));
+        var labels = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        labels.Children.Add(text);
+        if (detail.Length > 0) labels.Children.Add(Text(detail, "Muted", 12));
+        var row = new DockPanel();
+        var buttons = Actions(actions);
+        buttons.Margin = new Thickness(8, 0, -6, 0);
+        foreach (FrameworkElement button in buttons.Children) button.Margin = new Thickness(0, 0, 6, 0);
+        DockPanel.SetDock(buttons, Dock.Right);
+        row.Children.Add(buttons);
+        row.Children.Add(labels);
+        var entry = new Border { Child = row, Padding = new Thickness(8, 5, 8, 5), Margin = new Thickness(0, 0, 0, 4),
+            CornerRadius = new CornerRadius(8) };
+        entry.UseTheme(Border.BackgroundProperty, "Field");
+        panel.Children.Add(entry);
     }
 
     private DockPanel Page(string title, UIElement? action = null)
     {
-        var root = new DockPanel { Margin = new Thickness(15, 9, 11, 11) };
-        var header = new DockPanel { Margin = new Thickness(0, 0, 0, 11) };
+        var root = new DockPanel { Margin = new Thickness(14, 10, 14, 12) };
+        var header = new DockPanel { Margin = new Thickness(0, 0, 0, 9) };
         if (action is not null)
         {
+            if (action is FrameworkElement element)
+            {
+                element.VerticalAlignment = VerticalAlignment.Center;
+                element.Margin = new Thickness(8, 0, 0, 0);
+            }
             DockPanel.SetDock(action, Dock.Right);
             header.Children.Add(action);
         }
-        var heading = Text(title, "Ink", 24);
+        var heading = Text(title, "Ink", 22);
         heading.FontWeight = FontWeights.SemiBold;
         AutomationProperties.SetName(heading, title);
         header.Children.Add(heading);
@@ -125,7 +168,7 @@ public partial class MainWindow
 
     private StackPanel PageFields(string title, UIElement? action = null)
     {
-        var fields = new StackPanel { Margin = new Thickness(0, 0, 6, 0) };
+        var fields = new StackPanel();
         Page(title, action).Children.Add(new ScrollViewer
         {
             Content = fields, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
@@ -172,22 +215,87 @@ public partial class MainWindow
     private void ShowMotions()
     {
         var page = PageFields("Движения");
-        page.Children.Add(Actions(Button("Случайный порядок", () => Desktop?.SetPlayback("shuffle", 0), true),
-            Button("Пауза", () => Desktop?.SetPlayback("pause", 0)), Button("Продолжить", () => Desktop?.SetPlayback("resume", 0))));
-        var names = Desktop?.AnimationNames() ?? [];
-        for (int i = 0; i < names.Length; i++)
-        {
-            int index = i;
-            page.Children.Add(Actions(Button(names[i], () => Desktop?.SetPlayback("clip", index))));
-        }
-        if (names.Length == 0) page.Children.Add(Text("У питомца пока нет движений.", "Muted"));
+        var (pet, clips) = Desktop?.MotionSettings() ?? ("", []);
+        PopulateMotions(page, pet, clips);
     }
+
+    private void PopulateMotions(StackPanel page, string pet, (string Name, bool Enabled)[] clips)
+    {
+        if (clips.Length == 0)
+        {
+            page.Children.Add(Text("У питомца пока нет движений.", "Muted"));
+            return;
+        }
+        var shuffle = Button("Случайный порядок", () => Desktop?.SetPlayback("shuffle", 0), true);
+        var pause = Button("Пауза", () => Desktop?.SetPlayback("pause", 0));
+        var resume = Button("Продолжить", () => Desktop?.SetPlayback("resume", 0));
+        page.Children.Add(Actions(shuffle, pause, resume));
+        var enabled = new HashSet<string>(clips.Where(clip => clip.Enabled).Select(clip => clip.Name), StringComparer.Ordinal);
+        void UpdateActions() => shuffle.IsEnabled = pause.IsEnabled = resume.IsEnabled = enabled.Count != 0;
+        UpdateActions();
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            var (name, isEnabled) = clips[i];
+            int index = i;
+            var play = Button("", () => Desktop?.SetPlayback("clip", index));
+            play.SetResourceReference(StyleProperty, "SputnikIconButton");
+            var icon = new System.Windows.Shapes.Path
+            {
+                Width = 8, Height = 10, Stretch = System.Windows.Media.Stretch.Fill,
+                Data = System.Windows.Media.Geometry.Parse("M 0,0 L 8,5 0,10 Z")
+            };
+            icon.UseTheme(System.Windows.Shapes.Shape.FillProperty, "Ink");
+            play.Content = icon;
+            play.IsEnabled = isEnabled;
+            play.ToolTip = "Воспроизвести";
+            AutomationProperties.SetName(play, $"Воспроизвести «{name}»");
+            var toggle = new CheckBox { Content = Text(name, size: 13), IsChecked = isEnabled };
+            AutomationProperties.SetName(toggle, name);
+            toggle.Click += (_, _) =>
+            {
+                try
+                {
+                    bool on = toggle.IsChecked == true;
+                    var disabled = clips.Select(clip => clip.Name)
+                        .Where(clip => clip == name ? !on : !enabled.Contains(clip));
+                    SaveDisabledMotions(pet, disabled);
+                    if (on) enabled.Add(name); else enabled.Remove(name);
+                    play.IsEnabled = on;
+                    UpdateActions();
+                }
+                catch (Exception error)
+                {
+                    toggle.IsChecked = enabled.Contains(name);
+                    ShowError(error);
+                }
+            };
+            var row = new DockPanel();
+            DockPanel.SetDock(play, Dock.Right);
+            row.Children.Add(play);
+            row.Children.Add(toggle);
+            var surface = new Border { Child = row, Padding = new Thickness(5, 2, 4, 2), Margin = new Thickness(0, 0, 0, 4),
+                CornerRadius = new CornerRadius(7) };
+            surface.UseTheme(Border.BackgroundProperty, "Field");
+            page.Children.Add(surface);
+        }
+    }
+
+    private void SaveDisabledMotions(string pet, IEnumerable<string> disabled) => UpdateWorkspace(workspace =>
+    {
+        var preferences = workspace["disabledMotions"] as JsonObject ?? new JsonObject();
+        var list = disabled.Select(name => (JsonNode?)JsonValue.Create(name)).ToArray();
+        if (list.Length == 0) preferences.Remove(pet);
+        else preferences[pet] = new JsonArray(list);
+        if (preferences.Count == 0) workspace.Remove("disabledMotions");
+        else if (workspace["disabledMotions"] is not JsonObject) workspace["disabledMotions"] = preferences;
+    }, true);
 
     private void ShowChat()
     {
         var page = Page("Чат", Button("Модель и API", () => Desktop?.ShowWorkspace("model")));
         var input = Input("Сообщение модели", max: 10000);
-        var status = Text("", "Muted", 12);
+        var status = Status();
         var submit = AsyncButton("Отправить", Submit, true);
         async Task Submit()
         {
@@ -205,6 +313,7 @@ public partial class MainWindow
             await Submit();
         };
         var composer = new DockPanel();
+        submit.Margin = new Thickness(6, 0, 0, 0);
         DockPanel.SetDock(submit, Dock.Right);
         composer.Children.Add(submit);
         composer.Children.Add(input);
@@ -214,7 +323,8 @@ public partial class MainWindow
         DockPanel.SetDock(footer, Dock.Bottom);
         page.Children.Add(footer);
         chatHistory = new StackPanel();
-        chatScroll = new ScrollViewer { Content = chatHistory, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        chatScroll = new ScrollViewer { Content = chatHistory, Margin = new Thickness(0, 0, 0, 6),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         page.Children.Add(chatScroll);
         RefreshChatHistory((WorkspaceData()["messages"] as JsonArray) ?? new JsonArray());
     }
@@ -252,14 +362,16 @@ public partial class MainWindow
     {
         var saved = Read(Settings);
         var fields = PageFields("Модель и API");
-        var provider = new ComboBox { ItemsSource = Providers.Select(item => item.Name).Append("Другой провайдер").ToArray() };
+        var provider = new ComboBox { MaxDropDownHeight = 375,
+            ItemsSource = Providers.Select(item => item.Name).Append("Другой провайдер").ToArray() };
         var url = Input("Базовый URL", Value(saved, "url"));
         var key = new PasswordBox { MaxLength = 1800 };
         AutomationProperties.SetName(key, "API-ключ");
-        var clear = new CheckBox { Content = "Удалить сохранённый ключ", Margin = new Thickness(0, 0, 0, 11) };
+        var clear = new CheckBox { Content = "Удалить сохранённый ключ", Margin = new Thickness(0, 0, 0, 6),
+            Visibility = saved?["secret"] is null ? Visibility.Collapsed : Visibility.Visible };
         var model = new ComboBox { IsEditable = true, IsTextSearchEnabled = false, Text = Value(saved, "model") };
         AutomationProperties.SetName(model, "ID модели");
-        var status = Text("", "Muted", 13);
+        var status = Status(13);
         bool syncing = false;
         int revision = 0;
         int ProviderIndex()

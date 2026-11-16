@@ -63,6 +63,7 @@ internal sealed class DesktopPetWindow : Window
     private readonly Queue<AnimationClip> upcoming = new();
     private readonly HashSet<AnimationClip> unavailable = new();
     private readonly Dictionary<string, BitmapSource> bundledSheets = new();
+    private HashSet<string> disabledMotions = new(StringComparer.Ordinal);
     private Pet? active;
     private AnimationClip? current;
     private BitmapSource? sheet;
@@ -74,6 +75,11 @@ internal sealed class DesktopPetWindow : Window
     private bool paused;
     private double preferredSize = DefaultPetSize;
     private AnimationClip? pinned;
+    private bool dragging;
+    private Point? restingOrigin;
+    private Rect placementArea;
+    private readonly Dictionary<AnimationClip, Rect?[]> visibleFrames = new();
+    private byte[] alphaScan = [];
 
     public DesktopPetWindow(Action<string> openWorkspace, Action exitApp)
     {
@@ -99,29 +105,46 @@ internal sealed class DesktopPetWindow : Window
 
         Point dragStart = default;
         int clickCount = 0;
-        sprite.MouseLeftButtonDown += (_, args) =>
+        bool pressed = false;
+        PreviewMouseLeftButtonDown += (_, args) =>
         {
             dragStart = args.GetPosition(this);
             clickCount = args.ClickCount;
+            pressed = true;
             sprite.CaptureMouse();
         };
         sprite.MouseMove += (_, args) =>
         {
-            if (!sprite.IsMouseCaptured || args.LeftButton != MouseButtonState.Pressed) return;
+            if (!pressed || !sprite.IsMouseCaptured || args.LeftButton != MouseButtonState.Pressed) return;
             Vector delta = args.GetPosition(this) - dragStart;
             if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
                 Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+            pressed = false;
             sprite.ReleaseMouseCapture();
-            DragMove();
+            bool playing = elapsed.IsRunning;
+            elapsed.Stop();
+            dragging = true;
+            try { DragMove(); }
+            finally
+            {
+                dragging = false;
+                if (playing) elapsed.Start();
+            }
+            placementArea = controls.WorkArea(atCursor: true);
+            restingOrigin = new Point(Left, Top);
+            PositionAtRest();
+            restingOrigin = new Point(Left, Top);
             controls.FollowPet();
         };
-        sprite.MouseLeftButtonUp += (_, _) =>
+        PreviewMouseLeftButtonUp += (_, args) =>
         {
-            if (!sprite.IsMouseCaptured) return;
-            sprite.ReleaseMouseCapture();
-            controls.ShowSpheres();
+            if (!pressed) return;
+            pressed = false;
+            if (sprite.IsMouseCaptured) sprite.ReleaseMouseCapture();
+            args.Handled = true;
             if (clickCount == 3) openWorkspace("quick");
             else if (clickCount == 2 && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) openWorkspace("notes");
+            else if (!controls.ShowSpheres()) openWorkspace("favorites");
         };
 
         Loaded += (_, _) =>
@@ -132,13 +155,15 @@ internal sealed class DesktopPetWindow : Window
             Width = Height = frame.Width;
             Left = frame.Left;
             Top = frame.Top;
+            placementArea = area;
+            restingOrigin = frame.TopLeft;
         };
         SourceInitialized += (_, _) => HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(HandleScreenChange);
         timer.Tick += (_, _) => RenderFrame();
         timer.Start();
         LocationChanged += (_, _) => Follow();
         SizeChanged += (_, _) => Follow();
-        DpiChanged += (_, _) => Dispatcher.BeginInvoke(Follow);
+        DpiChanged += (_, _) => Dispatcher.BeginInvoke(() => { ConstrainToScreen(); Follow(); });
 
         void Follow()
         {
@@ -155,20 +180,28 @@ internal sealed class DesktopPetWindow : Window
     internal void SetNotesChecked(bool visible) => controls.SetNotesChecked(visible);
 
     internal int AnimationCount => active?.Animations.Length ?? 0;
-    internal string[] AnimationNames() => active?.Animations.Select(clip => clip.Name).ToArray() ?? [];
+    internal (string Pet, (string Name, bool Enabled)[] Clips) MotionSettings() =>
+        (active?.Id ?? "", active?.Animations.Select(clip => (clip.Name, MotionEnabled(clip))).ToArray() ?? []);
+
+    private bool MotionEnabled(AnimationClip clip) => !disabledMotions.Contains(clip.Name);
+    private bool HasEnabledMotion => active?.Animations.Any(MotionEnabled) == true;
 
     internal void SetPlayback(string command, int index)
     {
         if (command is "pause" or "resume")
         {
             paused = command == "pause";
-            if (paused) elapsed.Stop(); else elapsed.Start();
+            if (paused || !HasEnabledMotion) elapsed.Stop();
+            else if (current is not null && MotionEnabled(current)) elapsed.Start();
+            else PlayNext();
             return;
         }
 
+        var choice = command == "clip" ? active?.Animations.ElementAtOrDefault(index) : null;
+        if (!HasEnabledMotion || (command == "clip" && (choice is null || !MotionEnabled(choice)))) return;
         paused = false;
         upcoming.Clear();
-        pinned = command == "clip" ? active?.Animations.ElementAtOrDefault(index) : null;
+        pinned = choice;
         PlayNext();
     }
 
@@ -176,7 +209,8 @@ internal sealed class DesktopPetWindow : Window
     {
         var workspace = ReadWorkspace();
         string desired = workspace?["active"]?.ToString() ?? "klyaksa";
-        if (desired != active?.Id) SelectFromStore(desired);
+        if (desired != active?.Id) SelectFromStore(desired, workspace);
+        else ApplyMotionSettings(workspace);
         var favorites = (workspace?["favorites"] as JsonArray)?.OfType<JsonObject>()
             .Select(item => new DesktopControls.Favorite(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "",
                 item["target"]?.ToString() ?? "", item["icon"]?.ToString() ?? "", item["siteIcon"]?.ToString() ?? "",
@@ -189,29 +223,39 @@ internal sealed class DesktopPetWindow : Window
             : workspace?["themed"]?.GetValue<bool>() == false ? null : active?.Theme;
         ThemePalette.Apply(theme);
         ThemePalette.ApplyFont(workspace?["font"]?.ToString());
-        ResizePet(ReadScale("petScale"));
-        controls.SetSphereSize(DesktopControls.DefaultOrbSize * ReadScale("sphereScale"));
-        controls.SetSphereSpread(workspace?["sphereSpread"] is JsonValue spread && spread.TryGetValue<double>(out double spacingPercent)
-            ? Compatibility.Clamp(spacingPercent, 0, 100) / 100 : 1);
-        controls.SetSphereOffset(workspace?["sphereOffset"] is JsonValue offset && offset.TryGetValue<double>(out double distance)
-            ? Compatibility.Clamp(distance, 0, 80) : DesktopControls.DefaultSphereOffset);
+        ApplyAppearanceSizes(SizeSetting("petScale", 100), SizeSetting("sphereScale", 100),
+            SizeSetting("sphereSpread", 100), SizeSetting("sphereOffset", DesktopControls.DefaultSphereOffset), IsSmoothingOn(workspace));
         controls.SetFavorites(favorites);
 
-        double ReadScale(string name) => workspace?[name] is JsonValue value && value.TryGetValue<double>(out double percent)
-            ? Compatibility.Clamp(percent, 60, 160) / 100
-            : 1;
+        double SizeSetting(string name, double fallback) =>
+            workspace?[name] is JsonValue value && value.TryGetValue<double>(out double number) ? number : fallback;
+    }
+
+    internal static bool IsSmoothingOn(JsonNode? workspace) =>
+        workspace?["petSmoothing"] is JsonValue value && value.TryGetValue<bool>(out bool enabled) && enabled;
+
+    internal static BitmapScalingMode PetScalingMode(bool smoothing) =>
+        smoothing ? BitmapScalingMode.HighQuality : BitmapScalingMode.NearestNeighbor;
+
+    internal void ApplyAppearanceSizes(double petPercent, double spherePercent, double spreadPercent, double offset, bool smoothing)
+    {
+        RenderOptions.SetBitmapScalingMode(sprite, PetScalingMode(smoothing));
+        ResizePet(Compatibility.Clamp(petPercent, 60, 160) / 100);
+        controls.SetSphereSize(DesktopControls.DefaultOrbSize * Compatibility.Clamp(spherePercent, 60, 160) / 100);
+        controls.SetSphereSpread(Compatibility.Clamp(spreadPercent, 0, 100) / 100);
+        controls.SetSphereOffset(Compatibility.Clamp(offset, 0, 80));
     }
 
     private IntPtr HandleScreenChange(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        const int moving = 0x0216, exitMove = 0x0232, displayChange = 0x007E, settingChange = 0x001A;
+        const int moving = 0x0216, displayChange = 0x007E, settingChange = 0x001A;
         const int setWorkArea = 0x002F;
-        if (message == moving && lParam != IntPtr.Zero && DesktopControls.ConstrainDrag(hwnd, lParam))
+        if (message == moving && lParam != IntPtr.Zero && DesktopControls.ConstrainDrag(lParam, VisibleContent()))
         {
             handled = true;
             return new IntPtr(1);
         }
-        if (message is exitMove or displayChange || (message == settingChange && wParam.ToInt64() == setWorkArea))
+        if (message == displayChange || (message == settingChange && wParam.ToInt64() == setWorkArea))
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(ConstrainToScreen));
         return IntPtr.Zero;
     }
@@ -224,16 +268,64 @@ internal sealed class DesktopPetWindow : Window
 
     private void ConstrainToScreen()
     {
-        if (!IsLoaded || !IsVisible) return;
-        Rect area = controls.WorkArea();
-        double size = Math.Min(preferredSize, Math.Min(area.Width, area.Height));
-        var frame = DesktopControls.ClampPetFrame(new Rect(Left + (Width - size) / 2, Top + Height - size, size, size), area);
-        Width = Height = frame.Width;
-        Left = frame.Left;
-        Top = frame.Top;
+        if (!IsLoaded || !IsVisible || dragging) return;
+        placementArea = controls.WorkArea();
+        double size = Math.Min(preferredSize, Math.Min(placementArea.Width, placementArea.Height));
+        var bounds = VisibleContent();
+        Point origin = restingOrigin ?? new Point(Left, Top);
+        origin.Offset((Width - size) * (bounds.Left + bounds.Width / 2), (Height - size) * bounds.Bottom);
+        restingOrigin = origin;
+        Width = Height = size;
+        PositionAtRest();
     }
 
-    private void SelectFromStore(string desired)
+    private void PositionAtRest()
+    {
+        if (dragging || restingOrigin is not { } origin || placementArea.Width <= 0 || placementArea.Height <= 0) return;
+        var frame = new Rect(origin, new Size(Width, Height));
+        if (!placementArea.Contains(frame))
+            frame = DesktopControls.ClampVisiblePet(frame, placementArea, VisibleContent());
+        if (Math.Abs(Left - frame.Left) > .01) Left = frame.Left;
+        if (Math.Abs(Top - frame.Top) > .01) Top = frame.Top;
+    }
+
+    internal Rect VisibleContent()
+    {
+        if (current is null || lastFrame < 0 || sprite.Source is not BitmapSource image) return new Rect(0, 0, 1, 1);
+        if (!visibleFrames.TryGetValue(current, out var bounds))
+            visibleFrames[current] = bounds = new Rect?[current.FrameCount];
+        if (bounds[lastFrame] is { } cached) return cached;
+        if (image.Format != PixelFormats.Bgra32 && image.Format != PixelFormats.Pbgra32)
+            image = new FormatConvertedBitmap(image, PixelFormats.Bgra32, null, 0);
+        int width = image.PixelWidth, height = image.PixelHeight, stride = width * 4;
+        int bytes = stride * height;
+        if (alphaScan.Length < bytes) alphaScan = new byte[bytes];
+        image.CopyPixels(alphaScan, stride, 0);
+        int left = width, top = height, right = -1, bottom = -1;
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0, address = y * stride + 3; x < width; x++, address += 4)
+            {
+                if (alphaScan[address] == 0) continue;
+                left = Math.Min(left, x);
+                right = Math.Max(right, x);
+                top = Math.Min(top, y);
+                bottom = y;
+            }
+        }
+        var visible = new Rect(0, 0, 1, 1);
+        if (right >= left)
+        {
+            double ratio = image.Width / image.Height;
+            double w = Math.Min(1, ratio), h = Math.Min(1, 1 / ratio);
+            visible = new Rect((1 - w) / 2 + w * left / width, (1 - h) / 2 + h * top / height,
+                w * (right - left + 1) / width, h * (bottom - top + 1) / height);
+        }
+        bounds[lastFrame] = visible;
+        return visible;
+    }
+
+    private void SelectFromStore(string desired, JsonNode? workspace)
     {
         Pet? selected = builtins.FirstOrDefault(pet => pet.Id == desired);
         string folder = Assets;
@@ -249,7 +341,7 @@ internal sealed class DesktopPetWindow : Window
         }
 
         UsePet(selected ?? builtins.FirstOrDefault(pet => pet.Id == "klyaksa") ?? builtins[0],
-            selected is null ? Assets : folder);
+            selected is null ? Assets : folder, workspace);
     }
 
     private static JsonNode? ReadWorkspace()
@@ -265,14 +357,34 @@ internal sealed class DesktopPetWindow : Window
         }
     }
 
-    private void UsePet(Pet selected, string folder)
+    private static HashSet<string> DisabledMotions(JsonNode? workspace, string id) =>
+        new((workspace?["disabledMotions"] as JsonObject)?[id] is JsonArray items
+            ? items.OfType<JsonValue>().Select(item => item.TryGetValue<string>(out var name) ? name : "").Where(name => name.Length > 0)
+            : [], StringComparer.Ordinal);
+
+    private void ApplyMotionSettings(JsonNode? workspace)
+    {
+        if (active is null) return;
+        var next = DisabledMotions(workspace, active.Id);
+        if (disabledMotions.SetEquals(next)) return;
+        disabledMotions = next;
+        upcoming.Clear();
+        if (pinned is not null && !MotionEnabled(pinned)) pinned = null;
+        if (!HasEnabledMotion) elapsed.Stop();
+        else if (current is null || !MotionEnabled(current)) PlayNext();
+        else if (!paused) elapsed.Start();
+    }
+
+    private void UsePet(Pet selected, string folder, JsonNode? workspace = null)
     {
         active = selected;
+        disabledMotions = DisabledMotions(workspace, selected.Id);
         controls.SetPetName(selected.Name);
         root = folder;
         upcoming.Clear();
         unavailable.Clear();
         bundledSheets.Clear();
+        visibleFrames.Clear();
         current = null;
         sheet = null;
         sheetFile = null;
@@ -280,16 +392,17 @@ internal sealed class DesktopPetWindow : Window
         preloadedFile = null;
         pinned = null;
         idle.ScaleY = 1;
-        if (!PlayNext() && selected.Id != "hudi")
+        if (!PlayNext() && !(!HasEnabledMotion && PlayNext(showStill: true)) && selected.Id != "hudi" && selected != builtins[0])
             UsePet(builtins[0], Assets);
     }
 
-    private bool PlayNext()
+    private bool PlayNext(bool showStill = false)
     {
         if (active is null) return false;
         if (upcoming.Count == 0)
         {
-            var order = active.Animations.Where(clip => !unavailable.Contains(clip) && (pinned is null || clip == pinned)).ToArray();
+            var order = active.Animations.Where(clip => !unavailable.Contains(clip) &&
+                (showStill || (MotionEnabled(clip) && (pinned is null || clip == pinned)))).ToArray();
             for (int index = order.Length - 1; index > 0; index--)
             {
                 int swap = random.Next(index + 1);
@@ -315,9 +428,10 @@ internal sealed class DesktopPetWindow : Window
                 current = next;
                 lastFrame = -1;
                 elapsed.Restart();
-                if (paused) elapsed.Stop();
+                if (paused || showStill) elapsed.Stop();
                 ShowFrame(0);
-                PreloadSheet(first.Next ?? upcoming.FirstOrDefault()?.Locate(0).File);
+                if (showStill) upcoming.Clear();
+                else PreloadSheet(first.Next ?? upcoming.FirstOrDefault()?.Locate(0).File);
                 return true;
             }
             catch (Exception error) when (error is IOException or NotSupportedException or ArgumentException or FormatException or InvalidOperationException)
@@ -370,7 +484,7 @@ internal sealed class DesktopPetWindow : Window
 
     private void RenderFrame()
     {
-        if (current is null || paused) return;
+        if (current is null || !elapsed.IsRunning) return;
 
         if (current.FrameCount == 1)
         {
@@ -423,5 +537,6 @@ internal sealed class DesktopPetWindow : Window
             sprite.Source = frame;
         }
         lastFrame = index;
+        PositionAtRest();
     }
 }

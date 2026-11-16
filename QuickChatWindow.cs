@@ -41,7 +41,7 @@ internal sealed class QuickChatWindow : Window
         input = new TextBox
         {
             BorderThickness = new Thickness(0), Background = Brushes.Transparent,
-            Padding = new Thickness(0), FontSize = 14, MaxLength = 10000, VerticalContentAlignment = VerticalAlignment.Center
+            Padding = new Thickness(0), MinHeight = 0, FontSize = 14, MaxLength = 10000, VerticalContentAlignment = VerticalAlignment.Center
         };
         input.UseTheme(Control.ForegroundProperty, "Ink");
         input.UseTheme(TextBoxBase.CaretBrushProperty, "Accent");
@@ -163,7 +163,7 @@ internal sealed class QuickChatWindow : Window
         full.Click += (_, _) => { Hide(); openFull(); };
         DockPanel.SetDock(full, Dock.Bottom);
         stack.Children.Add(full);
-        stack.Children.Add(new ScrollViewer { Content = text, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden });
+        stack.Children.Add(new ScrollViewer { Content = text, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
         Present(stack, 300, Compatibility.Clamp(text.DesiredSize.Height + 45, 63, 195));
     }
 
@@ -193,25 +193,9 @@ internal sealed class QuickChatWindow : Window
     {
         var button = new Button
         {
-            Content = title, Cursor = Cursors.Hand, Padding = new Thickness(10, 4, 10, 4),
-            Background = Brushes.Transparent,
-            FontWeight = primary ? FontWeights.SemiBold : FontWeights.Normal
+            Content = title, MinHeight = 26, Padding = new Thickness(8, 2, 8, 2)
         };
-        button.UseTheme(Control.ForegroundProperty, primary ? "AccentInk" : "Ink");
-        if (primary) button.UseTheme(Control.BackgroundProperty, "Accent");
-        var surface = new FrameworkElementFactory(typeof(Border), "Fill");
-        surface.SetValue(Border.CornerRadiusProperty, new CornerRadius(7));
-        surface.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding(nameof(Background)) { RelativeSource = System.Windows.Data.RelativeSource.TemplatedParent });
-        surface.SetBinding(Border.PaddingProperty, new System.Windows.Data.Binding(nameof(Padding)) { RelativeSource = System.Windows.Data.RelativeSource.TemplatedParent });
-        surface.AppendChild(new FrameworkElementFactory(typeof(ContentPresenter)));
-        var template = new ControlTemplate(typeof(Button)) { VisualTree = surface };
-        foreach (var property in new[] { IsMouseOverProperty, IsKeyboardFocusedProperty })
-        {
-            var hover = new Trigger { Property = property, Value = true };
-            hover.Setters.Add(new Setter(Border.BackgroundProperty, new DynamicResourceExtension(primary ? "ThemeAccentHover" : "ThemeHover"), "Fill"));
-            template.Triggers.Add(hover);
-        }
-        button.Template = template;
+        if (primary) button.SetResourceReference(StyleProperty, "SputnikPrimaryButton");
         return button;
     }
 

@@ -54,11 +54,11 @@ public partial class MainWindow
         var clips = ((JsonArray)staged["animations"]!).OfType<JsonObject>().ToArray();
         string token = Value(staged, "token");
         string folder = Path.Combine(Pending, token);
-        var image = new Image { Height = 190, Stretch = Stretch.Uniform };
-        RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
+        var image = new Image { Height = 166, Stretch = Stretch.Uniform };
+        RenderOptions.SetBitmapScalingMode(image, DesktopPetWindow.PetScalingMode(DesktopPetWindow.IsSmoothingOn(WorkspaceData())));
         var stage = new Border { Child = image, CornerRadius = new CornerRadius(8), Margin = new Thickness(0, 1, 0, 8) };
         stage.UseTheme(Border.BackgroundProperty, "Background");
-        var status = Text("", "Muted", 12);
+        var status = Status();
         motion.ItemsSource = clips.Select(clip => Value(clip, "name")).ToArray();
         AutomationProperties.SetName(motion, "Движение");
         Field(page, "Движение", motion);

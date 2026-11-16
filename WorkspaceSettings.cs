@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Automation;
@@ -113,9 +114,7 @@ public partial class MainWindow
         var background = Input("Фон", Value(custom, "background", "#181C20"), 7);
         var surface = Input("Поверхности", Value(custom, "surface", "#23292F"), 7);
         var accent = Input("Акцент", Value(custom, "accent", "#A5E4F6"), 7);
-        Field(colors, "Фон (#RRGGBB)", background);
-        Field(colors, "Поверхности (#RRGGBB)", surface);
-        Field(colors, "Акцент (#RRGGBB)", accent);
+        Row(colors, Labeled("Фон", background), Labeled("Поверхности", surface), Labeled("Акцент", accent));
         page.Children.Add(colors);
         void ShowColors() => colors.Visibility = mode.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
         mode.SelectionChanged += (_, _) => ShowColors();
@@ -129,24 +128,52 @@ public partial class MainWindow
             ("sphereSpread", "Между сферами", 0, 100, 100, "%"), ("sphereOffset", "Отступ от питомца", 0, 80, 10, " пкс"),
         ];
         var sliders = new Dictionary<string, Slider>();
+        var sizeFields = new List<FrameworkElement>();
+        var smoothing = new CheckBox
+        {
+            Content = "Сглаживание WPF",
+            IsChecked = DesktopPetWindow.IsSmoothingOn(state),
+            ToolTip = "Сглаживать изображение питомца при отображении"
+        };
+        bool previewing = false;
+        void PreviewSizes()
+        {
+            if (!page.IsVisible) return;
+            previewing = true;
+            Desktop?.PreviewAppearanceSizes(sliders["petScale"].Value, sliders["sphereScale"].Value,
+                sliders["sphereSpread"].Value, sliders["sphereOffset"].Value, smoothing.IsChecked == true);
+        }
+        void RestoreSizes()
+        {
+            if (!previewing) return;
+            previewing = false;
+            Desktop?.RefreshPet();
+        }
+        page.IsVisibleChanged += (_, _) => { if (!page.IsVisible) RestoreSizes(); };
+        page.Unloaded += (_, _) => RestoreSizes();
         foreach (var entry in sizes)
         {
             var slider = new Slider
             {
                 Minimum = entry.Min, Maximum = entry.Max, TickFrequency = 5, IsSnapToTickEnabled = true,
                 Value = state[entry.Key]?.GetValue<double>() ?? entry.Initial,
-                Margin = new Thickness(0, 0, 0, 10)
             };
-            var label = Text("", "Muted", 13);
-            void ShowSize() => label.Text = $"{entry.Label}   {slider.Value:0}{entry.Unit}";
+            var label = Text("", "Muted", 12);
+            void ShowSize() => label.Text = $"{entry.Label} · {slider.Value:0}{entry.Unit}";
             ShowSize();
-            slider.ValueChanged += (_, _) => ShowSize();
+            slider.ValueChanged += (_, _) => { ShowSize(); PreviewSizes(); };
             AutomationProperties.SetName(slider, entry.Label);
             sliders.Add(entry.Key, slider);
-            page.Children.Add(label);
-            page.Children.Add(slider);
+            var field = new StackPanel { Margin = new Thickness(0, 1, 0, 6) };
+            field.Children.Add(label);
+            field.Children.Add(slider);
+            sizeFields.Add(field);
         }
-        var status = Text("", "Muted", 12);
+        Row(page, sizeFields.Take(2).ToArray());
+        Row(page, sizeFields.Skip(2).ToArray());
+        smoothing.Click += (_, _) => PreviewSizes();
+        page.Children.Add(smoothing);
+        var status = Status();
         page.Children.Add(Actions(Button("Сохранить", () =>
         {
             if (mode.SelectedIndex == 1 && new[] { background.Text, surface.Text, accent.Text }.Any(color =>
@@ -159,16 +186,19 @@ public partial class MainWindow
                 if (mode.SelectedIndex == 1)
                     workspace["customTheme"] = new JsonObject { ["background"] = background.Text, ["surface"] = surface.Text, ["accent"] = accent.Text };
                 workspace["font"] = fonts.SelectedItem as string ?? "Segoe UI";
+                workspace["petSmoothing"] = smoothing.IsChecked == true;
                 foreach (var pair in sliders) workspace[pair.Key] = pair.Value.Value;
             }, true);
+            previewing = false;
             status.Text = "Оформление сохранено.";
         }, true), Button("Сбросить", () =>
         {
             UpdateWorkspace(workspace =>
             {
-                foreach (string key in sizes.Select(entry => entry.Key).Concat(new[] { "font", "customTheme", "appearanceMode" })) workspace.Remove(key);
+                foreach (string key in sizes.Select(entry => entry.Key).Concat(new[] { "font", "customTheme", "appearanceMode", "petSmoothing" })) workspace.Remove(key);
                 workspace["themed"] = true;
             }, true);
+            previewing = false;
             OpenSection("theme");
         }), Button("Показать сферы", () => Desktop?.PreviewFavoriteSpheres())));
         page.Children.Add(status);
@@ -208,23 +238,32 @@ public partial class MainWindow
         page.Children.Add(browse);
         Field(page, "Значок", icons);
         page.Children.Add(monochrome);
+        var status = Status();
         string id = Value(existing, "id", Guid.NewGuid().ToString());
-        var actions = Actions(AsyncButton("Сохранить", async () =>
+        var actions = Actions(Button("Сохранить", () =>
         {
             string label = title.Text.Trim(), value = target.Text.Trim();
-            if (label.Length == 0 || value.Length == 0) throw new InvalidOperationException("Укажите название и адрес.");
+            if (label.Length == 0 || value.Length == 0)
+            {
+                status.Text = "Укажите название и адрес.";
+                (label.Length == 0 ? title : target).Focus();
+                return;
+            }
             bool site = kind.SelectedIndex != 1;
-            if (site) HttpUri(value);
+            if (site) value = WebsiteAddress(value);
             else if (!Compatibility.IsFullyQualifiedPath(value) || !File.Exists(value) || !Path.GetExtension(value).Equals(".exe", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Выберите существующее приложение Windows (.exe).");
+            {
+                status.Text = "Выберите существующее приложение Windows (.exe).";
+                target.Focus();
+                return;
+            }
             string selected = icons.SelectedItem as string ?? automaticLabel;
             bool automatic = site && selected == automaticLabel;
-            string? siteIcon = automatic ? await new SiteIcons(Favicons).Find(value) : null;
             var favorite = new JsonObject
             {
                 ["id"] = id, ["kind"] = site ? "site" : "app", ["title"] = label, ["target"] = value,
                 ["icon"] = selected == automaticLabel ? site ? "globe" : "cpu" : selected,
-                ["siteIcon"] = siteIcon, ["iconSource"] = automatic ? "site" : "library", ["monochrome"] = monochrome.IsChecked == true
+                ["iconSource"] = automatic ? "site" : "library", ["monochrome"] = monochrome.IsChecked == true
             };
             UpdateWorkspace(state =>
             {
@@ -232,7 +271,8 @@ public partial class MainWindow
                 var previous = items.FirstOrDefault(item => Value(item, "id") == id);
                 if (previous is null) items.Add(favorite); else items[items.IndexOf(previous)] = favorite;
             }, true);
-            if (page.IsLoaded) OpenSection("favorites");
+            OpenSection("favorites");
+            if (automatic) _ = AddFavoriteSiteIcon(id, value);
         }, true));
         if (existing is not null) actions.Children.Add(Button("Удалить", () =>
         {
@@ -240,5 +280,25 @@ public partial class MainWindow
             OpenSection("favorites");
         }));
         page.Children.Add(actions);
+        page.Children.Add(status);
+    }
+
+    private async Task AddFavoriteSiteIcon(string id, string address)
+    {
+        try
+        {
+            if (await new SiteIcons(Favicons).Find(address) is not { } icon) return;
+            UpdateWorkspace(workspace =>
+            {
+                var items = workspace["favorites"] as JsonArray;
+                var match = items?.OfType<JsonObject>().FirstOrDefault(item =>
+                    Value(item, "id") == id && Value(item, "target") == address && Value(item, "iconSource") == "site");
+                if (match is not null) match["siteIcon"] = icon;
+            }, true);
+        }
+        catch (Exception error) when (error is IOException or System.Net.Http.HttpRequestException or InvalidOperationException or JsonException)
+        {
+            App.WriteDiagnostic("favorite-icon", error.GetType().Name);
+        }
     }
 }
