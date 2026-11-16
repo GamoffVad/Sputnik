@@ -14,12 +14,16 @@ struct StickyShareChannel: Decodable, Equatable {
     let name: String
     let template: String
 
+    private static let telegram = "https://t.me/share/url?url=%E2%80%8B&text={text}"
+    private static let max = "https://web.max.ru/:share?text={text}"
     private static let legacyDefaults = [
         StickyShareChannel(name: "Почта", template: "mailto:?body={text}"),
         StickyShareChannel(name: "Telegram", template: "tg://msg?text={text}"),
     ]
-    private static let defaults = legacyDefaults + [
-        StickyShareChannel(name: "MAX", template: "https://max.ru/:share?text={text}"),
+    private static let defaults = [
+        legacyDefaults[0],
+        StickyShareChannel(name: "Telegram", template: telegram),
+        StickyShareChannel(name: "MAX", template: max),
     ]
     private static let schemes: Set<String> = ["https", "mailto", "tg", "max", "whatsapp", "viber", "sms"]
     private static let unreserved = CharacterSet(charactersIn:
@@ -33,7 +37,45 @@ struct StickyShareChannel: Decodable, Equatable {
         guard let data = try? Data(contentsOf: url),
               let settings = try? JSONDecoder().decode(Settings.self, from: data) else { return defaults }
         if settings.schemaVersion == nil, settings.channels == legacyDefaults { return defaults }
-        return Array(settings.channels.prefix(32))
+        return settings.channels.prefix(32).map { $0.currentTemplate }
+    }
+
+    private var currentTemplate: Self {
+        switch template {
+        case "tg://msg?text={text}", "https://t.me/share/url?url=&text={text}":
+            return Self(name: name, template: Self.telegram)
+        case "https://max.ru/:share?text={text}":
+            return Self(name: name, template: Self.max)
+        default: return self
+        }
+    }
+
+    var menuLabel: String { template == Self.max ? name + " (в браузере)" : name }
+
+    func targets(text: String) -> (primary: URL, fallback: URL?)? {
+        guard let target = currentTemplate.url(text: text) else { return nil }
+        if target.host == "t.me", target.path == "/share/url",
+           let web = URLComponents(url: target, resolvingAgainstBaseURL: false),
+           let query = web.percentEncodedQuery,
+           let native = URL(string: "tg://msg_url?" + query) {
+            return (native, target)
+        }
+        return (target, nil)
+    }
+
+    static func verifyTargets() throws {
+        let text = "Проверка 📝 & # + ?\nВторая строка"
+        let legacy = StickyShareChannel(name: "Telegram", template: "tg://msg?text={text}")
+        guard let telegram = legacy.targets(text: text), let fallback = telegram.fallback,
+              telegram.primary.scheme == "tg", telegram.primary.host == "msg_url", fallback.host == "t.me",
+              let query = URLComponents(url: telegram.primary, resolvingAgainstBaseURL: false)?.queryItems,
+              query.first(where: { $0.name == "url" })?.value == "\u{200B}",
+              query.first(where: { $0.name == "text" })?.value == text,
+              let max = defaults.last?.targets(text: text), max.primary.host == "web.max.ru",
+              max.primary.path == "/:share",
+              URLComponents(url: max.primary, resolvingAgainstBaseURL: false)?.queryItems?.first?.value == text else {
+            throw MacError("Ссылки отправки теряют текст заметки или не открывают выбор чата.")
+        }
     }
 
     func url(text: String) -> URL? {
@@ -462,18 +504,18 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     private func shareNote() {
         guard let share, !editor.string.isEmpty else { return }
         let plain = shareText()
-        let options: [(String, URL)] = plain.isEmpty ? [] : (shareChannels?() ?? []).compactMap { channel in
-            channel.url(text: plain).map { (channel.name, $0) }
+        let options: [StickyShareChannel] = plain.isEmpty ? [] : (shareChannels?() ?? []).filter { channel in
+            channel.targets(text: plain) != nil
         }
         guard !options.isEmpty else {
             shareUsingSystem()
             return
         }
         let menu = NSMenu()
-        for (name, url) in options {
-            let entry = NSMenuItem(title: name, action: #selector(openShareChannel(_:)), keyEquivalent: "")
+        for channel in options {
+            let entry = NSMenuItem(title: channel.menuLabel, action: #selector(openShareChannel(_:)), keyEquivalent: "")
             entry.target = self
-            entry.representedObject = url
+            entry.representedObject = channel
             menu.addItem(entry)
         }
         menu.addItem(.separator())
@@ -488,11 +530,10 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     }
 
     @objc private func openShareChannel(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else { return }
-        if NSWorkspace.shared.open(url) { return }
-        let telegramWeb = StickyShareChannel(name: "Telegram", template: "https://t.me/share/url?url=%E2%80%8B&text={text}")
-        if url.scheme?.lowercased() == "tg", let target = telegramWeb.url(text: shareText()),
-           NSWorkspace.shared.open(target) { return }
+        guard let channel = sender.representedObject as? StickyShareChannel,
+              let target = channel.targets(text: shareText()) else { return }
+        if NSWorkspace.shared.open(target.primary) { return }
+        if let fallback = target.fallback, NSWorkspace.shared.open(fallback) { return }
         shareUsingSystem()
     }
 

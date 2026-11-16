@@ -23,7 +23,8 @@ struct SputnikMain {
 
 @MainActor
 private final class BrowserPanel: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
-    let section: String
+    private(set) var section: String
+    var ready = false
     let panel: SputnikPanel
     let web: WKWebView
     private let indexURL: URL
@@ -90,6 +91,13 @@ private final class BrowserPanel: NSObject, WKNavigationDelegate, WKScriptMessag
 
     func start() { web.load(URLRequest(url: indexURL)) }
 
+    func showSection(_ section: String) {
+        let changed = self.section != section
+        self.section = section
+        panel.title = AppDelegate.sections.first(where: { $0.id == section })?.label ?? "Спутник"
+        if changed && ready { publish(["section": section]) }
+    }
+
     func dispose() {
         web.configuration.userContentController.removeScriptMessageHandler(forName: "sputnik")
         web.stopLoading()
@@ -136,6 +144,11 @@ private final class BrowserPanel: NSObject, WKNavigationDelegate, WKScriptMessag
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         app?.showNavigationError(error)
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        ready = false
+        start()
     }
 }
 
@@ -227,6 +240,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     do {
                         try await prepareSmokeTest(store: store, server: server, pet: pet)
                         try await MacStickyNotes.verifyMultipleNotes(in: store.dataDirectory, palette: pet.palette)
+                        try StickyShareChannel.verifyTargets()
+                        let workArea = CGRect(x: -1200, y: 20, width: 1200, height: 760)
+                        let outside = CGRect(x: -1300, y: 710, width: 230, height: 230)
+                        guard workArea.contains(DesktopPet.clamped(outside, to: workArea)) else {
+                            throw MacError("Питомец выходит за пределы дополнительного экрана.")
+                        }
                         openSection("pets")
                     } catch {
                         finishSmokeTest(false, error.localizedDescription)
@@ -246,6 +265,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pet.onClick = { [weak self] in self?.showFavorites() }
             pet.onMove = { [weak self] in self?.followPet() }
             pet.window.orderFrontRegardless()
+            DispatchQueue.main.async { [weak self] in
+                guard let self, browser == nil else { return }
+                _ = toolsPanel(section: "motion", size: CGSize(width: 490, height: 390))
+            }
             let timer = Timer(timeInterval: 1, target: self, selector: #selector(checkReminders), userInfo: nil, repeats: true)
             RunLoop.main.add(timer, forMode: .common)
             reminderTimer = timer
@@ -407,7 +430,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func openSection(_ section: String) {
-        guard let pet, let server,
+        guard let pet,
               Self.sections.contains(where: { $0.id == section }) || section == "sharing" else { return }
         if section == "quick", !smokeTest {
             showQuick()
@@ -429,13 +452,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let screen = pet.window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
         let size = CGSize(width: min(490, (screen?.width ?? 520)-24),
                           height: min(heights[section] ?? 390, (screen?.height ?? 510)-24))
-        if browser?.section != section {
-            browser?.dispose()
-            browser = BrowserPanel(section: section, url: server.origin.appendingPathComponent("index.html"),
-                                   size: size, palette: pet.palette, app: self)
-            browser?.start()
-        }
-        guard let browser else { return }
+        guard let browser = toolsPanel(section: section, size: size) else { return }
+        if browser.panel.frame.size != size { browser.panel.setContentSize(size) }
+        browser.showSection(section)
         browser.updatePalette(pet.palette, font: pet.fontFamily)
         if !smokeTest {
             position(browser.panel, besideMenu: true)
@@ -444,17 +463,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func toolsPanel(section: String, size: CGSize) -> BrowserPanel? {
+        if let browser { return browser }
+        guard let pet, let server else { return nil }
+        let panel = BrowserPanel(section: section, url: server.origin.appendingPathComponent("index.html"),
+                                 size: size, palette: pet.palette, app: self)
+        browser = panel
+        panel.start()
+        return panel
+    }
+
     fileprivate func execute(_ action: String, payload: Any?, browser: BrowserPanel) async throws -> Any? {
         guard let store else { return nil }
         switch action {
         case "ready":
+            browser.ready = true
             if smokeTest {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self, weak browser] in
-                    browser?.web.evaluateJavaScript("document.querySelector('#main h1')?.textContent") { value, error in
-                        let heading = value as? String
-                        let imported = self?.testedPetImport == true ? ", imported five Knight Watchman animations" : ""
-                        self?.finishSmokeTest(heading == "Питомцы",
-                            error?.localizedDescription ?? heading.map { "decoded Sand Watchman, opened and saved three notes, rendered \($0)\(imported)" } ?? "Пустая панель")
+                Task { @MainActor [weak self, weak browser] in
+                    guard let self, let browser else { return }
+                    do {
+                        try await verifyHeading("Питомцы", in: browser)
+                        openSection("motion")
+                        guard self.browser === browser else { throw MacError("WebKit пересоздан при смене раздела.") }
+                        try await verifyHeading("Движения", in: browser)
+                        let imported = testedPetImport ? ", imported five Knight Watchman animations" : ""
+                        finishSmokeTest(true, "verified pet bounds, opened and saved three notes, verified note sharing links, switched sections in one WKWebView\(imported)")
+                    } catch {
+                        finishSmokeTest(false, error.localizedDescription)
                     }
                 }
             }
@@ -477,6 +512,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         default:
             return try await MacBridge.execute(action, payload: payload, store: store, app: self)
         }
+    }
+
+    private func verifyHeading(_ heading: String, in browser: BrowserPanel) async throws {
+        for _ in 0..<30 {
+            try await Task.sleep(nanoseconds: 100_000_000)
+            let value = try await browser.web.evaluateJavaScript("document.querySelector('#main h1')?.textContent || ''")
+            if value as? String == heading { return }
+        }
+        throw MacError("Не открылся раздел «\(heading)».")
     }
 
     private func position(_ panel: NSWindow, besideMenu: Bool = false) {

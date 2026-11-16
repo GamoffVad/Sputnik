@@ -158,6 +158,7 @@ private final class DesktopSprite: NSView {
     var clicked: ((NSEvent) -> Void)?
     var context: (() -> Void)?
     var moved: (() -> Void)?
+    var preferredSize: CGFloat = 230
     private var dragPoint: CGPoint?
     private var start: CGPoint = .zero
     private var dragged = false
@@ -188,8 +189,12 @@ private final class DesktopSprite: NSView {
         let area = (NSScreen.screens.first { $0.frame.contains(mouse) } ?? window.screen ?? NSScreen.main)?.visibleFrame
         var frame = window.frame
         frame.origin = CGPoint(x: start.x + delta.x, y: start.y + delta.y)
-        if let area { frame = DesktopPet.clamped(frame, to: area) }
-        window.setFrameOrigin(frame.origin)
+        if let area {
+            let size = min(preferredSize, min(area.width, area.height))
+            frame.size = CGSize(width: size, height: size)
+            frame = DesktopPet.clamped(frame, to: area)
+        }
+        window.setFrame(frame, display: false)
         moved?()
     }
 
@@ -248,6 +253,9 @@ final class DesktopPet: NSObject {
         if let screen = NSScreen.main {
             window.setFrameOrigin(CGPoint(x: screen.visibleFrame.maxX - size - 24, y: screen.visibleFrame.minY + 18))
         }
+        constrainToScreen()
+        NotificationCenter.default.addObserver(self, selector: #selector(screenParametersChanged),
+                                               name: NSApplication.didChangeScreenParametersNotification, object: nil)
         sprite.clicked = { [weak self] event in
             switch event.clickCount {
             case 3: self?.onQuick?()
@@ -263,6 +271,7 @@ final class DesktopPet: NSObject {
     }
 
     func stop() {
+        NotificationCenter.default.removeObserver(self, name: NSApplication.didChangeScreenParametersNotification, object: nil)
         timer?.invalidate()
         timer = nil
         cancelPreload()
@@ -296,13 +305,22 @@ final class DesktopPet: NSObject {
         palette = SputnikPalette(theme)
         fontFamily = workspace["font"] as? String
         let scale = (workspace["petScale"] as? NSNumber)?.doubleValue ?? 100
-        let area = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame
-        let width = min(230 * max(0.6, min(1.6, scale / 100)), area.map { min($0.width, $0.height) } ?? 368)
+        sprite.preferredSize = 230 * max(0.6, min(1.6, scale / 100))
+        constrainToScreen()
+    }
+
+    @objc private func screenParametersChanged() {
+        constrainToScreen()
+        onMove?()
+    }
+
+    private func constrainToScreen() {
+        guard let area = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else { return }
+        let width = min(sprite.preferredSize, min(area.width, area.height))
         let old = window.frame
-        if abs(old.width - width) > 0.1 {
-            let new = CGRect(x: old.midX - width / 2, y: old.minY, width: width, height: width)
-            window.setFrame(area.map { Self.clamped(new, to: $0) } ?? new, display: true)
-        }
+        let new = CGRect(x: old.midX - width / 2, y: old.minY, width: width, height: width)
+        let fitted = Self.clamped(new, to: area)
+        if old != fitted { window.setFrame(fitted, display: true) }
     }
 
     func setPlayback(_ command: String, index: Int) {
