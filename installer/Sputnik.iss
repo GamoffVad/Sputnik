@@ -21,10 +21,10 @@
 AppId={#AppKey}
 AppName={#ProductName}
 AppVersion={#AppVersion}
-AppPublisher=GAMOFF
-AppPublisherURL=https://github.com/GAMOFF/Sputnik
-AppSupportURL=https://github.com/GAMOFF/Sputnik/issues
-AppUpdatesURL=https://github.com/GAMOFF/Sputnik/releases/latest
+AppPublisher=GamoffVad
+AppPublisherURL=https://github.com/GamoffVad/Sputnik
+AppSupportURL=https://github.com/GamoffVad/Sputnik/issues
+AppUpdatesURL=https://github.com/GamoffVad/Sputnik/releases/latest
 #if AppKey == "Sputnik.Desktop"
 DefaultDirName={localappdata}\Programs\Sputnik
 AppMutex=Local\Sputnik.Desktop
