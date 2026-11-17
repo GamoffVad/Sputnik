@@ -211,7 +211,6 @@ private final class DesktopSprite: NSView {
         if let area {
             let size = min(preferredSize, min(area.width, area.height))
             frame.size = CGSize(width: size, height: size)
-            frame = DesktopPet.clamped(frame, to: area)
         }
         window.setFrame(frame, display: false)
         moved?()

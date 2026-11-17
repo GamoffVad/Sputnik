@@ -8,12 +8,12 @@
 
 | Платформа | Версия | Загрузка |
 | --- | --- | --- |
-| macOS 13+, Apple Silicon и Intel | 0.2.1, предварительная | [Скачать DMG](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.1/Sputnik-0.2.1-macOS-Universal.dmg) |
+| macOS 13+, Apple Silicon и Intel | 0.2.2, предварительная | [Скачать DMG](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.2/Sputnik-0.2.2-macOS-Universal.dmg) |
 | Windows 10 / 11, x64 | 1.3.12 | [Установщик](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.12/Sputnik-1.3.12-Windows-10-11-x64.exe) |
 | Windows 7 SP1, x64 | 1.3.12 | [Установщик 64 бит](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.12/Sputnik-1.3.12-Windows-7-x64.exe) |
 | Windows 7 SP1, x86 | 1.3.12 | [Установщик 32 бита](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.12/Sputnik-1.3.12-Windows-7-x86.exe) |
 
-[Изменения Windows](docs/releases/1.3.12.md) · [Изменения macOS](docs/releases/macos-0.2.1.md) · [Архив выпусков](https://github.com/GamoffVad/Sputnik/releases)
+[Изменения Windows](docs/releases/1.3.12.md) · [Изменения macOS](docs/releases/macos-0.2.2.md) · [Архив выпусков](https://github.com/GamoffVad/Sputnik/releases)
 
 Версии платформ нумеруются отдельно: Windows использует WPF, macOS — AppKit/WebKit. Выпуск macOS подписан ad hoc, без Developer ID и нотарификации Apple. [Установка и сборка macOS](macos/README.md).
 
