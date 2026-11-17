@@ -281,8 +281,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pet.onMenu = { [weak self] in self?.toggleMenu() }
             pet.onQuick = { [weak self] in self?.openSection("quick") }
             pet.onNotes = { [weak self] in self?.openSection("notes") }
-            pet.onClick = { [weak self] in self?.showFavorites() }
+            pet.onClick = { [weak self] in
+                guard let self else { return }
+                if !self.showFavorites() { self.openSection("favorites") }
+            }
             pet.onMove = { [weak self] in self?.followPet() }
+            pet.onDragBegin = { [weak self] in self?.hideFavorites() }
             pet.window.orderFrontRegardless()
             DispatchQueue.main.async { [weak self] in
                 guard let self, browser == nil else { return }
@@ -668,8 +672,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // or changing their layout settings reanchors them to the pet.
     }
 
-    func showFavorites() {
-        guard let pet, let store else { return }
+    @discardableResult
+    func showFavorites() -> Bool {
+        guard let pet, let store else { return false }
         hideFavorites(animated: false)
         let active = store.readWorkspace()
         let favorites = (active["favorites"] as? [[String: Any]] ?? []).filter { item in
@@ -677,7 +682,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   let target = item["target"] as? String else { return false }
             return !target.isEmpty
         }
-        guard !favorites.isEmpty else { return }
+        guard !favorites.isEmpty else { return false }
         let diameter = CGFloat(max(30, min(86, 54 * ((active["sphereScale"] as? NSNumber)?.doubleValue ?? 100)/100)))
         sphereSpacing = CGFloat((active["sphereSpread"] as? NSNumber)?.doubleValue ?? 100)/100
         sphereOffset = CGFloat((active["sphereOffset"] as? NSNumber)?.doubleValue ?? 15)
@@ -731,6 +736,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             animation.duration = 0.16
             spheres.forEach { $0.animator().alphaValue = 1 }
         }
+        return true
     }
 
     private func symbolForFavorite(_ icon: String?) -> String {
