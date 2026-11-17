@@ -17,6 +17,7 @@ internal sealed class QuickChatWindow : Window
     private readonly Action<Window> position;
     private readonly Action openFull;
     private readonly Func<string, Task<string>> send;
+    private Button? submitButton;
     private bool waiting;
     private bool dismissed;
 
@@ -27,7 +28,7 @@ internal sealed class QuickChatWindow : Window
         this.send = send;
         Title = "Быстрый чат Спутника";
         Width = 300;
-        Height = 38;
+        Height = 44;
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
@@ -46,6 +47,7 @@ internal sealed class QuickChatWindow : Window
         input.UseTheme(Control.ForegroundProperty, "Ink");
         input.UseTheme(TextBoxBase.CaretBrushProperty, "Accent");
         AutomationProperties.SetName(input, "Сообщение модели");
+        input.TextChanged += (_, _) => { if (submitButton is not null) submitButton.IsEnabled = !string.IsNullOrWhiteSpace(input.Text); };
         input.KeyDown += async (_, e) =>
         {
             if (e.Key != Key.Enter) return;
@@ -75,19 +77,8 @@ internal sealed class QuickChatWindow : Window
             return;
         }
         var row = new DockPanel { Tag = "compose", Margin = new Thickness(10, 4, 4, 4) };
-        var submit = Button("Отправить", primary: true);
-        submit.ToolTip = "Отправить (Enter)";
-        AutomationProperties.SetName(submit, "Отправить");
-        var arrow = new Path
-        {
-            Data = Geometry.Parse("M2 8H15 M9 2L15 8 9 14"),
-            Width = 16, Height = 16, Stretch = Stretch.Uniform,
-            StrokeThickness = 1.7,
-            StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
-            StrokeLineJoin = PenLineJoin.Round,
-        };
-        arrow.UseTheme(Shape.StrokeProperty, "AccentInk");
-        submit.Content = arrow;
+        var submit = submitButton = WorkspaceUi.IconButton("Отправить сообщение (Enter)", WorkspaceUi.SendIcon, true);
+        submit.IsEnabled = !string.IsNullOrWhiteSpace(input.Text);
         submit.Click += async (_, _) => await Submit();
         DockPanel.SetDock(submit, Dock.Right);
         row.Children.Add(submit);
@@ -103,7 +94,7 @@ internal sealed class QuickChatWindow : Window
             Source = input, Converter = new HintVisibility()
         });
         row.Children.Add(field);
-        Present(row, 300, 38);
+        Present(row, 300, 44);
         Activate();
         input.Focus();
     }
@@ -128,12 +119,13 @@ internal sealed class QuickChatWindow : Window
     {
         var dots = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         AutomationProperties.SetName(dots, "Ожидание ответа");
+        AutomationProperties.SetLiveSetting(dots, AutomationLiveSetting.Polite);
         for (int index = 0; index < 3; index++)
         {
             var scale = new ScaleTransform(.65, .65);
             var dot = new Ellipse
             {
-                Width = 10, Height = 10, Margin = new Thickness(4, 0, 4, 0),
+                Width = 6, Height = 6, Margin = new Thickness(4, 0, 4, 0),
                 RenderTransform = scale, RenderTransformOrigin = new Point(.5, .5)
             };
             dot.UseTheme(Shape.FillProperty, "Accent");
@@ -147,6 +139,11 @@ internal sealed class QuickChatWindow : Window
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, pulse);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, pulse);
             }
+            dot.Unloaded += (_, _) =>
+            {
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            };
             dots.Children.Add(dot);
         }
         Present(dots, 65, 30);
@@ -154,17 +151,24 @@ internal sealed class QuickChatWindow : Window
 
     private void ShowAnswer(string answer)
     {
-        var text = new TextBlock { Text = answer, FontSize = 14, TextWrapping = TextWrapping.Wrap, LineHeight = 21 };
-        text.UseTheme(TextBlock.ForegroundProperty, "Ink");
-        text.Measure(new Size(276, double.PositiveInfinity));
-        var stack = new DockPanel { Margin = new Thickness(11, 7, 11, 7) };
-        var full = Button("Открыть чат");
-        full.HorizontalAlignment = HorizontalAlignment.Right;
+        var text = WorkspaceUi.MessageText(answer);
+        AutomationProperties.SetName(text, "Ответ модели");
+        var measure = new TextBlock { Text = answer, FontFamily = FontFamily, FontSize = text.FontSize, TextWrapping = TextWrapping.Wrap };
+        measure.Measure(new Size(276, double.PositiveInfinity));
+        var stack = new DockPanel { Margin = new Thickness(10, 6, 10, 10) };
+        var header = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+        var full = WorkspaceUi.IconButton("Открыть полный чат", WorkspaceUi.ExpandIcon);
         full.Click += (_, _) => { Hide(); openFull(); };
-        DockPanel.SetDock(full, Dock.Bottom);
-        stack.Children.Add(full);
-        stack.Children.Add(new ScrollViewer { Content = text, VerticalScrollBarVisibility = ScrollBarVisibility.Auto });
-        Present(stack, 300, Compatibility.Clamp(text.DesiredSize.Height + 45, 63, 195));
+        DockPanel.SetDock(full, Dock.Right);
+        header.Children.Add(full);
+        var title = new TextBlock { Text = "Ответ", FontSize = 12, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+        title.UseTheme(TextBlock.ForegroundProperty, "Muted");
+        header.Children.Add(title);
+        DockPanel.SetDock(header, Dock.Top);
+        stack.Children.Add(header);
+        stack.Children.Add(new ScrollViewer { Content = text, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
+        Present(stack, 300, Compatibility.Clamp(measure.DesiredSize.Height + 54, 78, 195));
     }
 
     internal void Dismiss()
@@ -177,26 +181,14 @@ internal sealed class QuickChatWindow : Window
     {
         ShowActivated = child is DockPanel { Tag: "compose" };
         frame.Child = child;
-        Width = width;
-        Height = height;
+        bool loading = child is StackPanel;
+        MinWidth = loading ? 65 : 220;
+        MinHeight = loading ? 30 : child is DockPanel { Tag: "compose" } ? 44 : 78;
+        string mode = loading ? "waiting" : child is DockPanel { Tag: "compose" } ? "compose" : "answer";
+        WindowSizing.UseSize(this, "quick/" + mode, width, height);
         position(this);
         if (!IsVisible) Show();
-        var slide = new TranslateTransform(0, 5);
-        frame.RenderTransform = slide;
-        if (!SystemParameters.ClientAreaAnimation) { slide.Y = 0; return; }
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        frame.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
-        slide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(5, 0, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
-    }
-
-    private static Button Button(string title, bool primary = false)
-    {
-        var button = new Button
-        {
-            Content = title, MinHeight = 26, Padding = new Thickness(8, 2, 8, 2)
-        };
-        if (primary) button.SetResourceReference(StyleProperty, "SputnikPrimaryButton");
-        return button;
+        WorkspaceUi.Reveal(frame);
     }
 
     private sealed class HintVisibility : System.Windows.Data.IValueConverter

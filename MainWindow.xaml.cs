@@ -65,6 +65,7 @@ public partial class MainWindow : Window
         if (text.Length is < 1 or > 10000) throw new InvalidOperationException("Введите сообщение длиной до 10 000 символов.");
         if (sending) throw new InvalidOperationException("Дождитесь ответа на предыдущее сообщение.");
         sending = true;
+        chatSendState?.Invoke();
         try
         {
             JsonArray history = AppendMessage("user", text);
@@ -77,7 +78,7 @@ public partial class MainWindow : Window
             AppendMessage("assistant", reply);
             return reply;
         }
-        finally { sending = false; }
+        finally { sending = false; chatSendState?.Invoke(); }
     }
 
     private JsonArray AppendMessage(string role, string text)

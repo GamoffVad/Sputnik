@@ -17,33 +17,38 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
 
     public bool IsVisible => windows.Values.Any(window => window.IsVisible);
 
-    public void Toggle()
+    public void Toggle(bool reposition = false)
     {
         if (IsVisible)
         {
             foreach (var window in windows.Values) window.Hide();
         }
-        else Show();
+        else Show(reposition);
     }
 
-    public void Show()
+    public void Show(bool reposition = false)
     {
         if (notes.Count == 0) Create();
-        else foreach (var note in notes.ToArray()) Open(note);
+        else foreach (var note in notes.ToArray()) Open(note, reposition);
     }
 
     private void Create()
     {
-        var note = new Note(Guid.NewGuid().ToString("N"), []);
+        string preferences = Path.Combine(directory, "workspace.json");
+        bool autoColor = File.Exists(preferences) &&
+            JsonNode.Parse(File.ReadAllText(preferences))?["noteColorMode"]?.ToString() == "auto";
+        var note = new Note(Guid.NewGuid().ToString("N"), [],
+            Color: autoColor ? StickyNoteWindow.NextColor(notes.LastOrDefault()?.Color) : null);
         notes.Add(note);
         Save();
         Open(note);
     }
 
-    private void Open(Note note)
+    private void Open(Note note, bool reposition = false)
     {
         if (windows.TryGetValue(note.Id, out var existing))
         {
+            if (reposition) position(existing);
             if (!existing.IsVisible) existing.Show();
             existing.Activate();
             return;
@@ -71,7 +76,6 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             notes[index] = notes[index] with { Pinned = pinned };
             Save();
         }, sharing.Load, settings);
-        position(window);
         var area = SystemParameters.WorkArea;
         var desktop = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
             SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
@@ -79,12 +83,13 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             window.Width = Compatibility.Clamp(width, window.MinWidth, Math.Max(window.MinWidth, desktop.Width));
         if (note.Height is { } height)
             window.Height = Compatibility.Clamp(height, window.MinHeight, Math.Max(window.MinHeight, desktop.Height));
-        if (note.Left is double left && note.Top is double top && desktop.Contains(new Point(left + window.Width / 2, top + 20)))
+        position(window);
+        if (!reposition && note.Left is double left && note.Top is double top && desktop.Contains(new Point(left + window.Width / 2, top + 20)))
         {
             window.Left = left;
             window.Top = top;
         }
-        else if (area.Contains(new Point(window.Left, window.Top)))
+        else if (!reposition && area.Contains(new Point(window.Left, window.Top)))
         {
             int shift = windows.Count % 7 * 25;
             window.Top = Math.Max(area.Top, Math.Min(area.Bottom - window.Height, window.Top + shift));
