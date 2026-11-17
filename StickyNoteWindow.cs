@@ -62,6 +62,7 @@ internal sealed class StickyNoteWindow : Window
             Resources.Clear();
             if (Colors.FirstOrDefault(preset => preset.Id == color).Theme is { } theme)
                 ThemePalette.Fill(Resources, theme);
+            else WindowMaterial.Refresh();
         }
         ApplyColor();
         RoundedWindow.Apply(this, frame);

@@ -47,6 +47,7 @@ foreach ($arch in $Architecture) {
     dotnet publish (Join-Path $root 'Sputnik.csproj') -c Release -p:Win7=true "-p:PlatformTarget=$arch" "-p:BaseIntermediateOutputPath=$intermediate" "-p:Version=$Version" -o $payload
     if ($LASTEXITCODE) { throw "Sputnik build failed for $arch" }
     & (Join-Path $PSScriptRoot 'Prepare-Payload.ps1') -PublishDir $payload
+    & (Join-Path $PSScriptRoot 'Test-Payload.ps1') -PublishDir $payload -Version $Version -Target "legacy-$arch"
     & $Compiler "/DAppVersion=$Version" "/DPublishDir=$payload" "/DInstallerOutput=$out" "/DLegacyArchitecture=$arch" "/DNetFrameworkInstaller=$framework" (Join-Path $PSScriptRoot 'Sputnik.iss')
     if ($LASTEXITCODE) { throw "Sputnik installer build failed for $arch" }
     Get-FileHash -LiteralPath (Join-Path $out "SputnikSetup-$Version-win7-$arch.exe") -Algorithm SHA256

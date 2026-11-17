@@ -90,7 +90,7 @@ public partial class MainWindow
 
     private Button Button(string label, Action action, bool primary = false)
     {
-        var button = new Button { Content = label };
+        var button = label == "Назад" ? WorkspaceUi.IconButton(label, "M10 2L4 8L10 14") : new Button { Content = label };
         if (primary) button.SetResourceReference(StyleProperty, "SputnikPrimaryButton");
         button.Click += (_, _) =>
         {
@@ -164,7 +164,13 @@ public partial class MainWindow
         header.Children.Add(heading);
         DockPanel.SetDock(header, Dock.Top);
         root.Children.Add(header);
-        PanelHost.Content = root;
+        // Each page paints the full content area so layered windows cannot retain
+        // pixels from the previous page between otherwise transparent controls.
+        var surface = new Border { Child = root, ClipToBounds = true };
+        surface.UseTheme(Border.BackgroundProperty, "PageSurface");
+        PanelHost.Content = null;
+        PanelHost.Content = surface;
+        Frame.InvalidateVisual();
         return root;
     }
 

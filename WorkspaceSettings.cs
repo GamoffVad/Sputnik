@@ -105,7 +105,14 @@ public partial class MainWindow
     private void ShowAppearance()
     {
         var state = WorkspaceData();
-        var page = PageFields("Внешний вид");
+        WindowMaterial.Configure(state);
+        var root = Page("Внешний вид");
+        var page = new StackPanel();
+        var footer = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+        DockPanel.SetDock(footer, Dock.Bottom);
+        root.Children.Add(footer);
+        root.Children.Add(new ScrollViewer { Content = page, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
         var mode = new ComboBox { ItemsSource = new[] { "Палитра питомца", "Своя палитра", "Графит" } };
         mode.SelectedIndex = Value(state, "appearanceMode") == "custom" ? 1 : state["themed"]?.GetValue<bool>() == false ? 2 : 0;
         Field(page, "Цветовая схема", mode);
@@ -143,18 +150,48 @@ public partial class MainWindow
             ToolTip = "Сглаживать изображение питомца при отображении"
         };
         bool previewing = false;
-        void PreviewSizes()
+        var glass = new CheckBox { Content = "Матовое стекло", IsChecked = state["windowGlass"]?.GetValue<bool>() == true,
+            VerticalAlignment = VerticalAlignment.Center, ToolTip = "Полупрозрачный фон с размытием окон позади" };
+        AutomationProperties.SetName(glass, "Матовое стекло");
+        var transparency = new Slider { Minimum = 0, Maximum = 70, TickFrequency = 5, IsSnapToTickEnabled = true,
+            Value = state["windowTransparency"]?.GetValue<double>() ?? 25 };
+        AutomationProperties.SetName(transparency, "Прозрачность окон");
+        var transparencyLabel = Text("", "Muted", 12);
+        var materialField = new StackPanel();
+        materialField.Children.Add(transparencyLabel);
+        materialField.Children.Add(transparency);
+        void MaterialChanged()
+        {
+            transparencyLabel.Text = $"Прозрачность · {transparency.Value:0}%";
+            transparency.IsEnabled = glass.IsChecked == true;
+            if (!page.IsVisible) return;
+            previewing = true;
+            WindowMaterial.Preview(transparency.Value, glass.IsChecked == true);
+        }
+        MaterialChanged();
+        glass.Checked += (_, _) => MaterialChanged();
+        glass.Unchecked += (_, _) => MaterialChanged();
+        transparency.ValueChanged += (_, _) => MaterialChanged();
+        Row(page, glass, materialField);
+        void PreviewSizes(bool showSpheres = false)
         {
             if (!page.IsVisible) return;
             previewing = true;
             Desktop?.PreviewAppearanceSizes(sliders["petScale"].Value, sliders["sphereScale"].Value,
                 sliders["sphereSpread"].Value, sliders["sphereOffset"].Value, smoothing.IsChecked == true);
+            if (showSpheres)
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                {
+                    // Show after the outside-click hook has handled the slider click.
+                    if (page.IsVisible) Desktop?.PreviewFavoriteSpheres();
+                }));
         }
         void RestoreSizes()
         {
             if (!previewing) return;
             previewing = false;
             Desktop?.RefreshPet();
+            WindowMaterial.Configure(WorkspaceData());
         }
         page.IsVisibleChanged += (_, _) => { if (!page.IsVisible) RestoreSizes(); };
         page.Unloaded += (_, _) => RestoreSizes();
@@ -172,7 +209,7 @@ public partial class MainWindow
                 Frame.InvalidateVisual();
             }
             ShowSize();
-            slider.ValueChanged += (_, _) => { ShowSize(); PreviewSizes(); };
+            slider.ValueChanged += (_, _) => { ShowSize(); PreviewSizes(entry.Key != "petScale"); };
             AutomationProperties.SetName(slider, entry.Label);
             if (entry.Key == "sphereOffset")
                 slider.ToolTip = "Отрицательные значения приближают сферы к центру питомца";
@@ -198,7 +235,7 @@ public partial class MainWindow
             return button;
         }
         AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
-        page.Children.Add(Actions(IconAction("Сохранить", "M2 1H12L15 4V15H1V1Z M4 1V6H11V1 M4 15V10H12V15", () =>
+        footer.Children.Add(Actions(IconAction("Сохранить", "M2 1H12L15 4V15H1V1Z M4 1V6H11V1 M4 15V10H12V15", () =>
         {
             if (mode.SelectedIndex == 1 && new[] { background.Text, surface.Text, accent.Text }.Any(color =>
                 color.Length != 7 || color[0] != '#' || !color.Skip(1).All(Uri.IsHexDigit)))
@@ -212,6 +249,8 @@ public partial class MainWindow
                 workspace["font"] = fonts.SelectedItem as string ?? "Segoe UI";
                 workspace["noteColorMode"] = noteColors.SelectedIndex == 1 ? "auto" : "pet";
                 workspace["petSmoothing"] = smoothing.IsChecked == true;
+                workspace["windowGlass"] = glass.IsChecked == true;
+                workspace["windowTransparency"] = transparency.Value;
                 foreach (var pair in sliders) workspace[pair.Key] = pair.Value.Value;
             }, true);
             previewing = false;
@@ -220,14 +259,13 @@ public partial class MainWindow
         {
             UpdateWorkspace(workspace =>
             {
-                foreach (string key in sizes.Select(entry => entry.Key).Concat(new[] { "font", "customTheme", "appearanceMode", "petSmoothing", "noteColorMode" })) workspace.Remove(key);
+                foreach (string key in sizes.Select(entry => entry.Key).Concat(new[] { "font", "customTheme", "appearanceMode", "petSmoothing", "noteColorMode", "windowGlass", "windowTransparency" })) workspace.Remove(key);
                 workspace["themed"] = true;
             }, true);
             previewing = false;
             OpenSection("theme");
-        }), IconAction("Показать сферы", "M7 3A2 2 0 1 1 3 3A2 2 0 1 1 7 3 M15 8A2 2 0 1 1 11 8A2 2 0 1 1 15 8 M7 13A2 2 0 1 1 3 13A2 2 0 1 1 7 13",
-            () => Desktop?.PreviewFavoriteSpheres())));
-        page.Children.Add(status);
+        })));
+        footer.Children.Add(status);
     }
 
     private void ShowFavorites()
@@ -273,9 +311,13 @@ public partial class MainWindow
             var open = WorkspaceUi.IconButton($"Открыть «{title}»", WorkspaceUi.ExpandIcon);
             open.Click += (_, _) => { try { OpenTarget(kind, target); } catch (Exception error) { ShowError(error); } };
             open.Background = Brushes.Transparent;
+            open.BorderThickness = new Thickness(0);
+            HoverCard.Attach(open, $"Открыть «{title}»");
             open.VerticalAlignment = VerticalAlignment.Center;
             var edit = WorkspaceUi.IconButton($"Изменить «{title}»", "M10 2L14 6 M2 10L10 2 14 6 6 14H2Z");
             edit.Background = Brushes.Transparent;
+            edit.BorderThickness = new Thickness(0);
+            HoverCard.Attach(edit, $"Изменить «{title}»");
             edit.Margin = new Thickness(2, 0, 5, 0);
             edit.VerticalAlignment = VerticalAlignment.Center;
             edit.Click += (_, _) => EditFavorite(item);
@@ -299,8 +341,31 @@ public partial class MainWindow
         var title = Input("Название", Value(existing, "title"), 80);
         var target = Input("Адрес или путь", Value(existing, "target"));
         const string automaticLabel = "Значок сайта автоматически";
-        var icons = new ComboBox { ItemsSource = FavoriteIcons.Names.Prepend(automaticLabel).ToArray(), IsTextSearchEnabled = true };
-        icons.SelectedItem = Value(existing, "iconSource") == "library" ? Value(existing, "icon") : automaticLabel;
+        var icons = new ComboBox { SelectedValuePath = "Tag", MaxDropDownHeight = 270, IsTextSearchEnabled = true };
+        AutomationProperties.SetName(icons, "Значок");
+        var iconGrid = new FrameworkElementFactory(typeof(WrapPanel));
+        iconGrid.SetValue(FrameworkElement.WidthProperty, 308d);
+        icons.ItemsPanel = new ItemsPanelTemplate(iconGrid);
+        var automaticItem = new ComboBoxItem { Content = automaticLabel, Tag = automaticLabel,
+            Width = 308, Height = 36, Padding = new Thickness(8, 4, 8, 4) };
+        AutomationProperties.SetName(automaticItem, automaticLabel);
+        icons.Items.Add(automaticItem);
+        foreach (string name in FavoriteIcons.Names)
+        {
+            var glyph = new System.Windows.Shapes.Path { Data = FavoriteIcons.Get(name), Width = 20, Height = 20,
+                Stretch = Stretch.Uniform, StrokeThickness = 1.7, StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round };
+            glyph.UseTheme(System.Windows.Shapes.Shape.StrokeProperty, "Ink");
+            var choice = new ComboBoxItem { Content = glyph, Tag = name, Width = 44, Height = 40,
+                Padding = new Thickness(8), HorizontalContentAlignment = HorizontalAlignment.Center };
+            choice.SetResourceReference(StyleProperty, "SputnikIconChoice");
+            AutomationProperties.SetName(choice, name);
+            TextSearch.SetText(choice, name);
+            HoverCard.Attach(choice, name);
+            icons.Items.Add(choice);
+        }
+        icons.SelectedValue = Value(existing, "iconSource") == "library" ? Value(existing, "icon") : automaticLabel;
+        if (icons.SelectedIndex < 0) icons.SelectedIndex = 0;
         var monochrome = new CheckBox { Content = "Монохромный", IsChecked = existing?["monochrome"]?.GetValue<bool>() == true };
         var browse = Button("Выбрать приложение", () =>
         {
@@ -334,7 +399,7 @@ public partial class MainWindow
                 target.Focus();
                 return;
             }
-            string selected = icons.SelectedItem as string ?? automaticLabel;
+            string selected = icons.SelectedValue as string ?? automaticLabel;
             bool automatic = site && selected == automaticLabel;
             var favorite = new JsonObject
             {

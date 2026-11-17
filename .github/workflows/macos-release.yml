@@ -1,0 +1,98 @@
+name: macOS — build and release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: macOS version without v
+        required: true
+        default: '0.2.0'
+        type: string
+      publish:
+        description: Publish tested preview without Apple notarization
+        default: false
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: macos-release-${{ inputs.version }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: macos-26-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and smoke-test universal app
+        env:
+          APP_VERSION: ${{ inputs.version }}
+          SPUTNIK_SMOKE_TEST: '1'
+        run: bash macos/build.sh "$APP_VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ inputs.version }}-Universal
+          path: artifacts/macos/*
+          if-no-files-found: error
+          compression-level: 0
+  smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel, xcode-27]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ inputs.version }}-Universal
+          path: release
+      - name: Verify disk image and launch on native architecture
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          sw_vers
+          uname -m
+          dmg="Sputnik-$APP_VERSION-macOS-Universal.dmg"
+          (cd release && shasum -a 256 --check "$dmg.sha256")
+          hdiutil verify -quiet "release/$dmg"
+          mount_point="$(mktemp -d)"
+          trap 'hdiutil detach "$mount_point" -quiet || true; rmdir "$mount_point"' EXIT
+          hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "release/$dmg"
+          app="$mount_point/Sputnik.app"
+          codesign --verify --strict --verbose=2 "$app"
+          xcrun lipo "$app/Contents/MacOS/Sputnik" -verify_arch arm64 x86_64
+          "$app/Contents/MacOS/Sputnik" --smoke-test
+  publish:
+    needs: [build, smoke]
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ inputs.version }}-Universal
+          path: release
+      - name: Publish verified macOS preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          tag="macos-v$APP_VERSION"
+          dmg="Sputnik-$APP_VERSION-macOS-Universal.dmg"
+          notes="docs/releases/macos-$APP_VERSION.md"
+          test -f "$notes"
+          (cd release && sha256sum --check "$dmg.sha256")
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; use a new version.' >&2
+            exit 1
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "Спутник $APP_VERSION — macOS" --notes-file "$notes" --prerelease --draft --repo "$GITHUB_REPOSITORY"
+          gh release upload "$tag" "release/$dmg#macOS — Apple Silicon и Intel (.dmg)" "release/$dmg.sha256#Контрольная сумма SHA-256" --repo "$GITHUB_REPOSITORY"
+          actual=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "'"$dmg"'") | .digest')
+          expected="sha256:$(sha256sum "release/$dmg" | cut -d' ' -f1)"
+          test "$actual" = "$expected"
+          gh release edit "$tag" --draft=false --latest=false --repo "$GITHUB_REPOSITORY"

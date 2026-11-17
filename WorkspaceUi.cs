@@ -23,7 +23,7 @@ internal static class WorkspaceUi
             StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
             RenderTransformOrigin = new Point(.5, .5), RenderTransform = new ScaleTransform()
         };
-        var button = new Button { Content = icon, Width = 32, Height = 32, Padding = new Thickness(8), ToolTip = label };
+        var button = new Button { Content = icon, Width = 32, Height = 32, Padding = new Thickness(6), ToolTip = label };
         if (primary) button.SetResourceReference(FrameworkElement.StyleProperty, "SputnikPrimaryButton");
         icon.SetBinding(Shape.StrokeProperty, new Binding(nameof(Control.Foreground)) { Source = button });
         AutomationProperties.SetName(button, label);

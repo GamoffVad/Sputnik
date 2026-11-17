@@ -63,6 +63,7 @@ internal static class ThemePalette
             Mix(surface, accent, .45), Mix(surface, accent, .10), new Point(.1, 0), new Point(.85, 1));
         resources["ThemeOrbRimFocus"] = new LinearGradientBrush(
             Mix(surface, accent, .72), Mix(surface, accent, .30), new Point(.1, 0), new Point(.85, 1));
+        WindowMaterial.Refresh();
     }
 
     private static Color Parse(string color) => (Color)ColorConverter.ConvertFromString(color);

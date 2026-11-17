@@ -1,4 +1,4 @@
-name: Windows release
+name: Windows — build and release
 
 on:
   workflow_dispatch:
@@ -53,10 +53,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force $out | Out-Null
           & ./installer/Prepare-Payload.ps1 -PublishDir $payload
-          Compress-Archive -Path "$payload/*" -DestinationPath "$out/Sputnik-win-x64.zip"
+          & ./installer/Test-Payload.ps1 -PublishDir $payload -Version $env:APP_VERSION -Target modern-x64
+          Compress-Archive -Path "$payload/*" -DestinationPath "$out/Sputnik-$env:APP_VERSION-Windows-10-11-x64-Portable.zip"
           & $compiler "/DAppVersion=$env:APP_VERSION" "/DVersionedOutput" "/DPublishDir=$payload" "/DInstallerOutput=$out" installer/Sputnik.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Get-FileHash -LiteralPath "$out/SputnikSetup-$env:APP_VERSION-win10-win11-x64.exe"
+          Move-Item -LiteralPath "$out/SputnikSetup-$env:APP_VERSION-win10-win11-x64.exe" -Destination "$out/Sputnik-$env:APP_VERSION-Windows-10-11-x64.exe"
       - name: Build Windows 7 installers and checksums
         shell: pwsh
         env:
@@ -64,7 +65,9 @@ jobs:
         run: |
           $compiler = Join-Path $env:RUNNER_TEMP 'inno7/ISCC.exe'
           & ./installer/Build-Windows7.ps1 -Version $env:APP_VERSION -Compiler $compiler
-          Copy-Item "artifacts/win7/v$env:APP_VERSION/*.exe" artifacts/release/
+          foreach ($arch in @('x64','x86')) {
+            Copy-Item "artifacts/win7/v$env:APP_VERSION/SputnikSetup-$env:APP_VERSION-win7-$arch.exe" "artifacts/release/Sputnik-$env:APP_VERSION-Windows-7-$arch.exe"
+          }
           Get-ChildItem artifacts/release -File | Sort-Object Name | ForEach-Object {
             $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             "$hash  $($_.Name)"
@@ -75,8 +78,8 @@ jobs:
         with:
           name: Sputnik-Windows-${{ inputs.version }}-preview
           path: |
-            artifacts/release/SputnikSetup-*.exe
-            artifacts/release/Sputnik-win-x64.zip
+            artifacts/release/Sputnik-*.exe
+            artifacts/release/Sputnik-*-Portable.zip
             artifacts/release/SHA256SUMS.txt
           if-no-files-found: error
           compression-level: 0
@@ -102,9 +105,9 @@ jobs:
           $notes = "docs/releases/$env:APP_VERSION.md"
           if (!$resume) {
             if (Test-Path -LiteralPath $notes) {
-              gh release create $tag --repo $repo --target $sourceCommit --title "Спутник $tag" --notes-file $notes --draft
+              gh release create $tag --repo $repo --target $sourceCommit --title "Спутник $env:APP_VERSION — Windows" --notes-file $notes --draft
             } else {
-              gh release create $tag --repo $repo --target $sourceCommit --title "Спутник $tag" --generate-notes --draft
+              gh release create $tag --repo $repo --target $sourceCommit --title "Спутник $env:APP_VERSION — Windows" --generate-notes --draft
             }
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }

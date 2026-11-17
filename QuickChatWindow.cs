@@ -184,8 +184,8 @@ internal sealed class QuickChatWindow : Window
         bool loading = child is StackPanel;
         MinWidth = loading ? 65 : 220;
         MinHeight = loading ? 30 : child is DockPanel { Tag: "compose" } ? 44 : 78;
-        string mode = loading ? "waiting" : child is DockPanel { Tag: "compose" } ? "compose" : "answer";
-        WindowSizing.UseSize(this, "quick/" + mode, width, height);
+        Width = width;
+        Height = height;
         position(this);
         if (!IsVisible) Show();
         WorkspaceUi.Reveal(frame);

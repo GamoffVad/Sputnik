@@ -154,14 +154,15 @@ internal sealed class DesktopControls : IDisposable
             {
                 Cursor = Cursors.Hand,
                 Content = new Viewbox { Child = ReadSiteIcon(item) ?? icon, Stretch = Stretch.Uniform },
-                ToolTip = pages == 1 ? item.Title : $"{item.Title} · {spherePage + 1}/{pages} · Колесо мыши",
             };
+            var popover = HoverCard.Attach(toggle, item.Title,
+                pages == 1 ? null : $"{spherePage + 1}/{pages} · Колесо мыши — следующая страница");
             AutomationProperties.SetName(toggle, item.Title);
             toggle.Click += (_, _) =>
             {
                 try { MainWindow.OpenTarget(item.Kind, item.Target); }
                 catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception)
-                { toggle.ToolTip = error.Message; }
+                { popover.ShowMessage(error.Message); }
             };
             toggle.PreviewMouseWheel += (_, args) =>
             {
@@ -301,7 +302,6 @@ internal sealed class DesktopControls : IDisposable
         menu = FloatingWindow(frame, 270, 456, activate: true);
         menu.MinWidth = 240;
         menu.MinHeight = 240;
-        WindowSizing.Enable(menu, frame);
         menu.UseTheme(Window.FontFamilyProperty, "Font");
         menu.PreviewKeyDown += (_, args) => { if (args.Key == Key.Escape) CloseMenu(); };
         PositionPanel(menu, "context");
@@ -342,7 +342,7 @@ internal sealed class DesktopControls : IDisposable
             "sticky" => (340d, 320d),
             "motion" => (426d, Math.Min(480d, 151d + 36d * Math.Max(1, (pet as DesktopPetWindow)?.AnimationCount ?? 0))),
             "manage" => (404d, 370d),
-            "theme" => (404d, 424d),
+            "theme" => (404d, 480d),
             "pets" => (410d, 375d),
             "favorites" => (454d, 410d),
             "model" => (438d, 400d),
@@ -355,7 +355,11 @@ internal sealed class DesktopControls : IDisposable
             window.Width = Math.Max(window.MinWidth, Math.Min(window.Width, area.Width));
             window.Height = Math.Max(window.MinHeight, Math.Min(window.Height, area.Height));
         }
-        else WindowSizing.UseSize(window, section, size.Item1, size.Item2, area.Size);
+        else
+        {
+            window.Width = Math.Max(window.MinWidth, Math.Min(size.Item1, area.Width));
+            window.Height = Math.Max(window.MinHeight, Math.Min(size.Item2, area.Height));
+        }
         if (TryPositionAtMenu(window, section == "sticky" ? "notes" : section, area)) return;
         if (section == "context")
         {
@@ -702,13 +706,15 @@ internal sealed class DesktopControls : IDisposable
     {
         content.RenderTransformOrigin = new Point(.5, .5);
         content.RenderTransform = new ScaleTransform(activate ? 1 : .75, activate ? 1 : .75);
-        return new Window
+        var window = new Window
         {
             Title = activate ? "Меню питомца" : "Быстрое действие Спутника",
             Width = width, Height = height, ShowActivated = activate, Topmost = true, ShowInTaskbar = false,
             WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize,
-            AllowsTransparency = true, Background = Brushes.Transparent, Content = content,
+            AllowsTransparency = !activate, Background = Brushes.Transparent, Content = content,
         };
+        if (activate && content is Border frame) RoundedWindow.Apply(window, frame);
+        return window;
     }
 
     private static ControlTemplate OrbTemplate(double size)
@@ -717,19 +723,21 @@ internal sealed class DesktopControls : IDisposable
         border.Name = "Fill";
         border.SetValue(Border.CornerRadiusProperty, new CornerRadius(size / 2));
         border.SetValue(Border.BorderThicknessProperty, new Thickness(1));
-        border.SetResourceReference(Border.BorderBrushProperty, "ThemeOrbRim");
+        border.SetValue(Border.BorderBrushProperty, Brushes.Transparent);
         border.SetResourceReference(Border.BackgroundProperty, "ThemeOrb");
         var content = new FrameworkElementFactory(typeof(ContentPresenter));
         content.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
         content.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
         border.AppendChild(content);
         var template = new ControlTemplate(typeof(Button)) { VisualTree = border };
-        foreach (DependencyProperty property in new[] { UIElement.IsMouseOverProperty, UIElement.IsKeyboardFocusedProperty })
         {
-            var trigger = new Trigger { Property = property, Value = true };
+            var trigger = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
             trigger.Setters.Add(new Setter(Border.BorderBrushProperty, new DynamicResourceExtension("ThemeOrbRimFocus"), "Fill"));
             template.Triggers.Add(trigger);
         }
+        var focus = new Trigger { Property = UIElement.IsKeyboardFocusedProperty, Value = true };
+        focus.Setters.Add(new Setter(UIElement.OpacityProperty, .82, "Fill"));
+        template.Triggers.Add(focus);
         return template;
     }
 

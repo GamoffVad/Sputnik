@@ -223,8 +223,10 @@ public partial class MainWindow : Window
         JsonNode? response;
         try { response = await result.Content.ReadFromJsonAsync<JsonNode>(); }
         catch (JsonException) { throw new InvalidOperationException("Сервер вернул ответ в формате, отличном от JSON. Проверьте базовый URL API."); }
-        string? reply = response?["choices"]?[0]?["message"]?["content"]?.ToString();
-        if (string.IsNullOrWhiteSpace(reply))
+        if (response is not JsonObject resultObject || resultObject["choices"] is not JsonArray choices ||
+            choices.Count == 0 || choices[0] is not JsonObject choice || choice["message"] is not JsonObject message ||
+            message["content"] is not JsonValue content || !content.TryGetValue<string>(out var reply) ||
+            string.IsNullOrWhiteSpace(reply))
             throw new InvalidOperationException("Модель вернула пустой ответ.");
         return testing ? "Подключение работает" : reply!;
     }
