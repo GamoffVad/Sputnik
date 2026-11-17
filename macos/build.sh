@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-version="${1:-0.2.0}"
+version="${1:-0.2.1}"
 output="${2:-$root/artifacts/macos}"
 build_number="${GITHUB_RUN_NUMBER:-1}"
 minimum_version="13.0"

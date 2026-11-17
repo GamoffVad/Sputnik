@@ -259,6 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         try await prepareSmokeTest(store: store, server: server, pet: pet)
                         try await MacStickyNotes.verifyMultipleNotes(in: store.dataDirectory, palette: pet.palette)
                         try StickyShareChannel.verifyTargets()
+                        try NoteAttachments.verify(in: store.dataDirectory)
                         let workArea = CGRect(x: -1200, y: 20, width: 1200, height: 760)
                         let outside = CGRect(x: -1300, y: 710, width: 230, height: 230)
                         guard workArea.contains(DesktopPet.clamped(outside, to: workArea)) else {

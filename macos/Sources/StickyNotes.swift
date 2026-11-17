@@ -523,22 +523,36 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
 
     private func shareNote() {
         guard let share, !editor.string.isEmpty else { return }
-        let plain = shareText()
-        let options: [StickyShareChannel] = plain.isEmpty ? [] : (shareChannels?() ?? []).filter { channel in
-            channel.targets(text: plain) != nil
-        }
+        let payload: NoteAttachments.Payload
+        do { payload = try NoteAttachments.read(editor.attributedString()) }
+        catch { NSAlert(error: error).runModal(); return }
+        let photos = !payload.images.isEmpty
+        let options = (shareChannels?() ?? []).filter { $0.targets(text: payload.text) != nil }
         guard !options.isEmpty else {
             shareUsingSystem()
             return
         }
         let menu = NSMenu()
+        if photos {
+            let all = NSMenuItem(title: "Поделиться текстом и фото…", action: #selector(shareUsingSystem), keyEquivalent: "")
+            all.target = self
+            menu.addItem(all)
+            menu.addItem(.separator())
+        }
         for channel in options {
-            let entry = NSMenuItem(title: channel.menuLabel, action: #selector(openShareChannel(_:)), keyEquivalent: "")
+            let label = photos ? channel.menuLabel + " — вставить фото" : channel.menuLabel
+            let entry = NSMenuItem(title: label, action: #selector(openShareChannel(_:)), keyEquivalent: "")
             entry.target = self
             entry.representedObject = channel
             menu.addItem(entry)
         }
         menu.addItem(.separator())
+        if photos {
+            let text = NSMenuItem(title: "Скопировать текст заметки", action: #selector(copyShareText), keyEquivalent: "")
+            text.target = self
+            text.isEnabled = !payload.text.isEmpty
+            menu.addItem(text)
+        }
         let system = NSMenuItem(title: "Другие способы…", action: #selector(shareUsingSystem), keyEquivalent: "")
         system.target = self
         menu.addItem(system)
@@ -550,23 +564,52 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     }
 
     @objc private func openShareChannel(_ sender: NSMenuItem) {
-        guard let channel = sender.representedObject as? StickyShareChannel,
-              let target = channel.targets(text: shareText()) else { return }
+        guard let channel = sender.representedObject as? StickyShareChannel else { return }
+        do {
+            let payload = try NoteAttachments.read(editor.attributedString())
+            if !payload.images.isEmpty { try handoffPhotos(payload, channel: channel); return }
+        } catch { NSAlert(error: error).runModal(); return }
+        guard let target = channel.targets(text: shareText()) else { return }
         if NSWorkspace.shared.open(target.primary) { return }
         if let fallback = target.fallback, NSWorkspace.shared.open(fallback) { return }
         shareUsingSystem()
     }
 
+    @objc private func copyShareText() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(shareText(), forType: .string)
+    }
+
+    private func handoffPhotos(_ payload: NoteAttachments.Payload, channel: StickyShareChannel) throws {
+        guard let target = channel.targets(text: payload.text) else { throw MacError("Проверьте адрес канала отправки.") }
+        let prompt = NSAlert()
+        prompt.messageText = "Фото для «\(channel.name)»"
+        prompt.informativeText = "Фото: \(payload.images.count). Скопируем их для вставки. Откройте нужный чат и нажмите ⌘V, затем подтвердите отправку. Текст заметки передадим через ссылку канала. Если клиент не принимает несколько фото из буфера, прикрепите подготовленные файлы через скрепку."
+        prompt.addButton(withTitle: "Открыть чат")
+        prompt.addButton(withTitle: "Показать файлы фото")
+        prompt.addButton(withTitle: "Отмена")
+        let response = prompt.runModal()
+        guard response == .alertFirstButtonReturn || response == .alertSecondButtonReturn else { return }
+        let root = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask,
+                                               appropriateFor: nil, create: true)
+            .appendingPathComponent("Sputnik/SharedNotes", isDirectory: true)
+        let files = try NoteAttachments.export(payload, root: root)
+        if response == .alertSecondButtonReturn {
+            NSWorkspace.shared.activateFileViewerSelecting(files)
+            return
+        }
+        try NoteAttachments.copyPhotos(files, to: .general)
+        if NSWorkspace.shared.open(target.primary) { return }
+        if let fallback = target.fallback, NSWorkspace.shared.open(fallback) { return }
+        NSWorkspace.shared.activateFileViewerSelecting(files)
+        throw MacError("Канал не открылся. Фото подготовлены: прикрепите их в нужном приложении.")
+    }
+
     @objc private func shareUsingSystem() {
         guard let share else { return }
-        var items: [Any] = []
-        let plain = shareText()
-        if !plain.isEmpty { items.append(plain) }
-        if let contents = editor.textStorage {
-            contents.enumerateAttribute(.attachment, in: NSRange(location: 0, length: contents.length)) { value, _, _ in
-                if let image = (value as? NSTextAttachment)?.image { items.append(image) }
-            }
-        }
+        let items: [Any]
+        do { items = try NoteAttachments.read(editor.attributedString()).items }
+        catch { NSAlert(error: error).runModal(); return }
         guard !items.isEmpty else { return }
         let picker = NSSharingServicePicker(items: items)
         sharingPicker = picker
