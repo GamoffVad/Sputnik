@@ -510,7 +510,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             browser.ready = true
             if smokeTest {
                 Task { @MainActor [weak self, weak browser] in
-                    guard let self, let browser else { return }
+                    guard let self, let browser, let pet = self.pet else { return }
                     do {
                         try await verifyHeading("Питомцы", in: browser)
                         openSection("motion")
