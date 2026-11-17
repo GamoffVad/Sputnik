@@ -61,7 +61,8 @@ jobs:
           hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "release/$dmg"
           app="$mount_point/Sputnik.app"
           codesign --verify --strict --verbose=2 "$app"
-          xcrun lipo "$app/Contents/MacOS/Sputnik" -verify_arch arm64 x86_64
+          architectures=" $(xcrun lipo -archs "$app/Contents/MacOS/Sputnik") "
+          [[ "$architectures" == *" arm64 "* && "$architectures" == *" x86_64 "* ]]
           "$app/Contents/MacOS/Sputnik" --smoke-test
   publish:
     needs: [build, smoke]
