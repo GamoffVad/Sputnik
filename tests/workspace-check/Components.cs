@@ -348,6 +348,25 @@ partial class Check
         Reject(()=>Invoke(petType,"Install","../escape",pending,library),"Invalid stage token");
         Console.WriteLine("PASS pet packages: PNG/manifest staging, install/list, duplicate ID, path traversal and token validation.");
 
+        manifest["id"]="qa-native"; manifest["schemaVersion"]=2;
+        manifest["animations"]![0]!["file"]="sheet.png";
+        manifest["animations"]![0]!["viewport"]=new JsonObject { ["x"]=-1, ["y"]=-1, ["width"]=4, ["height"]=4 };
+        var nativePreview=(JsonObject)Invoke(petType,"Stage",Package(manifest),pending,library);
+        Assert(nativePreview["animations"]![0]!["viewport"]!["x"]!.GetValue<double>()==-1,"Viewport lost while staging");
+        var raw=BitmapFrame.Create(new MemoryStream(png),BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad);
+        var originalPixels=new byte[raw.PixelWidth*raw.PixelHeight*4];
+        raw.CopyPixels(originalPixels,raw.PixelWidth*4,0);
+        var viewport=Activator.CreateInstance(T("PetViewport"),-1d,-1d,4d,4d)!;
+        var shown=(ImageSource)Invoke(T("PetFrames"),"Present",raw,viewport);
+        var retainedPixels=new byte[originalPixels.Length]; raw.CopyPixels(retainedPixels,raw.PixelWidth*4,0);
+        Assert(shown.Width==4 && shown.Height==4 && originalPixels.SequenceEqual(retainedPixels),"Viewport resampled the master frame");
+        manifest["animations"]![0]!["viewport"]!["width"]=0;
+        Reject(()=>Invoke(petType,"Stage",Package(manifest),pending,library),"Empty viewport");
+        manifest["animations"]![0]!["viewport"]!["width"]=4;
+        manifest["animations"]![0]!["viewport"]!["x"]=9000;
+        Reject(()=>Invoke(petType,"Stage",Package(manifest),pending,library),"Viewport outside allowed coordinates");
+        Console.WriteLine("PASS native pet viewports: v2 staging, transparent padding, source pixels retained, invalid rectangles rejected.");
+
         // Real loopback HTTP tests icon discovery and disk cache, without external sites.
         var listener=new System.Net.Sockets.TcpListener(IPAddress.Loopback,0); listener.Start();
         int port=((IPEndPoint)listener.LocalEndpoint).Port, requests=0;
