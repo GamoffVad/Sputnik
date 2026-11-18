@@ -75,6 +75,15 @@ internal sealed class NoteSharing(string directory)
     public static string Text(FlowDocument document)
     {
         var lines = new List<string>();
+        // TextRange on a paragraph inside a WPF List includes the generated
+        // marker. Read its inlines so our explicit list prefix appears once.
+        string InlineText(InlineCollection inlines) => string.Concat(inlines.Select(inline => inline switch
+        {
+            Run run => run.Text,
+            Span span => InlineText(span.Inlines),
+            LineBreak => Environment.NewLine,
+            _ => "",
+        }));
         void Read(BlockCollection blocks, string prefix)
         {
             foreach (var block in blocks)
@@ -84,7 +93,7 @@ internal sealed class NoteSharing(string directory)
                     case Paragraph paragraph:
                         string check = paragraph.Inlines.FirstInline is InlineUIContainer { Child: System.Windows.Controls.CheckBox box }
                             ? box.IsChecked == true ? "[x] " : "[ ] " : "";
-                        lines.Add(prefix + check + new TextRange(paragraph.ContentStart, paragraph.ContentEnd).Text.Replace("\uFFFC", ""));
+                        lines.Add(prefix + check + InlineText(paragraph.Inlines));
                         break;
                     case List list:
                         int index = 1;

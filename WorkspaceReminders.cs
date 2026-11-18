@@ -164,12 +164,14 @@ internal sealed class ReminderScheduler : IDisposable
         top.Children.Add(message);
         var row = new WrapPanel();
         top.Children.Add(row);
-        var frame = new Border { Child = top, BorderThickness = new Thickness(1) };
+        var frame = new Border { Child = new ScrollViewer { Content = top, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled }, BorderThickness = new Thickness(1) };
         frame.UseTheme(Border.BackgroundProperty, "Surface");
         frame.UseTheme(Border.BorderBrushProperty, "Edge");
         var window = new Window
         {
             Content = frame, Title = "Напоминание Спутника", Width = 330, Height = 134, ShowInTaskbar = false, ShowActivated = false,
+            MinWidth = 280, MinHeight = 134,
             WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, Topmost = true
         };
         window.UseTheme(Window.FontFamilyProperty, "Font");

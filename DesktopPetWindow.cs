@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
@@ -80,7 +81,7 @@ internal sealed class DesktopPetWindow : Window
     private bool dragging;
     private Point? restingOrigin;
     private Rect placementArea;
-    private readonly Dictionary<AnimationClip, Rect?[]> visibleFrames = new();
+    private readonly Dictionary<AnimationClip, Rect?[]> visibleBounds = new();
     private byte[] alphaScan = [];
 
     public DesktopPetWindow(Action<string> openWorkspace, Action exitApp)
@@ -108,6 +109,7 @@ internal sealed class DesktopPetWindow : Window
         Point dragStart = default;
         int clickCount = 0;
         bool pressed = false;
+        bool resumeAfterDrag = false;
         PreviewMouseLeftButtonDown += (_, args) =>
         {
             dragStart = args.GetPosition(this);
@@ -117,37 +119,50 @@ internal sealed class DesktopPetWindow : Window
         };
         sprite.MouseMove += (_, args) =>
         {
-            if (!pressed || !sprite.IsMouseCaptured || args.LeftButton != MouseButtonState.Pressed) return;
-            Vector delta = args.GetPosition(this) - dragStart;
-            if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
-                Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
-            pressed = false;
-            sprite.ReleaseMouseCapture();
-            bool playing = elapsed.IsRunning;
-            elapsed.Stop();
-            dragging = true;
-            try { DragMove(); }
-            finally
+            if (!pressed || !sprite.IsMouseCaptured) return;
+            if (args.LeftButton != MouseButtonState.Pressed) { FinishDrag(); return; }
+            Point pointer = args.GetPosition(this);
+            Vector delta = pointer - dragStart;
+            if (!dragging)
             {
-                dragging = false;
-                if (playing) elapsed.Start();
+                if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
+                    Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+                resumeAfterDrag = elapsed.IsRunning;
+                elapsed.Stop();
+                dragging = true;
+                controls.HideSpheres();
             }
-            placementArea = controls.WorkArea(atCursor: true);
-            restingOrigin = new Point(Left, Top);
-            PositionAtRest();
-            restingOrigin = new Point(Left, Top);
-            controls.FollowPet();
+            if (!MoveDragTo(PointToScreen(pointer), dragStart))
+            {
+                App.WriteDiagnostic("pet-drag", $"SetWindowPos failed: {Marshal.GetLastWin32Error()}");
+                FinishDrag();
+            }
+            args.Handled = true;
         };
+        sprite.LostMouseCapture += (_, _) => FinishDrag();
         PreviewMouseLeftButtonUp += (_, args) =>
         {
             if (!pressed) return;
-            pressed = false;
-            if (sprite.IsMouseCaptured) sprite.ReleaseMouseCapture();
+            bool moved = dragging;
+            FinishDrag();
             args.Handled = true;
+            if (moved) return;
             if (clickCount == 3) openWorkspace("quick");
             else if (clickCount == 2 && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) openWorkspace("notes");
             else if (!controls.ShowSpheres()) openWorkspace("favorites");
         };
+
+        void FinishDrag()
+        {
+            bool moved = dragging;
+            dragging = false;
+            pressed = false;
+            if (sprite.IsMouseCaptured) sprite.ReleaseMouseCapture();
+            if (!moved) return;
+            restingOrigin = new Point(Left, Top);
+            if (resumeAfterDrag) elapsed.Start();
+            controls.FollowPet();
+        }
 
         Loaded += (_, _) =>
         {
@@ -165,7 +180,7 @@ internal sealed class DesktopPetWindow : Window
         timer.Start();
         LocationChanged += (_, _) => Follow();
         SizeChanged += (_, _) => Follow();
-        DpiChanged += (_, _) => Dispatcher.BeginInvoke(() => { ConstrainToScreen(); Follow(); });
+        DpiChanged += (_, _) => Dispatcher.BeginInvoke(() => { ApplyPetSize(); Follow(); });
 
         void Follow()
         {
@@ -176,6 +191,7 @@ internal sealed class DesktopPetWindow : Window
     }
 
     internal void PositionPanel(Window panel, string section) => controls.PositionPanel(panel, section);
+    internal bool HasContextMenu => controls.HasContextMenu;
     internal void ShowFavoriteSpheres() => controls.ShowSpheres();
     internal void PositionBubble(Window bubble) => controls.PositionBubble(bubble);
     internal void WatchQuickChat(QuickChatWindow window) => controls.WatchQuickChat(window);
@@ -245,30 +261,40 @@ internal sealed class DesktopPetWindow : Window
         ResizePet(Compatibility.Clamp(petPercent, 60, 160) / 100);
         controls.SetSphereSize(DesktopControls.DefaultOrbSize * Compatibility.Clamp(spherePercent, 60, 160) / 100);
         controls.SetSphereSpread(Compatibility.Clamp(spreadPercent, 0, 100) / 100);
-        controls.SetSphereOffset(Compatibility.Clamp(offset, 0, 80));
+        controls.SetSphereOffset(Compatibility.Clamp(offset, DesktopControls.MinimumSphereOffset, DesktopControls.MaximumSphereOffset));
     }
+
+    private bool MoveDragTo(Point pointerOnScreen, Point grabbedPoint)
+    {
+        // Physical screen coordinates keep the grabbed point under the cursor across DPI boundaries.
+        Point origin = PointToScreen(new Point());
+        Vector movement = pointerOnScreen - PointToScreen(grabbedPoint);
+        const uint noSize = 0x0001, noZOrder = 0x0004, noActivate = 0x0010;
+        return SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero,
+            (int)Math.Round(origin.X + movement.X), (int)Math.Round(origin.Y + movement.Y),
+            0, 0, noSize | noZOrder | noActivate);
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
 
     private IntPtr HandleScreenChange(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        const int moving = 0x0216, displayChange = 0x007E, settingChange = 0x001A;
+        const int displayChange = 0x007E, settingChange = 0x001A;
         const int setWorkArea = 0x002F;
-        if (message == moving && lParam != IntPtr.Zero && DesktopControls.ConstrainDrag(lParam, VisibleContent()))
-        {
-            handled = true;
-            return new IntPtr(1);
-        }
         if (message == displayChange || (message == settingChange && wParam.ToInt64() == setWorkArea))
-            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(ConstrainToScreen));
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(ApplyPetSize));
         return IntPtr.Zero;
     }
 
     private void ResizePet(double scale)
     {
         preferredSize = DefaultPetSize * scale * Compatibility.Clamp(active?.DisplayScale ?? 1, 0.75, 1.6);
-        if (IsLoaded) ConstrainToScreen();
+        if (IsLoaded) ApplyPetSize();
     }
 
-    private void ConstrainToScreen()
+    private void ApplyPetSize()
     {
         if (!IsLoaded || !IsVisible || dragging) return;
         placementArea = controls.WorkArea();
@@ -283,27 +309,26 @@ internal sealed class DesktopPetWindow : Window
 
     private void PositionAtRest()
     {
-        if (dragging || restingOrigin is not { } origin || placementArea.Width <= 0 || placementArea.Height <= 0) return;
-        var frame = new Rect(origin, new Size(Width, Height));
-        if (!placementArea.Contains(frame))
-            frame = DesktopControls.ClampVisiblePet(frame, placementArea, VisibleContent());
-        if (Math.Abs(Left - frame.Left) > .01) Left = frame.Left;
-        if (Math.Abs(Top - frame.Top) > .01) Top = frame.Top;
+        if (dragging || restingOrigin is not { } origin) return;
+        if (Math.Abs(Left - origin.X) > .01) Left = origin.X;
+        if (Math.Abs(Top - origin.Y) > .01) Top = origin.Y;
     }
 
-    internal Rect VisibleContent()
+    // Use the full canvas so animation frames cannot change placement or menu anchors.
+    internal Rect VisibleContent() => new(0, 0, 1, 1);
+
+    internal Rect VisibleBounds()
     {
         if (current is null || lastFrame < 0 || displayedFrame is not { } image) return new Rect(0, 0, 1, 1);
-        if (!visibleFrames.TryGetValue(current, out var bounds))
-            visibleFrames[current] = bounds = new Rect?[current.FrameCount];
+        if (!visibleBounds.TryGetValue(current, out var bounds))
+            visibleBounds[current] = bounds = new Rect?[current.FrameCount];
         if (bounds[lastFrame] is { } cached) return cached;
         if (image.Format != PixelFormats.Bgra32 && image.Format != PixelFormats.Pbgra32)
             image = new FormatConvertedBitmap(image, PixelFormats.Bgra32, null, 0);
         int width = image.PixelWidth, height = image.PixelHeight, stride = width * 4;
-        int bytes = stride * height;
-        if (alphaScan.Length < bytes) alphaScan = new byte[bytes];
+        if (alphaScan.Length < stride * height) alphaScan = new byte[stride * height];
         image.CopyPixels(alphaScan, stride, 0);
-        int left = width, top = height, right = -1, bottom = -1;
+        int left = width, right = -1, top = height, bottom = -1;
         for (int y = 0; y < height; y++)
         {
             for (int x = 0, address = y * stride + 3; x < width; x++, address += 4)
@@ -388,7 +413,7 @@ internal sealed class DesktopPetWindow : Window
         upcoming.Clear();
         unavailable.Clear();
         bundledSheets.Clear();
-        visibleFrames.Clear();
+        visibleBounds.Clear();
         current = null;
         sheet = null;
         displayedFrame = null;
@@ -543,6 +568,5 @@ internal sealed class DesktopPetWindow : Window
         }
         sprite.Source = PetFrames.Present(displayedFrame, current.Viewport);
         lastFrame = index;
-        PositionAtRest();
     }
 }

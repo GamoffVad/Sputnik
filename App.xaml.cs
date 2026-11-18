@@ -78,6 +78,7 @@ public partial class App : Application
     private void StartDesktop()
     {
         Directory.CreateDirectory(DataDirectory);
+        RefreshWindowMaterial();
         pet = new DesktopPetWindow(ShowWorkspace, ExitApp);
         pet.UpdateFromStore();
         pet.Show();
@@ -102,7 +103,7 @@ public partial class App : Application
         {
             workspace?.Hide();
             notes ??= new StickyNotes(DataDirectory, window => pet?.PositionPanel(window, "sticky"), () => ShowWorkspace("sharing"));
-            notes.Toggle();
+            notes.Toggle(reposition: pet?.HasContextMenu == true);
             pet?.SetNotesChecked(notes.IsVisible);
             return;
         }
@@ -160,7 +161,12 @@ public partial class App : Application
         if (quickChat is { IsVisible: true }) pet?.PositionBubble(quickChat);
     }
 
-    internal void RefreshPet() => pet?.UpdateFromStore();
+    internal void RefreshPet() { pet?.UpdateFromStore(); RefreshWindowMaterial(); }
+    private static void RefreshWindowMaterial()
+    {
+        string path = Path.Combine(DataDirectory, "workspace.json");
+        WindowMaterial.Configure(File.Exists(path) ? JsonNode.Parse(File.ReadAllText(path)) as JsonObject : null);
+    }
     internal void ResetReminder(string id) => reminders?.Forget(id);
     internal void PreviewFavoriteSpheres() => pet?.ShowFavoriteSpheres();
     internal void PreviewAppearanceSizes(double petScale, double sphereScale, double spread, double offset, bool smoothing) =>

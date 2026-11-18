@@ -12,6 +12,8 @@ public partial class MainWindow
     private bool editing;
     private StackPanel? chatHistory;
     private ScrollViewer? chatScroll;
+    private Action? chatSendState;
+    private readonly List<(string Role, string Content)> renderedMessages = [];
     private static App? Desktop => Application.Current as App;
 
     private JsonObject WorkspaceData() => Read(Store) as JsonObject ?? new JsonObject();
@@ -88,7 +90,7 @@ public partial class MainWindow
 
     private Button Button(string label, Action action, bool primary = false)
     {
-        var button = new Button { Content = label };
+        var button = label == "Назад" ? WorkspaceUi.IconButton(label, "M10 2L4 8L10 14") : new Button { Content = label };
         if (primary) button.SetResourceReference(StyleProperty, "SputnikPrimaryButton");
         button.Click += (_, _) =>
         {
@@ -142,7 +144,7 @@ public partial class MainWindow
         panel.Children.Add(entry);
     }
 
-    private DockPanel Page(string title, UIElement? action = null)
+    private DockPanel Page(string title, UIElement? action = null, double titleSize = 22)
     {
         var root = new DockPanel { Margin = new Thickness(14, 10, 14, 12) };
         var header = new DockPanel { Margin = new Thickness(0, 0, 0, 9) };
@@ -156,20 +158,26 @@ public partial class MainWindow
             DockPanel.SetDock(action, Dock.Right);
             header.Children.Add(action);
         }
-        var heading = Text(title, "Ink", 22);
+        var heading = Text(title, "Ink", titleSize);
         heading.FontWeight = FontWeights.SemiBold;
         AutomationProperties.SetName(heading, title);
         header.Children.Add(heading);
         DockPanel.SetDock(header, Dock.Top);
         root.Children.Add(header);
-        PanelHost.Content = root;
+        // Each page paints the full content area so layered windows cannot retain
+        // pixels from the previous page between otherwise transparent controls.
+        var surface = new Border { Child = root, ClipToBounds = true };
+        surface.UseTheme(Border.BackgroundProperty, "PageSurface");
+        PanelHost.Content = null;
+        PanelHost.Content = surface;
+        Frame.InvalidateVisual();
         return root;
     }
 
-    private StackPanel PageFields(string title, UIElement? action = null)
+    private StackPanel PageFields(string title, UIElement? action = null, double titleSize = 22)
     {
         var fields = new StackPanel();
-        Page(title, action).Children.Add(new ScrollViewer
+        Page(title, action, titleSize).Children.Add(new ScrollViewer
         {
             Content = fields, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
@@ -197,6 +205,8 @@ public partial class MainWindow
         editing = false;
         chatHistory = null;
         chatScroll = null;
+        chatSendState = null;
+        renderedMessages.Clear();
         switch (value)
         {
             case "model": ShowModel(); break;
@@ -226,9 +236,10 @@ public partial class MainWindow
             page.Children.Add(Text("У питомца пока нет движений.", "Muted"));
             return;
         }
-        var shuffle = Button("Случайный порядок", () => Desktop?.SetPlayback("shuffle", 0), true);
-        var pause = Button("Пауза", () => Desktop?.SetPlayback("pause", 0));
-        var resume = Button("Продолжить", () => Desktop?.SetPlayback("resume", 0));
+        var shuffle = MotionButton("Случайный порядок", "M3 5 H5 L15 15 H18 M15 12 L18 15 15 18 M3 15 H5 L8 12 M12 8 L15 5 H18 M15 2 L18 5 15 8",
+            () => Desktop?.SetPlayback("shuffle", 0), true);
+        var pause = MotionButton("Пауза", "M7 4 V16 M13 4 V16", () => Desktop?.SetPlayback("pause", 0));
+        var resume = MotionButton("Продолжить", "M6 3 L16 10 6 17 Z", () => Desktop?.SetPlayback("resume", 0));
         page.Children.Add(Actions(shuffle, pause, resume));
         var enabled = new HashSet<string>(clips.Where(clip => clip.Enabled).Select(clip => clip.Name), StringComparer.Ordinal);
         void UpdateActions() => shuffle.IsEnabled = pause.IsEnabled = resume.IsEnabled = enabled.Count != 0;
@@ -281,6 +292,28 @@ public partial class MainWindow
         }
     }
 
+    private Button MotionButton(string label, string geometry, Action action, bool primary = false)
+    {
+        var button = Button(label, action, primary);
+        button.Width = button.Height = 32;
+        button.Padding = new Thickness(0);
+        button.ToolTip = label;
+        AutomationProperties.SetName(button, label);
+        var icon = new System.Windows.Shapes.Path
+        {
+            Width = 20, Height = 20,
+            Data = System.Windows.Media.Geometry.Parse(geometry),
+            StrokeThickness = 2,
+            StrokeStartLineCap = System.Windows.Media.PenLineCap.Round,
+            StrokeEndLineCap = System.Windows.Media.PenLineCap.Round,
+            StrokeLineJoin = System.Windows.Media.PenLineJoin.Round
+        };
+        icon.SetBinding(System.Windows.Shapes.Shape.StrokeProperty,
+            new System.Windows.Data.Binding(nameof(Foreground)) { Source = button });
+        button.Content = icon;
+        return button;
+    }
+
     private void SaveDisabledMotions(string pet, IEnumerable<string> disabled) => UpdateWorkspace(workspace =>
     {
         var preferences = workspace["disabledMotions"] as JsonObject ?? new JsonObject();
@@ -293,58 +326,128 @@ public partial class MainWindow
 
     private void ShowChat()
     {
-        var page = Page("Чат", Button("Модель и API", () => Desktop?.ShowWorkspace("model")));
+        var settings = WorkspaceUi.IconButton("Модель и API", "M2 4H14 M2 12H14 M5 1V7 M11 9V15");
+        settings.Click += (_, _) => Desktop?.ShowWorkspace("model");
+        var page = Page("Чат", settings, 18);
         var input = Input("Сообщение модели", max: 10000);
+        input.AcceptsReturn = true;
+        input.TextWrapping = TextWrapping.Wrap;
+        input.MinHeight = 32;
+        input.MaxHeight = 96;
+        input.FontSize = 14;
+        input.Padding = new Thickness(8, 6, 8, 6);
+        input.BorderThickness = new Thickness(0);
+        input.Background = System.Windows.Media.Brushes.Transparent;
+        input.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+        input.ToolTip = "Enter — отправить · Shift+Enter — новая строка";
         var status = Status();
-        var submit = AsyncButton("Отправить", Submit, true);
+        status.Margin = new Thickness(2, 0, 0, 5);
+        AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
+        status.Unloaded += (_, _) => WorkspaceUi.SetWaiting(status, false);
+        var submit = WorkspaceUi.IconButton("Отправить сообщение (Enter)", WorkspaceUi.SendIcon, true);
+        bool pending = false;
+        void UpdateComposer() => submit.IsEnabled = !pending && !sending && !string.IsNullOrWhiteSpace(input.Text);
+        chatSendState = UpdateComposer;
+        input.TextChanged += (_, _) => UpdateComposer();
+        UpdateComposer();
         async Task Submit()
         {
             string text = input.Text.Trim();
-            if (text.Length == 0 || sending) return;
+            if (text.Length == 0 || sending || pending) return;
+            pending = true;
             input.Clear();
+            UpdateComposer();
             status.Text = "Модель отвечает…";
+            WorkspaceUi.SetWaiting(status, true);
             try { await SendChat(text); status.Text = ""; }
-            catch (Exception error) { status.Text = error.Message; }
+            catch (Exception error)
+            {
+                status.Text = error.Message;
+                if (input.Text.Length == 0) input.Text = text;
+            }
+            finally
+            {
+                pending = false;
+                WorkspaceUi.SetWaiting(status, false);
+                UpdateComposer();
+                if (input.IsVisible) input.Focus();
+            }
         }
+        submit.Click += async (_, _) => await Submit();
         input.PreviewKeyDown += async (_, e) =>
         {
-            if (e.Key != Key.Enter) return;
+            if (e.Key != Key.Enter || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
             e.Handled = true;
             await Submit();
         };
-        var composer = new DockPanel();
-        submit.Margin = new Thickness(6, 0, 0, 0);
+        var hint = Text("Написать сообщение…", "Muted", 14);
+        hint.Margin = new Thickness(8, 6, 8, 6);
+        hint.IsHitTestVisible = false;
+        input.TextChanged += (_, _) => hint.Visibility = input.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var field = new Grid();
+        field.Children.Add(input);
+        field.Children.Add(hint);
+        var composer = new DockPanel { Margin = new Thickness(4) };
+        submit.Margin = new Thickness(4, 0, 0, 0);
+        submit.VerticalAlignment = VerticalAlignment.Bottom;
         DockPanel.SetDock(submit, Dock.Right);
         composer.Children.Add(submit);
-        composer.Children.Add(input);
+        composer.Children.Add(field);
+        var composerFrame = new Border { Child = composer, CornerRadius = new CornerRadius(11), BorderThickness = new Thickness(1) };
+        composerFrame.UseTheme(Border.BackgroundProperty, "Field");
+        composerFrame.UseTheme(Border.BorderBrushProperty, "Line");
+        input.GotKeyboardFocus += (_, _) => composerFrame.UseTheme(Border.BorderBrushProperty, "Accent");
+        input.LostKeyboardFocus += (_, _) => composerFrame.UseTheme(Border.BorderBrushProperty, "Line");
         var footer = new StackPanel();
         footer.Children.Add(status);
-        footer.Children.Add(composer);
+        footer.Children.Add(composerFrame);
         DockPanel.SetDock(footer, Dock.Bottom);
         page.Children.Add(footer);
         chatHistory = new StackPanel();
-        chatScroll = new ScrollViewer { Content = chatHistory, Margin = new Thickness(0, 0, 0, 6),
+        renderedMessages.Clear();
+        chatScroll = new ScrollViewer { Content = chatHistory, Margin = new Thickness(0, 0, 0, 8),
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         page.Children.Add(chatScroll);
-        RefreshChatHistory((WorkspaceData()["messages"] as JsonArray) ?? new JsonArray());
+        RefreshChatHistory((WorkspaceData()["messages"] as JsonArray) ?? new JsonArray(), false);
     }
 
-    private void RefreshChatHistory(JsonArray history)
+    private void RefreshChatHistory(JsonArray history, bool animate = true)
     {
         if (chatHistory is null) return;
-        chatHistory.Children.Clear();
-        foreach (var item in history.Skip(Math.Max(0, history.Count - 200)))
+        var messages = history.Skip(Math.Max(0, history.Count - 200))
+            .Select(item => (Role: Value(item, "role"), Content: Value(item, "content"))).ToArray();
+        bool follow = !animate || chatScroll is null || chatScroll.ScrollableHeight - chatScroll.VerticalOffset < 32
+            || (messages.Length > 0 && messages[messages.Length - 1].Role == "user");
+        int common = 0;
+        while (common < Math.Min(messages.Length, renderedMessages.Count) && messages[common] == renderedMessages[common]) common++;
+        if (renderedMessages.Count == 0) chatHistory.Children.Clear();
+        while (chatHistory.Children.Count > common) chatHistory.Children.RemoveAt(chatHistory.Children.Count - 1);
+        for (int index = common; index < messages.Length; index++)
         {
+            var message = messages[index];
+            bool user = message.Role == "user";
+            var content = WorkspaceUi.MessageText(message.Content);
+            AutomationProperties.SetName(content, user ? "Ваше сообщение" : "Ответ модели");
             var bubble = new Border
             {
-                Child = Text(Value(item, "content")), Padding = new Thickness(9, 6, 9, 6),
-                Margin = new Thickness(0, 0, 4, 6), CornerRadius = new CornerRadius(7)
+                Child = content, Padding = new Thickness(user ? 10 : 2, 7, user ? 10 : 2, 7),
+                Margin = new Thickness(user ? 32 : 0, 0, user ? 4 : 16, 6),
+                CornerRadius = new CornerRadius(10), HorizontalAlignment = user ? HorizontalAlignment.Right : HorizontalAlignment.Stretch
             };
-            bubble.UseTheme(Border.BackgroundProperty, Value(item, "role") == "user" ? "Hover" : "Background");
+            if (user) bubble.UseTheme(Border.BackgroundProperty, "Hover");
             chatHistory.Children.Add(bubble);
+            if (animate && index == messages.Length - 1) WorkspaceUi.Reveal(bubble);
         }
-        if (history.Count == 0) chatHistory.Children.Add(Text("С чего начнём?", "Muted"));
-        chatScroll?.ScrollToEnd();
+        renderedMessages.Clear();
+        renderedMessages.AddRange(messages);
+        if (messages.Length == 0)
+        {
+            var empty = Text("С чего начнём?", "Muted");
+            empty.Margin = new Thickness(2, 12, 0, 0);
+            chatHistory.Children.Add(empty);
+        }
+        if (follow && chatScroll is { } scroll)
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(scroll.ScrollToEnd));
     }
 
     private static readonly (string Name, string Url)[] Providers =
@@ -445,10 +548,14 @@ public partial class MainWindow
             catch (Exception error) { status.Text = error.Message; }
         }), Button("Сохранить", () =>
         {
-            SaveModel(Draft());
-            key.Clear();
-            clear.IsChecked = false;
-            status.Text = "Настройки сохранены.";
+            try
+            {
+                SaveModel(Draft());
+                key.Clear();
+                clear.IsChecked = false;
+                Hide();
+            }
+            catch (Exception error) { status.Text = error.Message; }
         }, true)));
         fields.Children.Add(status);
     }

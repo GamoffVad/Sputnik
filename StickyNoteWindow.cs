@@ -32,6 +32,12 @@ internal sealed class StickyNoteWindow : Window
         ("purple", "Сиреневый", new("#C7A8EC", "#F0E6FD", "#E6D7FC")),
     ];
 
+    internal static string NextColor(string? previous)
+    {
+        int index = Array.FindIndex(Colors, preset => preset.Id == previous);
+        return Colors[(index + 1) % Colors.Length].Id;
+    }
+
     public StickyNoteWindow(StickyNoteContent.BlockData[] content, Action create, Action<StickyNoteContent.BlockData[]> save, Action delete,
         string? color, Action<string?> saveColor, bool pinned, Action<bool> savePin, Func<NoteSharing.Channel[]> channels, Action sharingSettings)
     {
@@ -56,6 +62,7 @@ internal sealed class StickyNoteWindow : Window
             Resources.Clear();
             if (Colors.FirstOrDefault(preset => preset.Id == color).Theme is { } theme)
                 ThemePalette.Fill(Resources, theme);
+            else WindowMaterial.Refresh();
         }
         ApplyColor();
         RoundedWindow.Apply(this, frame);

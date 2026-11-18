@@ -16,7 +16,10 @@ internal sealed class DesktopControls : IDisposable
 {
     internal const double DefaultOrbSize = 52;
     internal const double DefaultSphereOffset = 10;
+    internal const double MinimumSphereOffset = -400;
+    internal const double MaximumSphereOffset = 80;
     private const double Gap = 10;
+    private const double MinimumSphereGap = 5;
     private const int MaxSpheresPerArc = 9;
     private static readonly (string Title, string Action, string Icon, string Hint)[] Entries =
     [
@@ -51,6 +54,8 @@ internal sealed class DesktopControls : IDisposable
     private readonly MouseHook mouseCallback;
     private IntPtr hook;
     private Window? menu;
+    private readonly Dictionary<string, Button> menuItems = [];
+    internal bool HasContextMenu => menu is { IsVisible: true };
     private QuickChatWindow? quickChat;
     private TextBlock? menuTitle;
     private TextBlock? notesCheck;
@@ -93,21 +98,21 @@ internal sealed class DesktopControls : IDisposable
             return;
         }
         foreach (var sphere in spheres) ResizeSphere(sphere);
-        FollowPet();
+        PositionSpheres();
     }
 
     public void SetSphereSpread(double spread)
     {
         if (sphereSpread == spread) return;
         sphereSpread = spread;
-        FollowPet();
+        PositionSpheres();
     }
 
     public void SetSphereOffset(double offset)
     {
         if (sphereOffset == offset) return;
         sphereOffset = offset;
-        FollowPet();
+        PositionSpheres();
     }
 
     private void ResizeSphere(Window sphere)
@@ -122,10 +127,10 @@ internal sealed class DesktopControls : IDisposable
 
     private int SpherePageSize()
     {
-        Rect area = WorkArea();
+        Rect area = SphereArea(WorkArea(), orbSize, MinimumSphereGap);
         double diameter = Math.Min(area.Width, area.Height);
         double radius = Math.Max(orbSize, (diameter - orbSize) / 2);
-        return (int)Compatibility.Clamp((int)(Math.PI / (2 * Math.Asin((orbSize + 5) / (2 * radius)))) + 1, 1, MaxSpheresPerArc);
+        return (int)Compatibility.Clamp((int)(Math.PI / (2 * Math.Asin((orbSize + MinimumSphereGap) / (2 * radius)))) + 1, 1, MaxSpheresPerArc);
     }
 
     private void RebuildSpheres()
@@ -149,14 +154,15 @@ internal sealed class DesktopControls : IDisposable
             {
                 Cursor = Cursors.Hand,
                 Content = new Viewbox { Child = ReadSiteIcon(item) ?? icon, Stretch = Stretch.Uniform },
-                ToolTip = pages == 1 ? item.Title : $"{item.Title} · {spherePage + 1}/{pages} · Колесо мыши",
             };
+            var popover = HoverCard.Attach(toggle, item.Title,
+                pages == 1 ? null : $"{spherePage + 1}/{pages} · Колесо мыши — следующая страница");
             AutomationProperties.SetName(toggle, item.Title);
             toggle.Click += (_, _) =>
             {
                 try { MainWindow.OpenTarget(item.Kind, item.Target); }
                 catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception)
-                { toggle.ToolTip = error.Message; }
+                { popover.ShowMessage(error.Message); }
             };
             toggle.PreviewMouseWheel += (_, args) =>
             {
@@ -173,7 +179,7 @@ internal sealed class DesktopControls : IDisposable
         StopWatchingWhenIdle();
     }
 
-    private static FrameworkElement? ReadSiteIcon(Favorite item)
+    internal static FrameworkElement? ReadSiteIcon(Favorite item)
     {
         if (item.Kind != "site" || !SiteIcons.IsCachedName(item.SiteIcon)) return null;
         try
@@ -197,7 +203,7 @@ internal sealed class DesktopControls : IDisposable
         if (spheresVisible) return true;
         spheresVisible = true;
         visibilityRevision++;
-        FollowPet();
+        PositionSpheres();
 
         for (int index = 0; index < spheres.Length; index++)
         {
@@ -205,6 +211,7 @@ internal sealed class DesktopControls : IDisposable
             if (!sphere.IsVisible)
             {
                 sphere.Opacity = 0;
+                sphere.Owner = pet;
                 sphere.Show();
             }
             SetInteractive(sphere, true);
@@ -274,6 +281,7 @@ internal sealed class DesktopControls : IDisposable
                 HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Stretch,
             };
             AutomationProperties.SetName(button, label);
+            menuItems[action] = button;
             button.Click += (_, _) =>
             {
                 if (action == "exit")
@@ -292,6 +300,8 @@ internal sealed class DesktopControls : IDisposable
         frame.UseTheme(Border.BackgroundProperty, "Surface");
         frame.UseTheme(Border.BorderBrushProperty, "Edge");
         menu = FloatingWindow(frame, 270, 456, activate: true);
+        menu.MinWidth = 240;
+        menu.MinHeight = 240;
         menu.UseTheme(Window.FontFamilyProperty, "Font");
         menu.PreviewKeyDown += (_, args) => { if (args.Key == Key.Escape) CloseMenu(); };
         PositionPanel(menu, "context");
@@ -332,7 +342,7 @@ internal sealed class DesktopControls : IDisposable
             "sticky" => (340d, 320d),
             "motion" => (426d, Math.Min(480d, 151d + 36d * Math.Max(1, (pet as DesktopPetWindow)?.AnimationCount ?? 0))),
             "manage" => (404d, 370d),
-            "theme" => (404d, 424d),
+            "theme" => (404d, 480d),
             "pets" => (410d, 375d),
             "favorites" => (454d, 410d),
             "model" => (438d, 400d),
@@ -340,8 +350,17 @@ internal sealed class DesktopControls : IDisposable
             "sharing" => (430d, 354d),
             _ => (450d, 438d),
         };
-        window.Width = Math.Min(size.Item1, area.Width);
-        window.Height = Math.Min(size.Item2, area.Height);
+        if (section == "sticky")
+        {
+            window.Width = Math.Max(window.MinWidth, Math.Min(window.Width, area.Width));
+            window.Height = Math.Max(window.MinHeight, Math.Min(window.Height, area.Height));
+        }
+        else
+        {
+            window.Width = Math.Max(window.MinWidth, Math.Min(size.Item1, area.Width));
+            window.Height = Math.Max(window.MinHeight, Math.Min(size.Item2, area.Height));
+        }
+        if (TryPositionAtMenu(window, section == "sticky" ? "notes" : section, area)) return;
         if (section == "context")
         {
             Rect sprite = PetBounds();
@@ -363,9 +382,13 @@ internal sealed class DesktopControls : IDisposable
     public void FollowPet()
     {
         if (menu is { IsVisible: true }) PositionPanel(menu, "context");
+    }
+
+    private void PositionSpheres()
+    {
         if (!spheresVisible && !spheres.Any(sphere => sphere.IsVisible)) return;
         Rect area = WorkArea();
-        Rect sprite = PetBounds();
+        Rect sprite = SpherePetBounds();
         Point[] positions = Arrange(sprite, area, spheres.Length, orbSize, sphereSpread, sphereOffset);
         for (int index = 0; index < spheres.Length; index++)
         {
@@ -377,6 +400,7 @@ internal sealed class DesktopControls : IDisposable
     public void PositionBubble(Window window)
     {
         Rect area = WorkArea();
+        if (TryPositionAtMenu(window, "quick", area)) return;
         Rect sprite = PetBounds();
         window.Left = Compatibility.Clamp(sprite.Left + (sprite.Width - window.Width) / 2, area.Left, Math.Max(area.Left, area.Right - window.Width));
         double above = sprite.Top - window.Height - Gap;
@@ -384,6 +408,35 @@ internal sealed class DesktopControls : IDisposable
         window.Top = above >= area.Top || below + window.Height > area.Bottom
             ? Math.Max(area.Top, above) : below;
         KeepMenuClear(window, area);
+    }
+
+    private bool TryPositionAtMenu(Window window, string section, Rect area)
+    {
+        if (menu is not { IsVisible: true } || menu == window ||
+            !menuItems.TryGetValue(section, out var item) || !item.IsVisible) return false;
+        menu.UpdateLayout();
+        Rect local = item.TransformToAncestor(menu).TransformBounds(new Rect(item.RenderSize));
+        var row = new Rect(menu.Left + local.Left, menu.Top + local.Top, local.Width, local.Height);
+        Rect placed = PlaceBesideMenu(new Rect(menu.Left, menu.Top, menu.ActualWidth, menu.ActualHeight), row,
+            new Size(window.Width, window.Height), area, new Size(window.MinWidth, window.MinHeight));
+        window.Width = placed.Width;
+        window.Height = placed.Height;
+        window.Left = placed.Left;
+        window.Top = placed.Top;
+        return true;
+    }
+
+    internal static Rect PlaceBesideMenu(Rect menu, Rect item, Size desired, Rect area, Size minimum)
+    {
+        double rightSpace = Math.Max(0, area.Right - menu.Right - Gap);
+        double leftSpace = Math.Max(0, menu.Left - area.Left - Gap);
+        bool right = rightSpace >= desired.Width || (leftSpace < desired.Width && rightSpace >= leftSpace);
+        double space = right ? rightSpace : leftSpace;
+        double width = Math.Min(desired.Width, space >= minimum.Width ? space : area.Width);
+        double height = Math.Min(desired.Height, area.Height);
+        double x = right ? menu.Right + Gap : menu.Left - Gap - width;
+        return new Rect(Compatibility.Clamp(x, area.Left, Math.Max(area.Left, area.Right - width)),
+            Compatibility.Clamp(item.Top, area.Top, Math.Max(area.Top, area.Bottom - height)), width, height);
     }
 
     private void KeepMenuClear(Window window, Rect area)
@@ -410,102 +463,124 @@ internal sealed class DesktopControls : IDisposable
         }
     }
 
-    // Space the shortcuts evenly across the semicircle.
+    private static Rect SphereArea(Rect area, double orbSize, double margin)
+    {
+        double horizontal = Math.Min(margin, Math.Max(0, (area.Width - orbSize) / 2));
+        double vertical = Math.Min(margin, Math.Max(0, (area.Height - orbSize) / 2));
+        area.Inflate(-horizontal, -vertical);
+        return area;
+    }
+
+    // Keep the circle centered on the character; only use angles whose spheres fit on screen.
     internal static Point[] Arrange(Rect sprite, Rect area, int count, double orbSize = DefaultOrbSize,
-        double spread = 1, double offsetFromPet = DefaultSphereOffset)
+        double spread = 1, double offsetFromPet = DefaultSphereOffset, double? visibleRadius = null)
     {
         if (count == 0) return [];
         double halfOrb = orbSize / 2;
         Point center = new(sprite.Left + sprite.Width / 2, sprite.Top + sprite.Height / 2);
-        double fullStep = count <= 1 ? 0 : Math.PI / (count - 1);
-        double spacingRadius = count <= 1 ? 0 : (orbSize + 5) / (2 * Math.Sin(fullStep / 2));
-        double clearance = halfOrb + offsetFromPet;
-        double spreadRadius = Math.Max(spacingRadius,
-            Math.Sqrt(sprite.Width * sprite.Width + sprite.Height * sprite.Height) / 2 + halfOrb + DefaultSphereOffset);
-        double minStep = 2 * Math.Asin(Math.Min(1, (orbSize + 5) / (2 * spreadRadius)));
-        double step = Math.Min(fullStep, minStep + (fullStep - minStep) * spread);
-        spacingRadius = count <= 1 ? 0 : (orbSize + 5) / (2 * Math.Sin(step / 2));
-        var offsets = new double[count];
-        for (int index = 0; index < count; index++)
-            offsets[index] = (index - (count - 1) / 2d) * step;
-        var candidate = new Point[count];
-        var best = new Point[count];
+        double gap = MinimumSphereGap + Compatibility.Clamp(spread, 0, 1) * orbSize / 2;
+        Rect allowed = SphereArea(area, orbSize, gap);
+        allowed = new Rect(allowed.Left + halfOrb, allowed.Top + halfOrb,
+            Math.Max(0, allowed.Width - orbSize), Math.Max(0, allowed.Height - orbSize));
+        Point nearest = new(Compatibility.Clamp(center.X, allowed.Left, allowed.Right),
+            Compatibility.Clamp(center.Y, allowed.Top, allowed.Bottom));
+        double minimumRadius = (nearest - center).Length;
+        double maximumRadius = new[] { allowed.TopLeft, allowed.TopRight, allowed.BottomLeft, allowed.BottomRight }
+            .Max(point => (point - center).Length);
+        double spacingRadius = count <= 1 ? 0 : (orbSize + gap) / (2 * Math.Sin(Math.PI / (count - 1) / 2));
+        double silhouetteRadius = visibleRadius ?? Math.Sqrt(sprite.Width * sprite.Width + sprite.Height * sprite.Height) / 2;
+        double preferredRadius = Math.Max(spacingRadius, Math.Max(0, silhouetteRadius + halfOrb + offsetFromPet));
+        if (count == 1 && preferredRadius == 0 && minimumRadius == 0)
+            return [center - new Vector(halfOrb, halfOrb)];
+        var best = Enumerable.Repeat(nearest - new Vector(halfOrb, halfOrb), count).ToArray();
         double bestCost = double.PositiveInfinity;
 
-        for (int rotation = -12; rotation <= 12; rotation++)
+        // Include the exact requested radius, then explore circles intersecting the usable screen.
+        for (int sample = -1; sample <= 96; sample++)
         {
-            double direction = -Math.PI / 2 + rotation * Math.PI / 24;
-            double left = 0, right = 0, top = 0, bottom = 0;
-            double preferredRadius = spacingRadius;
-            for (int index = 0; index < count; index++)
+            double radius = sample < 0 ? Compatibility.Clamp(preferredRadius, minimumRadius, maximumRadius)
+                : minimumRadius + (maximumRadius - minimumRadius) * sample / 96;
+            if (radius < .000001) continue;
+            foreach (var arc in ScreenArcs(center, radius, allowed))
             {
-                double angle = direction + offsets[index];
-                var unit = new Point(Math.Cos(angle), Math.Sin(angle));
-                candidate[index] = unit;
-                left = index == 0 ? unit.X : Math.Min(left, unit.X);
-                right = index == 0 ? unit.X : Math.Max(right, unit.X);
-                top = index == 0 ? unit.Y : Math.Min(top, unit.Y);
-                bottom = index == 0 ? unit.Y : Math.Max(bottom, unit.Y);
-                double horizontal = (sprite.Width / 2 + clearance) / Math.Max(.001, Math.Abs(unit.X));
-                double vertical = (sprite.Height / 2 + clearance) / Math.Max(.001, Math.Abs(unit.Y));
-                preferredRadius = Math.Max(preferredRadius, Math.Min(horizontal, vertical));
-            }
-
-            double radius = Math.Max(0, Math.Min(preferredRadius, Math.Min(
-                (area.Width - orbSize) / Math.Max(right - left, .001),
-                (area.Height - orbSize) / Math.Max(bottom - top, .001))));
-            // At the top of the monitor, also try fitting the arc in the free strip beside the pet.
-            Score(area.Left, area.Right, radius);
-            if (sprite.Top - area.Top < radius + halfOrb)
-            {
-                ScoreSide(area.Left, sprite.Left);
-                ScoreSide(sprite.Right, area.Right);
-            }
-
-            void ScoreSide(double start, double end)
-            {
-                double sideRadius = Math.Min(radius, (end - start - orbSize) / Math.Max(right - left, .001));
-                if (sideRadius >= spacingRadius) Score(start, end, sideRadius);
-            }
-
-            void Score(double start, double end, double actualRadius)
-            {
-                double minX = start + halfOrb - left * actualRadius;
-                double minY = area.Top + halfOrb - top * actualRadius;
-                Point anchor = new(
-                    Compatibility.Clamp(center.X, minX, Math.Max(minX, end - halfOrb - right * actualRadius)),
-                    Compatibility.Clamp(center.Y, minY, Math.Max(minY, area.Bottom - halfOrb - bottom * actualRadius)));
-                double cost = (anchor - center).LengthSquared + rotation * rotation * 40
-                    + Math.Pow(preferredRadius - actualRadius, 2) * 4;
-
-                for (int index = 0; index < count; index++)
+                double span = count <= 1 ? 0 : Math.Min(Math.PI, arc.End - arc.Start);
+                double step = count <= 1 ? 0 : span / (count - 1);
+                double separation = count <= 1 ? orbSize + gap : 2 * radius * Math.Sin(step / 2);
+                double crowding = Math.Max(0, orbSize + gap - separation);
+                for (int turn = -1; turn <= 2; turn++)
                 {
-                    Point unit = candidate[index];
-                    Point orb = new(anchor.X + unit.X * actualRadius, anchor.Y + unit.Y * actualRadius);
-                    double dx = Math.Max(sprite.Left - orb.X, orb.X - sprite.Right);
-                    double dy = Math.Max(sprite.Top - orb.Y, orb.Y - sprite.Bottom);
-                    double overlap = Math.Max(0, halfOrb - Math.Max(dx, dy));
-                    if (overlap > .001) cost += 100000 + overlap * overlap * 24;
-                    cost += Math.Pow(Math.Max(0, clearance - Math.Max(dx, dy)), 2) * 2;
-                    if (orb.Y > center.Y + .001 && dx < halfOrb - .001)
-                        cost += 100000 + Math.Pow(orb.Y - center.Y, 2) * 5;
+                    double above = -Math.PI / 2 + turn * 2 * Math.PI;
+                    double middle = (arc.Start + arc.End) / 2;
+                    double freedom = Math.Max(0, (arc.End - arc.Start - span) / 2);
+                    double direction = middle + Compatibility.Clamp(above - middle, -freedom, freedom);
+                    double cost = Math.Pow(radius - preferredRadius, 2) * 4
+                        + Math.Pow(Math.PI - span, 2) * 200 + Math.Pow(direction - above, 2) * 10
+                        + (crowding > .001 ? 1e9 + crowding * crowding * 1000 : 0);
+                    if (cost >= bestCost) continue;
+                    bestCost = cost;
+                    for (int index = 0; index < count; index++)
+                    {
+                        double angle = direction - span / 2 + index * step;
+                        best[index] = new Point(center.X + radius * Math.Cos(angle) - halfOrb,
+                            center.Y + radius * Math.Sin(angle) - halfOrb);
+                    }
                 }
-
-                if (cost >= bestCost) return;
-                bestCost = cost;
-                for (int index = 0; index < count; index++)
-                    best[index] = new Point(anchor.X + candidate[index].X * actualRadius - halfOrb,
-                        anchor.Y + candidate[index].Y * actualRadius - halfOrb);
             }
-            if (bestCost == 0) break;
+            if (bestCost < .000001) break;
         }
         return best;
+    }
+
+    private static List<(double Start, double End)> ScreenArcs(Point center, double radius, Rect allowed)
+    {
+        double turn = 2 * Math.PI;
+        var cuts = new List<double> { 0, turn };
+        foreach (double edge in new[] { allowed.Left, allowed.Right })
+        {
+            double value = (edge - center.X) / radius;
+            if (value < -1 || value > 1) continue;
+            double angle = Math.Acos(value);
+            cuts.Add(angle);
+            cuts.Add(turn - angle);
+        }
+        foreach (double edge in new[] { allowed.Top, allowed.Bottom })
+        {
+            double value = (edge - center.Y) / radius;
+            if (value < -1 || value > 1) continue;
+            double angle = Math.Asin(value);
+            cuts.Add((angle + turn) % turn);
+            cuts.Add((Math.PI - angle + turn) % turn);
+        }
+        cuts.Sort();
+        var arcs = new List<(double Start, double End)>();
+        for (int index = 1; index < cuts.Count; index++)
+        {
+            double start = cuts[index - 1], end = cuts[index];
+            if (end - start < .000001) continue;
+            double middle = (start + end) / 2;
+            if (!allowed.Contains(new Point(center.X + radius * Math.Cos(middle), center.Y + radius * Math.Sin(middle)))) continue;
+            if (arcs.Count > 0 && Math.Abs(arcs[arcs.Count - 1].End - start) < .000001)
+                arcs[arcs.Count - 1] = (arcs[arcs.Count - 1].Start, end);
+            else arcs.Add((start, end));
+        }
+        if (arcs.Count > 1 && arcs[0].Start < .000001 && Math.Abs(arcs[arcs.Count - 1].End - turn) < .000001)
+        {
+            arcs[arcs.Count - 1] = (arcs[arcs.Count - 1].Start, arcs[0].End + turn);
+            arcs.RemoveAt(0);
+        }
+        return arcs;
     }
 
     private Rect PetBounds()
     {
         var frame = new Rect(pet.Left, pet.Top, pet.Width, pet.Height);
         return pet is DesktopPetWindow sprite ? ScalePetBounds(frame, sprite.VisibleContent()) : frame;
+    }
+
+    private Rect SpherePetBounds()
+    {
+        Rect frame = new(pet.Left, pet.Top, pet.Width, pet.Height);
+        return pet is DesktopPetWindow sprite ? ScalePetBounds(frame, sprite.VisibleBounds()) : frame;
     }
 
     internal Rect WorkArea(bool atCursor = false)
@@ -516,7 +591,7 @@ internal sealed class DesktopControls : IDisposable
         if (atCursor && GetCursorPos(out var cursor)) monitor = MonitorFromPoint(cursor, 2);
         else
         {
-            var bounds = PetBounds();
+            var bounds = SpherePetBounds();
             var center = pet.PointToScreen(new Point(bounds.Left - pet.Left + bounds.Width / 2, bounds.Top - pet.Top + bounds.Height / 2));
             monitor = MonitorFromPoint(new NativePoint { X = (int)Math.Round(center.X), Y = (int)Math.Round(center.Y) }, 2);
         }
@@ -526,23 +601,6 @@ internal sealed class DesktopControls : IDisposable
         return new Rect(new Point(pet.Left + top.X, pet.Top + top.Y), new Size(bottom.X - top.X, bottom.Y - top.Y));
     }
 
-    internal static bool ConstrainDrag(IntPtr moveRect, Rect content)
-    {
-        // During a drag, internal monitor edges are passable. The drop uses the selected monitor's work area.
-        Rect desktop = new(GetSystemMetrics(76), GetSystemMetrics(77), GetSystemMetrics(78), GetSystemMetrics(79));
-        var frame = Marshal.PtrToStructure<NativeRect>(moveRect);
-        var fitted = ClampVisiblePet(new Rect(frame.Left, frame.Top, frame.Right - frame.Left, frame.Bottom - frame.Top),
-            desktop, content);
-        int x = (int)Math.Round(fitted.Left), y = (int)Math.Round(fitted.Top);
-        if (frame.Left == x && frame.Top == y) return false;
-        frame.Right += x - frame.Left;
-        frame.Bottom += y - frame.Top;
-        frame.Left = x;
-        frame.Top = y;
-        Marshal.StructureToPtr(frame, moveRect, false);
-        return true;
-    }
-
     internal static Rect ClampPetFrame(Rect frame, Rect area) =>
         new(Compatibility.Clamp(frame.Left, area.Left, Math.Max(area.Left, area.Right - frame.Width)),
             Compatibility.Clamp(frame.Top, area.Top, Math.Max(area.Top, area.Bottom - frame.Height)), frame.Width, frame.Height);
@@ -550,14 +608,6 @@ internal sealed class DesktopControls : IDisposable
     internal static Rect ScalePetBounds(Rect frame, Rect content) =>
         new(frame.Left + frame.Width * content.X, frame.Top + frame.Height * content.Y,
             frame.Width * content.Width, frame.Height * content.Height);
-
-    internal static Rect ClampVisiblePet(Rect frame, Rect area, Rect content)
-    {
-        var visible = ScalePetBounds(frame, content);
-        var fitted = ClampPetFrame(visible, area);
-        frame.Offset(fitted.Left - visible.Left, fitted.Top - visible.Top);
-        return frame;
-    }
 
     private static bool TryWorkArea(IntPtr monitor, out NativeRect work)
     {
@@ -610,13 +660,14 @@ internal sealed class DesktopControls : IDisposable
     {
         var openMenu = menu;
         menu = null;
+        menuItems.Clear();
         menuTitle = null;
         notesCheck = null;
         openMenu?.Close();
         StopWatchingWhenIdle();
     }
 
-    private void HideSpheres()
+    internal void HideSpheres()
     {
         if (!spheresVisible) return;
         spheresVisible = false;
@@ -655,13 +706,15 @@ internal sealed class DesktopControls : IDisposable
     {
         content.RenderTransformOrigin = new Point(.5, .5);
         content.RenderTransform = new ScaleTransform(activate ? 1 : .75, activate ? 1 : .75);
-        return new Window
+        var window = new Window
         {
             Title = activate ? "Меню питомца" : "Быстрое действие Спутника",
             Width = width, Height = height, ShowActivated = activate, Topmost = true, ShowInTaskbar = false,
             WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize,
-            AllowsTransparency = true, Background = Brushes.Transparent, Content = content,
+            AllowsTransparency = !activate, Background = Brushes.Transparent, Content = content,
         };
+        if (activate && content is Border frame) RoundedWindow.Apply(window, frame);
+        return window;
     }
 
     private static ControlTemplate OrbTemplate(double size)
@@ -670,19 +723,21 @@ internal sealed class DesktopControls : IDisposable
         border.Name = "Fill";
         border.SetValue(Border.CornerRadiusProperty, new CornerRadius(size / 2));
         border.SetValue(Border.BorderThicknessProperty, new Thickness(1));
-        border.SetResourceReference(Border.BorderBrushProperty, "ThemeOrbRim");
+        border.SetValue(Border.BorderBrushProperty, Brushes.Transparent);
         border.SetResourceReference(Border.BackgroundProperty, "ThemeOrb");
         var content = new FrameworkElementFactory(typeof(ContentPresenter));
         content.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
         content.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
         border.AppendChild(content);
         var template = new ControlTemplate(typeof(Button)) { VisualTree = border };
-        foreach (DependencyProperty property in new[] { UIElement.IsMouseOverProperty, UIElement.IsKeyboardFocusedProperty })
         {
-            var trigger = new Trigger { Property = property, Value = true };
+            var trigger = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
             trigger.Setters.Add(new Setter(Border.BorderBrushProperty, new DynamicResourceExtension("ThemeOrbRimFocus"), "Fill"));
             template.Triggers.Add(trigger);
         }
+        var focus = new Trigger { Property = UIElement.IsKeyboardFocusedProperty, Value = true };
+        focus.Setters.Add(new Setter(UIElement.OpacityProperty, .82, "Fill"));
+        template.Triggers.Add(focus);
         return template;
     }
 
@@ -768,7 +823,6 @@ internal sealed class DesktopControls : IDisposable
     [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(NativePoint point);
     [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr handle, uint flags);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr handle, out uint processId);
-    [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(NativePoint point, uint flags);
     [DllImport("user32.dll")] private static extern bool GetCursorPos(out NativePoint point);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfo(IntPtr handle, ref MonitorInfo info);
