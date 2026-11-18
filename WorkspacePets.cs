@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Automation;
@@ -96,6 +97,8 @@ public partial class MainWindow
                 if (sequence != revision || !page.IsVisible) return;
                 int columns = clip["columns"]!.GetValue<int>(), width = clip["frameWidth"]!.GetValue<int>(), height = clip["frameHeight"]!.GetValue<int>();
                 int count = clip["frameCount"]!.GetValue<int>(), fps = clip["fps"]!.GetValue<int>();
+                var viewport = clip["viewport"]?.Deserialize<PetViewport>(
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 int[] counts = sources.Select(part => part["frames"]?.GetValue<int>() ?? count).ToArray();
                 int last = -1;
                 void Render()
@@ -105,7 +108,9 @@ public partial class MainWindow
                     last = index;
                     int part = 0;
                     while (index >= counts[part]) index -= counts[part++];
-                    image.Source = new CroppedBitmap(atlases[part], new Int32Rect(index % columns * width, index / columns * height, width, height));
+                    var frame = new CroppedBitmap(atlases[part], new Int32Rect(index % columns * width, index / columns * height, width, height));
+                    frame.Freeze();
+                    image.Source = PetFrames.Present(frame, viewport);
                 }
                 timer.Stop();
                 timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000d / 30) };

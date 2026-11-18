@@ -26,6 +26,7 @@ internal sealed class DesktopPetWindow : Window
         public int Columns { get; init; } = 1;
         public int FrameCount { get; init; }
         public int Fps { get; init; }
+        public PetViewport? Viewport { get; init; }
 
         public (string File, int Index, string? Next) Locate(int index)
         {
@@ -67,6 +68,7 @@ internal sealed class DesktopPetWindow : Window
     private Pet? active;
     private AnimationClip? current;
     private BitmapSource? sheet;
+    private BitmapSource? displayedFrame;
     private string? sheetFile;
     private string? preloadedFile;
     private Task<BitmapSource?>? preloaded;
@@ -291,7 +293,7 @@ internal sealed class DesktopPetWindow : Window
 
     internal Rect VisibleContent()
     {
-        if (current is null || lastFrame < 0 || sprite.Source is not BitmapSource image) return new Rect(0, 0, 1, 1);
+        if (current is null || lastFrame < 0 || displayedFrame is not { } image) return new Rect(0, 0, 1, 1);
         if (!visibleFrames.TryGetValue(current, out var bounds))
             visibleFrames[current] = bounds = new Rect?[current.FrameCount];
         if (bounds[lastFrame] is { } cached) return cached;
@@ -316,10 +318,12 @@ internal sealed class DesktopPetWindow : Window
         var visible = new Rect(0, 0, 1, 1);
         if (right >= left)
         {
-            double ratio = image.Width / image.Height;
+            var viewport = current.Viewport?.Bounds ?? new Rect(0, 0, width, height);
+            double ratio = viewport.Width / viewport.Height;
             double w = Math.Min(1, ratio), h = Math.Min(1, 1 / ratio);
-            visible = new Rect((1 - w) / 2 + w * left / width, (1 - h) / 2 + h * top / height,
-                w * (right - left + 1) / width, h * (bottom - top + 1) / height);
+            visible = new Rect((1 - w) / 2 + w * (left - viewport.X) / viewport.Width,
+                (1 - h) / 2 + h * (top - viewport.Y) / viewport.Height,
+                w * (right - left + 1) / viewport.Width, h * (bottom - top + 1) / viewport.Height);
         }
         bounds[lastFrame] = visible;
         return visible;
@@ -387,6 +391,7 @@ internal sealed class DesktopPetWindow : Window
         visibleFrames.Clear();
         current = null;
         sheet = null;
+        displayedFrame = null;
         sheetFile = null;
         preloaded = null;
         preloadedFile = null;
@@ -527,15 +532,16 @@ internal sealed class DesktopPetWindow : Window
             PreloadSheet(part.Next ?? upcoming.FirstOrDefault()?.Locate(0).File);
         }
         if (current.FrameWidth <= 0 || current.FrameHeight <= 0)
-            sprite.Source = sheet;
+            displayedFrame = sheet;
         else
         {
             int x = part.Index % current.Columns * current.FrameWidth;
             int y = part.Index / current.Columns * current.FrameHeight;
             var frame = new CroppedBitmap(sheet, new Int32Rect(x, y, current.FrameWidth, current.FrameHeight));
             frame.Freeze();
-            sprite.Source = frame;
+            displayedFrame = frame;
         }
+        sprite.Source = PetFrames.Present(displayedFrame, current.Viewport);
         lastFrame = index;
         PositionAtRest();
     }

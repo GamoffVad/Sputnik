@@ -9,7 +9,7 @@ namespace Sputnik;
 
 internal static class PetPackages
 {
-    private const long Limit = 96L * 1024 * 1024;
+    private const long Limit = 256L * 1024 * 1024;
 
     public static JsonObject Stage(string path, string pending, string library)
     {
@@ -25,8 +25,8 @@ internal static class PetPackages
 
         using var stream = entry.Open();
         var manifest = JsonNode.Parse(stream)?.AsObject() ?? throw new InvalidDataException("Некорректный манифест.");
-        if (manifest["schemaVersion"]?.GetValue<int>() != 1)
-            throw new InvalidDataException("Поддерживаются пакеты версии 1.");
+        if (manifest["schemaVersion"]?.GetValue<int>() is not (1 or 2))
+            throw new InvalidDataException("Поддерживаются пакеты версий 1 и 2.");
         string id = Required(manifest, "id", 50);
         if (!Regex.IsMatch(id, @"\A[a-z0-9][a-z0-9-]{0,48}\z"))
             throw new InvalidDataException("Недопустимый идентификатор питомца.");
@@ -75,6 +75,27 @@ internal static class PetPackages
                 int count = Number(clip, "frameCount", 1, 480);
                 int fps = Number(clip, "fps", 1, 60);
                 var installed = new JsonObject { ["name"] = title, ["frameWidth"] = width, ["frameHeight"] = height, ["columns"] = columns, ["frameCount"] = count, ["fps"] = fps };
+                if (clip["viewport"] is { } region)
+                {
+                    if (region is not JsonObject viewport)
+                        throw new InvalidDataException("Некорректная область отображения.");
+                    double ReadCoordinate(string key)
+                    {
+                        if (viewport[key] is not JsonValue value || !value.TryGetValue<double>(out var number) ||
+                            double.IsNaN(number) || double.IsInfinity(number) || Math.Abs(number) > 8192)
+                            throw new InvalidDataException("Некорректная область отображения.");
+                        return number;
+                    }
+                    double x = ReadCoordinate("x"), y = ReadCoordinate("y");
+                    double viewWidth = ReadCoordinate("width"), viewHeight = ReadCoordinate("height");
+                    if (viewWidth < 1 || viewHeight < 1 || x >= width || y >= height ||
+                        x + viewWidth <= 0 || y + viewHeight <= 0)
+                        throw new InvalidDataException("Область отображения не содержит кадр.");
+                    installed["viewport"] = new JsonObject
+                    {
+                        ["x"] = x, ["y"] = y, ["width"] = viewWidth, ["height"] = viewHeight
+                    };
+                }
                 void ExtractSheet(JsonObject source, string asset, int frames)
                 {
                     string file = Required(source, "file", 160);
