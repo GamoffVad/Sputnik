@@ -75,6 +75,41 @@ class Check
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             var timer = (DispatcherTimer)type.GetField("timer", flags)!.GetValue(window)!;
             timer.Stop();
+            Point Support()
+            {
+                if (type.GetField("supportPosition", flags)!.GetValue(window) is Point target) return target;
+                var anchor = (Point)type.GetField("supportAnchor", flags)!.GetValue(window)!;
+                var origin = (Point?)type.GetField("restingOrigin", flags)!.GetValue(window) ?? new Point(window.Left, window.Top);
+                return new Point(origin.X + window.Width * anchor.X, origin.Y + window.Height * anchor.Y);
+            }
+            Point PhysicalSupport()
+            {
+                var anchor = (Point)type.GetField("supportAnchor", flags)!.GetValue(window)!;
+                return window.PointToScreen(new Point(window.Width * anchor.X, window.Height * anchor.Y));
+            }
+            var baseline = Support();
+            var physicalBaseline = PhysicalSupport();
+            foreach (string petId in new[] { "cloth-ninja", "klyaksa", "hudi", "kudryashka", "sand-watchman-clean", "quiet-ninja", "knight-watchman" })
+            {
+                Call("SelectFromStore", petId, null);
+                var selectedPet = type.GetField("active", flags)!.GetValue(window)!;
+                if (!Equals(selectedPet.GetType().GetProperty("Id")!.GetValue(selectedPet), petId))
+                    throw new Exception($"Switch test requires installed pet {petId}; fallback would conceal a regression.");
+                foreach (double scale in new[] { 100d, 160d, 80d, 100d })
+                {
+                    Call("ApplyAppearanceSizes", scale, 100d, 100d, 10d, false);
+                    if ((Support() - baseline).Length > .01)
+                        throw new Exception($"Pet support moved when switching/resizing {petId}: {Support()} versus {baseline}");
+                    var physicalDelta = PhysicalSupport() - physicalBaseline;
+                    if (Math.Max(Math.Abs(physicalDelta.X), Math.Abs(physicalDelta.Y)) > 1)
+                        throw new Exception($"Pet support moved beyond one native window-positioning pixel: {physicalDelta}");
+                }
+                var stable = Support();
+                Call("ShowFrame", 0);
+                if ((Support() - stable).Length > .01) throw new Exception("Support follows animated frame bounds");
+                window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            }
+            Console.WriteLine("PASS: seven pet switches and 28 size changes preserve the same visible support point despite different transparent padding and display scales.");
             var originalOrigin = window.PointToScreen(new Point());
             var grabbedPoint = new Point(window.Width / 2, window.Height / 2);
             var originalPointer = window.PointToScreen(grabbedPoint);
@@ -106,6 +141,7 @@ class Check
                 new Point(area.Left + 300, area.Top + 150) })
             {
                 type.GetField("restingOrigin", flags)!.SetValue(window, position);
+                type.GetField("supportPosition", flags)!.SetValue(window, null);
                 Call("PositionAtRest");
                 Call("ApplyPetSize");
                 if ((new Point(window.Left, window.Top) - position).Length > .01)

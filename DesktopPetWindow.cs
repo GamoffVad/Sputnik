@@ -80,6 +80,8 @@ internal sealed class DesktopPetWindow : Window
     private AnimationClip? pinned;
     private bool dragging;
     private Point? restingOrigin;
+    private Point supportAnchor = new(.5, 1);
+    private Point? supportPosition;
     private Rect placementArea;
     private readonly Dictionary<AnimationClip, Rect?[]> visibleBounds = new();
     private byte[] alphaScan = [];
@@ -160,6 +162,7 @@ internal sealed class DesktopPetWindow : Window
             if (sprite.IsMouseCaptured) sprite.ReleaseMouseCapture();
             if (!moved) return;
             restingOrigin = new Point(Left, Top);
+            supportPosition = new Point(Left + Width * supportAnchor.X, Top + Height * supportAnchor.Y);
             if (resumeAfterDrag) elapsed.Start();
             controls.FollowPet();
         }
@@ -174,6 +177,7 @@ internal sealed class DesktopPetWindow : Window
             Top = frame.Top;
             placementArea = area;
             restingOrigin = frame.TopLeft;
+            supportPosition = new Point(frame.Left + Width * supportAnchor.X, frame.Top + Height * supportAnchor.Y);
         };
         SourceInitialized += (_, _) => HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(HandleScreenChange);
         timer.Tick += (_, _) => RenderFrame();
@@ -301,11 +305,16 @@ internal sealed class DesktopPetWindow : Window
         if (!IsLoaded || !IsVisible || dragging) return;
         placementArea = controls.WorkArea();
         double size = Math.Min(preferredSize, Math.Min(placementArea.Width, placementArea.Height));
-        var bounds = VisibleContent();
         Point origin = restingOrigin ?? new Point(Left, Top);
-        origin.Offset((Width - size) * (bounds.Left + bounds.Width / 2), (Height - size) * bounds.Bottom);
-        restingOrigin = origin;
+        Point point = supportPosition ?? new Point(origin.X + Width * supportAnchor.X, origin.Y + Height * supportAnchor.Y);
         Width = Height = size;
+        AlignSupport(point);
+    }
+
+    private void AlignSupport(Point point)
+    {
+        supportPosition = point;
+        restingOrigin = new Point(point.X - Width * supportAnchor.X, point.Y - Height * supportAnchor.Y);
         PositionAtRest();
     }
 
@@ -408,6 +417,10 @@ internal sealed class DesktopPetWindow : Window
 
     private void UsePet(Pet selected, string folder, JsonNode? workspace = null)
     {
+        Point origin = restingOrigin ?? new Point(Left, Top);
+        Point? previousSupport = IsLoaded
+            ? supportPosition ?? new Point(origin.X + Width * supportAnchor.X, origin.Y + Height * supportAnchor.Y)
+            : null;
         active = selected;
         disabledMotions = DisabledMotions(workspace, selected.Id);
         controls.SetPetName(selected.Name);
@@ -425,7 +438,18 @@ internal sealed class DesktopPetWindow : Window
         pinned = null;
         idle.ScaleY = 1;
         if (!PlayNext() && !(!HasEnabledMotion && PlayNext(showStill: true)) && selected.Id != "hudi" && selected != builtins[0])
+        {
             UsePet(builtins[0], Assets);
+            return;
+        }
+
+        // Capture the resting pose once. Following each animated frame would cancel hops and move the window.
+        var neutral = VisibleBounds();
+        supportAnchor = new Point(neutral.Left + neutral.Width / 2, neutral.Bottom);
+        if (previousSupport is { } point && !dragging)
+        {
+            AlignSupport(point);
+        }
     }
 
     private bool PlayNext(bool showStill = false)
