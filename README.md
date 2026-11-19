@@ -60,7 +60,7 @@
 
 ## Дополнительные питомцы
 
-[Все отдельные пакеты питомцев](installer/pets/README.md) · [Скачать Тихого ниндзя (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet) · [Скачать Рыцаря-дозорного (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet)
+[Все отдельные пакеты питомцев](installer/pets/README.md) · [Все референсы и структура PET](PET/README.md) · [Тканевый ниндзя — 11 анимаций (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet) · [Тихий ниндзя (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet) · [Рыцарь-дозорный (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet)
 
 У рыцаря пять анимаций со сглаженными переходами. Для установки откройте скачанный `.pet` двойным щелчком или через **Питомцы → Добавить питомца** и нажмите **Установить питомца**. Палитра из пакета применяется при включённом флажке **Применить палитру питомца**. Для «Тихого ниндзя» нужна Windows-версия 1.3.13 или новее; macOS 0.2.2 этот пакет пока не поддерживает.
 

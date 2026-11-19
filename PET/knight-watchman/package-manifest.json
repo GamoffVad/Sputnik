@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "knight-watchman",
+  "name": "Рыцарь-дозорный",
+  "description": "Молчаливый дозорный в стальном шлеме и медном шарфе.",
+  "theme": {
+    "name": "Медь и сталь",
+    "accent": "#E4AC85",
+    "background": "#1B222A",
+    "surface": "#29343E"
+  },
+  "animations": [
+    {
+      "name": "Шорох на посту",
+      "file": "lookout.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 91,
+      "fps": 24
+    },
+    {
+      "name": "Прыжок с балансом",
+      "file": "hop.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 91,
+      "fps": 24
+    },
+    {
+      "name": "Рыцарский поклон",
+      "file": "salute.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 91,
+      "fps": 24
+    },
+    {
+      "name": "Упрямый шарф",
+      "file": "scarf.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 92,
+      "fps": 24
+    },
+    {
+      "name": "Тихая победа",
+      "file": "dance.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 91,
+      "fps": 24
+    }
+  ]
+}

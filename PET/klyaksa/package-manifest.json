@@ -1,0 +1,85 @@
+{
+  "id": "klyaksa",
+  "name": "Клякса",
+  "description": "Озорная спутница с восемью анимациями",
+  "theme": {
+    "name": "Сумерки",
+    "accent": "#bac7ff",
+    "background": "#181b2c",
+    "surface": "#262b45"
+  },
+  "animations": [
+    {
+      "name": "Чих с сюрпризом",
+      "file": "assets/klyaksa/sneeze.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 84,
+      "fps": 21
+    },
+    {
+      "name": "Поймала равновесие",
+      "file": "assets/klyaksa/balance.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 84,
+      "fps": 21
+    },
+    {
+      "name": "Победный шажок",
+      "file": "assets/klyaksa/step.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 84,
+      "fps": 21
+    },
+    {
+      "name": "Удивлённо оглядывается",
+      "file": "assets/klyaksa/look.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 92,
+      "fps": 23
+    },
+    {
+      "name": "Ходит в разные стороны",
+      "file": "assets/klyaksa/walk.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 92,
+      "fps": 23
+    },
+    {
+      "name": "Радуется",
+      "file": "assets/klyaksa/joy.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 92,
+      "fps": 23
+    },
+    {
+      "name": "Подражает набору текста",
+      "file": "assets/klyaksa/typing.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 92,
+      "fps": 23
+    },
+    {
+      "name": "Нетерпеливо ждёт",
+      "file": "assets/klyaksa/waiting.png",
+      "frameWidth": 384,
+      "frameHeight": 384,
+      "columns": 12,
+      "frameCount": 92,
+      "fps": 23
+    }
+  ]
+}

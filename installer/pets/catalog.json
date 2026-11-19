@@ -1,0 +1,68 @@
+[
+  {
+    "id": "hudi",
+    "name": "HUDI",
+    "file": "hudi.pet",
+    "theme": {
+      "name": "Графит",
+      "accent": "#a5e4f6",
+      "background": "#181c20",
+      "surface": "#23292f"
+    },
+    "sha256": "4b75e90c7d2e2c7e60a0ff3ccac2f640ee5ea268e4ee681d376e298b690b2a56",
+    "bytes": 377557
+  },
+  {
+    "id": "kudryashka",
+    "name": "Кудряшка",
+    "file": "kudryashka.pet",
+    "theme": {
+      "name": "Сирень",
+      "accent": "#ead8ff",
+      "background": "#201b27",
+      "surface": "#2b2434"
+    },
+    "sha256": "282ba072910af6b0bcb701c6e4bbd2966d7fad5251e91ccb187771e103e4788a",
+    "bytes": 34380588
+  },
+  {
+    "id": "sand-watchman-clean",
+    "name": "Песчаный дозорный (чёткий контур)",
+    "file": "sand-watchman-clean.pet",
+    "theme": {
+      "name": "Песок и бронза",
+      "accent": "#CEA87A",
+      "background": "#241C19",
+      "surface": "#362A24"
+    },
+    "sha256": "d39c197d43ad68ddbf44524932ff040e7b6075f2c20c53dc66390e6247e70866",
+    "bytes": 78518400
+  },
+  {
+    "id": "knight-watchman",
+    "name": "Рыцарь-дозорный",
+    "file": "knight-watchman.pet",
+    "sha256": "983f0e56635d0fef6321cf921971bd2f74f47dbb83f7d72fa9bd82a2392d99bb",
+    "bytes": 28724623
+  },
+  {
+    "id": "quiet-ninja",
+    "name": "Тихий ниндзя",
+    "file": "quiet-ninja.pet",
+    "sha256": "a0e97cb70740a430835196a774ed1bbe04e964a9d2611c95b42cbd631cd4d223",
+    "bytes": 216856449
+  },
+  {
+    "id": "cloth-ninja",
+    "name": "Тканевый ниндзя",
+    "file": "cloth-ninja.pet",
+    "theme": {
+      "name": "Уголь и канат",
+      "accent": "#AA8A78",
+      "background": "#171B23",
+      "surface": "#272D38"
+    },
+    "sha256": "8739bc09e549432bf473ef714237334055278ffd89470694da856b72136be03d",
+    "bytes": 246701021
+  }
+]

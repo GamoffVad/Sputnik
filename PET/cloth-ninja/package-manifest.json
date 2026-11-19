@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 2,
+  "id": "cloth-ninja",
+  "name": "Тканевый ниндзя",
+  "description": "Ловкий и озорной тканевый ниндзя: 11 согласованных анимаций, мягкая тень, сохранённые детали и эффекты. Общие начальные и конечные кадры.",
+  "displayScale": 1.3,
+  "theme": {
+    "name": "Уголь и канат",
+    "accent": "#AA8A78",
+    "background": "#171B23",
+    "surface": "#272D38"
+  },
+  "animations": [
+    {
+      "name": "Узел с характером",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-0-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-0-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-0-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Секретный чих",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-1-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-1-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-1-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Ветер не по плану",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-2-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-2-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-2-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Геройское приземление",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-3-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-3-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-3-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Обманный манёвр",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-4-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-4-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-4-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Невидимая стена",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-5-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-5-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-5-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Танец запретной школы",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-6-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-6-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-6-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Слишком почтительный поклон",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-7-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-7-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-7-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Искра-озорница",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-8-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-8-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-8-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Бумажный бумеранг",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-9-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-9-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-9-2.png",
+          "frames": 32
+        }
+      ]
+    },
+    {
+      "name": "Танцевальный взрыв",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "clip-10-0.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-10-1.png",
+          "frames": 32
+        },
+        {
+          "file": "clip-10-2.png",
+          "frames": 32
+        }
+      ]
+    }
+  ]
+}

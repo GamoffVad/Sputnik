@@ -9,7 +9,10 @@
     "name": "Ожидание",
     "file": "assets/hudi.png",
     "frameCount": 1,
-    "fps": 1
+    "fps": 1,
+    "frameWidth": 346,
+    "frameHeight": 720,
+    "columns": 1
   },
   "generation": {
     "reference": "../../reference.png",
@@ -22,5 +25,11 @@
     "keepAccessories": true,
     "doNotDownscale": true,
     "identicalEndpointPixels": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 0,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package",
+    "preserveNativeResolution": true
   }
 }

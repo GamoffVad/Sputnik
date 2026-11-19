@@ -1,7 +1,7 @@
 {
   "id": "paper-boomerang",
   "name": "Бумажный бумеранг",
-  "status": "idea",
+  "status": "approved",
   "movement": "Бросает бумажную звёздочку, складывает руки, замечает её возвращение и ловит за спиной.",
   "proposedTrigger": "random-idle",
   "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
@@ -10,12 +10,44 @@
     "reference": "../../reference.png",
     "firstFrame": "../../keyframes/start.png",
     "lastFrame": "../../keyframes/end.png",
-    "requested": false,
+    "requested": true,
     "sameCharacterScale": true,
     "fixedCamera": true,
     "keepFullShadow": true,
     "keepAccessories": true,
     "doNotDownscale": true,
-    "identicalEndpointPixels": true
-  }
+    "identicalEndpointPixels": true,
+    "turnWholeBodyToCameraBeforeAction": false,
+    "visibleFootsteps": true,
+    "actionFacingCamera": false,
+    "returnToOriginalPoseAndPosition": true,
+    "naturalHeadAndTorsoDirectionChanges": true,
+    "jobId": "a9871810-0f74-4ca8-8e87-ab2a1a3563fe",
+    "model": "seedance_2_0",
+    "mode": "fast",
+    "resolution": "720p",
+    "durationSeconds": 4,
+    "quotedCredits": 10
+  },
+  "delivery": {
+    "horizontalFlip": true,
+    "preserveNativeResolution": true,
+    "flipEntireFrameIncludingShadowAndProps": true,
+    "processed": true,
+    "frames": 96,
+    "fps": 24,
+    "durationSeconds": 4,
+    "nativeSize": [
+      960,
+      960
+    ],
+    "rgbaFrames": "../../renders/approved-10/rgba-flipped",
+    "preview": "../../renders/approved-10/preview-black-white-flipped.mp4",
+    "commonEndpointRgbaSha256": "f3901c6c9fa84a725cc86de7e3799627b6e58d779af0e3213b4e98209abe66ac",
+    "preserveAllNonBackgroundElements": true,
+    "packageAnimationIndex": 9,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package"
+  },
+  "userApproved": true
 }

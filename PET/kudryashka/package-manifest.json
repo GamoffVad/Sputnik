@@ -1,0 +1,50 @@
+{
+  "id": "kudryashka",
+  "name": "Кудряшка",
+  "description": "Четыре анимации из исходных роликов",
+  "theme": {
+    "name": "Сирень",
+    "accent": "#ead8ff",
+    "background": "#201b27",
+    "surface": "#2b2434"
+  },
+  "animations": [
+    {
+      "name": "Приветствие",
+      "file": "assets/wink.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "columns": 8,
+      "frameCount": 72,
+      "fps": 18
+    },
+    {
+      "name": "Повороты головы",
+      "file": "assets/seedance.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "columns": 8,
+      "frameCount": 71,
+      "fps": 18
+    },
+    {
+      "name": "Опора ладонью",
+      "file": "assets/palm.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "columns": 8,
+      "frameCount": 144,
+      "fps": 18
+    },
+    {
+      "name": "Анимация Kling",
+      "file": "assets/kling.png",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "columns": 8,
+      "frameCount": 144,
+      "fps": 18
+    }
+  ],
+  "schemaVersion": 1
+}

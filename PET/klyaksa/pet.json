@@ -60,5 +60,9 @@
       "name": "Нетерпеливо ждёт",
       "file": "animations/action-08/animation.json"
     }
-  ]
+  ],
+  "bundled": true,
+  "bundledAssets": "source/bundled",
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
 }

@@ -19,7 +19,13 @@
   },
   "theme": "theme.json",
   "package": {
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet"
+    "file": "exports/hudi.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet",
+    "sha256": "4b75e90c7d2e2c7e60a0ff3ccac2f640ee5ea268e4ee681d376e298b690b2a56",
+    "bytes": 377557,
+    "schemaVersion": 1,
+    "compatibleWindows": "1.3.14",
+    "releaseTag": "v1.3.14"
   },
   "animations": [
     {
@@ -27,5 +33,8 @@
       "name": "Ожидание",
       "file": "animations/action-01/animation.json"
     }
-  ]
+  ],
+  "bundled": false,
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
 }

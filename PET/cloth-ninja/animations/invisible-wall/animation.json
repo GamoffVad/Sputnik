@@ -1,7 +1,7 @@
 {
   "id": "invisible-wall",
   "name": "Невидимая стена",
-  "status": "idea",
+  "status": "approved",
   "movement": "Шагает, упирается ладонями в невидимое препятствие, ощупывает его и протискивается боком.",
   "proposedTrigger": "random-idle",
   "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
@@ -10,12 +10,39 @@
     "reference": "../../reference.png",
     "firstFrame": "../../keyframes/start.png",
     "lastFrame": "../../keyframes/end.png",
-    "requested": false,
+    "requested": true,
     "sameCharacterScale": true,
     "fixedCamera": true,
     "keepFullShadow": true,
     "keepAccessories": true,
     "doNotDownscale": true,
-    "identicalEndpointPixels": true
+    "identicalEndpointPixels": true,
+    "turnWholeBodyToCameraBeforeAction": false,
+    "visibleFootsteps": true,
+    "actionFacingCamera": false,
+    "returnToOriginalPoseAndPosition": true,
+    "naturalHeadAndTorsoDirectionChanges": true
+  },
+  "userApproved": true,
+  "jobId": "d50a1f8a-581a-4ce6-aa40-3518eecbb466",
+  "delivery": {
+    "horizontalFlip": true,
+    "preserveNativeResolution": true,
+    "flipEntireFrameIncludingShadowAndProps": true,
+    "processed": true,
+    "frames": 96,
+    "fps": 24,
+    "durationSeconds": 4,
+    "nativeSize": [
+      960,
+      960
+    ],
+    "rgbaFrames": "../../renders/approved-6/rgba-flipped",
+    "preview": "../../renders/approved-6/preview-black-white-flipped.mp4",
+    "commonEndpointRgbaSha256": "f3901c6c9fa84a725cc86de7e3799627b6e58d779af0e3213b4e98209abe66ac",
+    "preserveAllNonBackgroundElements": true,
+    "packageAnimationIndex": 5,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package"
   }
 }

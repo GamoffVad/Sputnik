@@ -19,7 +19,13 @@
   },
   "theme": "theme.json",
   "package": {
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet"
+    "file": "exports/sand-watchman-clean.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet",
+    "sha256": "d39c197d43ad68ddbf44524932ff040e7b6075f2c20c53dc66390e6247e70866",
+    "bytes": 78518400,
+    "schemaVersion": 1,
+    "compatibleWindows": "1.3.14",
+    "releaseTag": "v1.3.14"
   },
   "animations": [
     {
@@ -47,5 +53,8 @@
       "name": "Задремал на посту",
       "file": "animations/action-05/animation.json"
     }
-  ]
+  ],
+  "bundled": false,
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
 }

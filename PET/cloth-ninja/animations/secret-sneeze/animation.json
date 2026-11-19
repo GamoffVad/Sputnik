@@ -1,7 +1,7 @@
 {
   "id": "secret-sneeze",
   "name": "Секретный чих",
-  "status": "idea",
+  "status": "approved",
   "movement": "Сдерживает чих, зажимает лицо ладонями, мощно чихает всем телом и подпрыгивает.",
   "proposedTrigger": "random-idle",
   "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
@@ -10,12 +10,39 @@
     "reference": "../../reference.png",
     "firstFrame": "../../keyframes/start.png",
     "lastFrame": "../../keyframes/end.png",
-    "requested": false,
+    "requested": true,
     "sameCharacterScale": true,
     "fixedCamera": true,
     "keepFullShadow": true,
     "keepAccessories": true,
     "doNotDownscale": true,
-    "identicalEndpointPixels": true
+    "identicalEndpointPixels": true,
+    "turnWholeBodyToCameraBeforeAction": false,
+    "visibleFootsteps": true,
+    "actionFacingCamera": false,
+    "returnToOriginalPoseAndPosition": true,
+    "naturalHeadAndTorsoDirectionChanges": true
+  },
+  "jobId": "60733e42-c356-47f0-a2e0-2492a0f6c259",
+  "userApproved": true,
+  "delivery": {
+    "horizontalFlip": true,
+    "preserveNativeResolution": true,
+    "flipEntireFrameIncludingShadowAndProps": true,
+    "processed": true,
+    "frames": 96,
+    "fps": 24,
+    "durationSeconds": 4,
+    "nativeSize": [
+      960,
+      960
+    ],
+    "rgbaFrames": "../../renders/approved-2/rgba-flipped",
+    "preview": "../../renders/approved-2/preview-black-white-flipped.mp4",
+    "commonEndpointRgbaSha256": "f3901c6c9fa84a725cc86de7e3799627b6e58d779af0e3213b4e98209abe66ac",
+    "preserveAllNonBackgroundElements": true,
+    "packageAnimationIndex": 1,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package"
   }
 }

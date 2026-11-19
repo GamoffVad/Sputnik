@@ -1,7 +1,7 @@
 {
   "id": "cloth-ninja",
   "name": "Тканевый ниндзя",
-  "status": "reference-and-ideas",
+  "status": "ready",
   "character": "Маленький ниндзя, который старается выглядеть невозмутимым, но постоянно попадает в забавные ситуации. Молчаливый, любопытный, ловкий и немного озорной. Движения быстрые и точные, с короткой комической развязкой.",
   "reference": {
     "file": "reference.png",
@@ -18,7 +18,15 @@
     "filesIdentical": true
   },
   "theme": "theme.json",
-  "package": null,
+  "package": {
+    "file": "exports/cloth-ninja.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet",
+    "sha256": "8739bc09e549432bf473ef714237334055278ffd89470694da856b72136be03d",
+    "bytes": 246701021,
+    "schemaVersion": 2,
+    "compatibleWindows": "1.3.14",
+    "releaseTag": "pet-cloth-ninja-v1"
+  },
   "animations": [
     {
       "id": "stubborn-knot",
@@ -69,6 +77,30 @@
       "id": "paper-boomerang",
       "name": "Бумажный бумеранг",
       "file": "animations/paper-boomerang/animation.json"
+    },
+    {
+      "id": "dance-explosion",
+      "name": "Танцевальный взрыв",
+      "file": "animations/dance-explosion/animation.json"
     }
-  ]
+  ],
+  "delivery": {
+    "horizontalFlip": true,
+    "nativeFrameSize": [
+      960,
+      960
+    ],
+    "animations": 11,
+    "frames": 1056,
+    "fps": 24,
+    "secondsPerAnimation": 4,
+    "packageSha256": "8739bc09e549432bf473ef714237334055278ffd89470694da856b72136be03d",
+    "packageBytes": 246701021,
+    "firstFrame": "keyframes/delivery-start.png",
+    "lastFrame": "keyframes/delivery-end.png",
+    "allEndpointsPixelIdentical": true
+  },
+  "bundled": false,
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
 }

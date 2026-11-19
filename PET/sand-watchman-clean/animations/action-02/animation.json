@@ -34,5 +34,11 @@
     "keepAccessories": true,
     "doNotDownscale": true,
     "identicalEndpointPixels": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 1,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package",
+    "preserveNativeResolution": true
   }
 }

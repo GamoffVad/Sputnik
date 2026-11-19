@@ -4,3 +4,7 @@
 !*/renders/.gitkeep
 */exports/*
 !*/exports/.gitkeep
+
+# Local AE masters and account-specific generation / installation records.
+/cloth-ninja/processing/
+/cloth-ninja/production.json

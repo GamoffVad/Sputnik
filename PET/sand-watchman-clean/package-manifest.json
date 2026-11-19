@@ -1,0 +1,105 @@
+{
+  "id": "sand-watchman-clean",
+  "name": "Песчаный дозорный (чёткий контур)",
+  "description": "Молчаливый страж в тканевых обмотках и бронзовых доспехах.",
+  "theme": {
+    "name": "Песок и бронза",
+    "accent": "#CEA87A",
+    "background": "#241C19",
+    "surface": "#362A24"
+  },
+  "animations": [
+    {
+      "name": "На посту",
+      "frameWidth": 720,
+      "frameHeight": 720,
+      "columns": 10,
+      "frameCount": 120,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "assets/sand-watchman-clean/clip-0-0.png",
+          "frames": 60
+        },
+        {
+          "file": "assets/sand-watchman-clean/clip-0-1.png",
+          "frames": 60
+        }
+      ]
+    },
+    {
+      "name": "Подозрительный шорох",
+      "frameWidth": 720,
+      "frameHeight": 720,
+      "columns": 10,
+      "frameCount": 120,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "assets/sand-watchman-clean/clip-1-0.png",
+          "frames": 60
+        },
+        {
+          "file": "assets/sand-watchman-clean/clip-1-1.png",
+          "frames": 60
+        }
+      ]
+    },
+    {
+      "name": "Порыв ветра",
+      "frameWidth": 720,
+      "frameHeight": 720,
+      "columns": 10,
+      "frameCount": 120,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "assets/sand-watchman-clean/clip-2-0.png",
+          "frames": 60
+        },
+        {
+          "file": "assets/sand-watchman-clean/clip-2-1.png",
+          "frames": 60
+        }
+      ]
+    },
+    {
+      "name": "Почтительный поклон",
+      "frameWidth": 720,
+      "frameHeight": 720,
+      "columns": 10,
+      "frameCount": 120,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "assets/sand-watchman-clean/clip-3-0.png",
+          "frames": 60
+        },
+        {
+          "file": "assets/sand-watchman-clean/clip-3-1.png",
+          "frames": 60
+        }
+      ]
+    },
+    {
+      "name": "Задремал на посту",
+      "frameWidth": 720,
+      "frameHeight": 720,
+      "columns": 10,
+      "frameCount": 120,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "assets/sand-watchman-clean/clip-4-0.png",
+          "frames": 60
+        },
+        {
+          "file": "assets/sand-watchman-clean/clip-4-1.png",
+          "frames": 60
+        }
+      ]
+    }
+  ],
+  "displayScale": 1.538462,
+  "schemaVersion": 1
+}

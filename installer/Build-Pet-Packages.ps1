@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string] $OutputDir,
-    [string] $NinjaPackage
+    [string] $NinjaPackage,
+    [string] $ClothNinjaPackage
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -58,6 +59,19 @@ try {
     if ($downloaded -and (Test-Path -LiteralPath $NinjaPackage)) { Remove-Item -LiteralPath $NinjaPackage }
 }
 $exported += [pscustomobject]@{ id='quiet-ninja'; name='Тихий ниндзя'; file='quiet-ninja.pet' }
+$clothPin = Get-Content -Raw -LiteralPath "$PSScriptRoot/pets/cloth-ninja-source.json" | ConvertFrom-Json
+$clothDownloaded = !$ClothNinjaPackage
+if (!$ClothNinjaPackage) {
+    $ClothNinjaPackage = Join-Path $out 'cloth-ninja.download'
+    Invoke-WebRequest -Uri $clothPin.url -OutFile $ClothNinjaPackage
+}
+try {
+    if ((Get-FileHash -LiteralPath $ClothNinjaPackage -Algorithm SHA256).Hash -ne $clothPin.sha256) { throw 'Cloth Ninja checksum mismatch.' }
+    Copy-Item -LiteralPath $ClothNinjaPackage -Destination (Join-Path $out 'cloth-ninja.pet')
+} finally {
+    if ($clothDownloaded -and (Test-Path -LiteralPath $ClothNinjaPackage)) { Remove-Item -LiteralPath $ClothNinjaPackage }
+}
+$exported += [pscustomobject]@{ id='cloth-ninja'; name='Тканевый ниндзя'; file='cloth-ninja.pet' }
 foreach ($item in $exported) {
     $file = Join-Path $out $item.file
     $item | Add-Member -NotePropertyName sha256 -NotePropertyValue ((Get-FileHash -LiteralPath $file).Hash.ToLowerInvariant())

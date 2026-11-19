@@ -19,7 +19,13 @@
   },
   "theme": "theme.json",
   "package": {
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet"
+    "file": "exports/kudryashka.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet",
+    "sha256": "282ba072910af6b0bcb701c6e4bbd2966d7fad5251e91ccb187771e103e4788a",
+    "bytes": 34380588,
+    "schemaVersion": 1,
+    "compatibleWindows": "1.3.14",
+    "releaseTag": "v1.3.14"
   },
   "animations": [
     {
@@ -42,5 +48,8 @@
       "name": "Анимация Kling",
       "file": "animations/action-04/animation.json"
     }
-  ]
+  ],
+  "bundled": false,
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
 }

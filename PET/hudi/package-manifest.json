@@ -1,0 +1,23 @@
+{
+  "id": "hudi",
+  "name": "HUDI",
+  "description": "Компаньон рабочего стола",
+  "theme": {
+    "name": "Графит",
+    "accent": "#a5e4f6",
+    "background": "#181c20",
+    "surface": "#23292f"
+  },
+  "animations": [
+    {
+      "name": "Ожидание",
+      "file": "assets/hudi.png",
+      "frameCount": 1,
+      "fps": 1,
+      "frameWidth": 346,
+      "frameHeight": 720,
+      "columns": 1
+    }
+  ],
+  "schemaVersion": 1
+}

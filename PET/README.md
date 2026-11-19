@@ -1,34 +1,38 @@
-# Исходники питомцев
+# Питомцы и исходные референсы
 
-У каждого персонажа своя папка. Здесь хранятся референс, опорные кадры, характер, палитра и описание движений. Эти материалы не включаются в установщик приложения.
+Все семь питомцев имеют отдельную папку с референсом, темой, опорными кадрами, описаниями анимаций и манифестом готовых ресурсов. [Машиночитаемый каталог](catalog.json) · [Результат проверки структуры](validation.json).
 
-| Питомец | Папка |
-| --- | --- |
-| Клякса | [klyaksa](klyaksa/pet.json) |
-| Кудряшка | [kudryashka](kudryashka/pet.json) |
-| HUDI | [hudi](hudi/pet.json) |
-| Песчаный дозорный | [sand-watchman-clean](sand-watchman-clean/pet.json) |
-| Рыцарь-дозорный | [knight-watchman](knight-watchman/pet.json) |
-| Тихий ниндзя | [quiet-ninja](quiet-ninja/pet.json) |
-| Новый тканевый ниндзя | [cloth-ninja](cloth-ninja/pet.json) · [10 идей](cloth-ninja/ANIMATIONS.md) |
+| Питомец | Референс PNG | Анимации | Загрузка |
+| --- | --- | ---: | --- |
+| [Тканевый ниндзя](cloth-ninja/pet.json) | [941×1671](cloth-ninja/reference.png) | 11 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet) |
+| [HUDI](hudi/pet.json) | [346×720](hudi/reference.png) | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet) |
+| [Клякса](klyaksa/pet.json) | [384×384](klyaksa/reference.png) | 8 | [В приложении](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/Sputnik-1.3.14-Windows-10-11-x64.exe) |
+| [Рыцарь-дозорный](knight-watchman/pet.json) | [384×384](knight-watchman/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet) |
+| [Кудряшка](kudryashka/pet.json) | [256×256](kudryashka/reference.png) | 4 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet) |
+| [Тихий ниндзя](quiet-ninja/pet.json) | [1280×720](quiet-ninja/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet) |
+| [Песчаный дозорный (чёткий контур)](sand-watchman-clean/pet.json) | [720×720](sand-watchman-clean/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet) |
 
 ```text
 PET/<id>/
-  pet.json                    # имя, характер, ссылки и состояние работы
-  theme.json                  # палитра приложения для этого питомца
-  reference.png               # основной референс с прозрачностью
-  keyframes/start.png         # исходная поза для новой анимации
-  keyframes/end.png           # тот же кадр, побайтово
+  README.md
+  pet.json
+  reference.png
+  theme.json
+  package-manifest.json
+  keyframes/start.png
+  keyframes/end.png
   animations/<id>/animation.json
-  source/                     # оригинальные ролики и рабочие материалы
-  renders/                    # обработанные кадры в исходном разрешении
-  exports/                    # готовый пакет .pet
+  source/
+  renders/
+  exports/<id>.pet
 ```
 
-`start.png` и `end.png` — один и тот же референс. Для будущих роликов они задают одинаковую опорную позу. Это не утверждение о совпадении концов старых роликов всех персонажей. У «Тихого ниндзя» совпадение всех десяти концов дополнительно проверено по фактическим кадрам пакета.
+Референсы сохранены как RGBA PNG без изменения исходного разрешения. У шести существующих питомцев референс совпадает с первым нативным кадром актуальных ресурсов. У тканевого ниндзя `reference.png` — исходный референс 941×1671 для генерации; `keyframes/delivery-start.png` и `delivery-end.png` — общая зеркальная поза готовых анимаций 960×960. Исходное изображение не заменяется кадром другого размера.
 
-У существующих питомцев референс извлечён из первого кадра пакета/исходного PNG без уменьшения. У нового тканевого ниндзя используется последнее изображение после удаления фона и выступающей слева части меча; пояс и металлическая деталь сохранены. Его анимации пока только описаны — видео не генерировалось.
+`start.png` и `end.png` побайтово совпадают с основным референсом каждого питомца. Это опорные кадры для будущих анимаций, а не заявление о совпадении концов всех старых роликов. У тихого ниндзя проверены 10 общих концов; у тканевого — 22.
 
-PNG-референсы и JSON хранятся в Git. Большие ролики, рендеры и пакеты остаются в рабочих папках, а готовые `.pet` публикуются в [файлах релиза рядом с установщиком](https://github.com/GamoffVad/Sputnik/releases/latest).
+У тканевого ниндзя готовы 11 согласованных анимаций, включая дополнительный танец. Все итоговые кадры зеркальные; сохранены детали, реквизит, эффекты и мягкая тень. [Описание движений](cloth-ninja/ANIMATIONS.md).
 
-Для каждой анимации сохраняются исходный масштаб персонажа, качество кадров, аксессуары и мягкая тень. Ни части тела, ни тень не должны обрезаться. Новая генерация запускается только по запросу пользователя.
+Клякса встроена в приложение: её исходные PNG остаются в `wwwroot/assets/klyaksa`, локальные рабочие копии создаются в `PET/klyaksa/source/bundled`. Шесть отдельных `.pet` лежат локально в `exports/` соответствующих питомцев и опубликованы среди файлов релиза рядом с установщиками. В Git хранятся референсы, JSON и инструкции; тяжёлые видео, AE-мастера, рендеры и пакеты исключены из Git.
+
+Для восстановления локальных пакетов скачайте `.pet` из выпуска 1.3.14 в отдельную папку и выполните `python PET/organize.py --packages <папка>`. Скрипт проверяет SHA256, прозрачность и размеры референсов, совпадение опорных кадров и соответствие всех анимаций. Он не масштабирует изображения и не запускает генерацию.
