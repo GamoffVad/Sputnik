@@ -10,7 +10,14 @@
       720
     ],
     "rgbaSha256": "768e2418a178cb1a0f94750c7a75ddc27a4bcd65140dbc161ea762fb3b518e4e",
-    "origin": "Первый кадр исходного PNG без масштабирования"
+    "origin": "Первый кадр исходного PNG без масштабирования",
+    "originalFile": "reference-original.png",
+    "mirroredOriginalFile": "reference-original-flipped.png",
+    "originalSize": [
+      941,
+      1671
+    ],
+    "originalPngSha256": "60ec613bffaae9a6c1db26969dce473618c4aaa5d5f17dc064a2c14960f7def6"
   },
   "keyframes": {
     "start": "keyframes/start.png",
@@ -56,5 +63,13 @@
   ],
   "bundled": false,
   "workspaceSchemaVersion": 1,
-  "assetsManifest": "package-manifest.json"
+  "assetsManifest": "package-manifest.json",
+  "proposedAnimations": "new-ten-plan.json",
+  "generationKeyframes": {
+    "start": "keyframes/new-ten/green-start.png",
+    "end": "keyframes/new-ten/green-end.png",
+    "filesIdentical": true,
+    "referencePixelsResampled": false,
+    "characterHeightPercent": 50
+  }
 }

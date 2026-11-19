@@ -1,0 +1,106 @@
+{
+  "name": "Песчаный Дозорный",
+  "character": "Невозмутимый, дисциплинированный, ловкий и немного гордый страж с любопытством и сухим юмором.",
+  "reference": "reference-original-flipped.png",
+  "originalReference": "reference-original.png",
+  "generation": {
+    "model": "seedance_2_0",
+    "mode": "fast",
+    "resolution": "720p",
+    "fps": 24,
+    "durationSeconds": 4,
+    "audio": false,
+    "aspectRatio": "1:1",
+    "bitrate": "high",
+    "quotedCreditsPerClip": 10,
+    "quotedDate": "2026-11-19",
+    "characterHeightPercent": 50,
+    "approvedSubmissionIndexes": [
+      1
+    ],
+    "reviewEachClipBeforeNext": true
+  },
+  "requirements": {
+    "uniformGreenBackground": "#00FF00",
+    "fullCharacterAndShadowInsideEveryFrame": true,
+    "preserveAllPropsAndEffects": true,
+    "nativeResolutionThroughoutProcessing": true,
+    "commonPixelIdenticalEndpoints": true,
+    "naturalHeadAndTorsoDirectionChanges": true,
+    "visibleFootwork": true,
+    "referenceAlreadyMirrored": true,
+    "doNotMirrorOutputAgain": true
+  },
+  "animations": [
+    {
+      "index": 1,
+      "id": "scarf-with-character",
+      "name": "Шарф с характером",
+      "movement": "Конец шарфа закрывает лицо; Дозорный пригибается, делает шаг в сторону, ловит прикреплённую ленту и перебрасывает её за плечо.",
+      "status": "first-generation-authorized"
+    },
+    {
+      "index": 2,
+      "id": "tassel-duel",
+      "name": "Дуэль с кисточкой",
+      "movement": "Уклоняется от подвески чалмы, ловит её двумя руками и строго поправляет.",
+      "status": "idea"
+    },
+    {
+      "index": 3,
+      "id": "sand-surfing",
+      "name": "Песчаный серфинг",
+      "movement": "Балансирует на маленькой волне песка, спрыгивает и возвращается на исходное место.",
+      "status": "idea"
+    },
+    {
+      "index": 4,
+      "id": "guardian-jump",
+      "name": "Прыжок стража",
+      "movement": "Короткий разбег, прыжок с четвертью оборота, низкое приземление и резкое выпрямление.",
+      "status": "idea"
+    },
+    {
+      "index": 5,
+      "id": "stubborn-hem",
+      "name": "Непослушный подол",
+      "movement": "Наступает на край одежды, дважды подскакивает на одной ноге, освобождается и отряхивается.",
+      "status": "idea"
+    },
+    {
+      "index": 6,
+      "id": "golden-scarab",
+      "name": "Золотой скарабей",
+      "movement": "Приседает и ловит жука возле сапога; замечает его на плече и разворачивается следом.",
+      "status": "idea"
+    },
+    {
+      "index": 7,
+      "id": "battle-dance",
+      "name": "Боевой танец",
+      "movement": "Быстрые удары пятками, скользящие шаги, движения плечами и короткий разворот в строгую стойку.",
+      "status": "idea"
+    },
+    {
+      "index": 8,
+      "id": "ribbon-pattern",
+      "name": "Узор лентой",
+      "movement": "Рисует свободным концом шарфа восьмёрку с двумя боковыми шагами и поворотом корпуса.",
+      "status": "idea"
+    },
+    {
+      "index": 9,
+      "id": "invisible-opponent",
+      "name": "Невидимый соперник",
+      "movement": "Уклон, блок и короткий выпад; заглядывает за плечо и невозмутимо возвращается.",
+      "status": "idea"
+    },
+    {
+      "index": 10,
+      "id": "sand-levitation",
+      "name": "Песчаная левитация",
+      "movement": "Небольшой вихрь приподнимает его; он перебирает ногами, балансирует и мягко приземляется.",
+      "status": "idea"
+    }
+  ]
+}

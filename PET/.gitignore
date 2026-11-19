@@ -8,3 +8,6 @@
 # Local AE masters and account-specific generation / installation records.
 /cloth-ninja/processing/
 /cloth-ninja/production.json
+
+# Local project masters for paused and future characters.
+*/processing/
