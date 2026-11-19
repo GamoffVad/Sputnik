@@ -13,7 +13,7 @@ namespace Sputnik;
 
 public partial class MainWindow
 {
-    private void ShowPets()
+    private void ShowPets(string? message = null)
     {
         var builtins = Read(Path.Combine(AppContext.BaseDirectory, "wwwroot", "assets", "pets.json")) as JsonArray ?? new();
         var pets = builtins.Concat(PetPackages.Installed(Pets)).OfType<JsonObject>().ToArray();
@@ -33,19 +33,33 @@ public partial class MainWindow
         select.SelectionChanged += (_, _) => Apply();
         useTheme.Click += (_, _) => Apply();
         page.Children.Add(Actions(Button("Движения", () => Desktop?.ShowWorkspace("motion"))));
+        page.Children.Add(Actions(Button("Скачать питомцев", () => Process.Start(new ProcessStartInfo("https://github.com/GamoffVad/Sputnik/releases/latest") { UseShellExecute = true }))));
+        if (message is not null) { var status = Status(); status.Text = message; page.Children.Add(status); }
     }
 
     private void SelectPet(string id, bool themed) => UpdateWorkspace(current =>
     {
         current["active"] = id;
         current["themed"] = themed;
-        if (Value(current, "appearanceMode") != "custom") current["appearanceMode"] = themed ? "pet" : "default";
+        if (themed || Value(current, "appearanceMode") != "custom") current["appearanceMode"] = themed ? "pet" : "default";
     }, true);
 
     private async Task ImportPet()
     {
         var path = Choose("Пакет питомца (*.pet)|*.pet");
         if (path is null) return;
+        await PreviewPetPackage(path);
+    }
+
+    internal async Task OpenPetPackage(string path)
+    {
+        OpenSection("pets");
+        try { await PreviewPetPackage(path); }
+        catch (Exception error) { ShowPets(error.Message); }
+    }
+
+    private async Task PreviewPetPackage(string path)
+    {
         var host = PanelHost.Content;
         var staged = await Task.Run(() => PetPackages.Stage(path, Pending, Pets));
         if (!ReferenceEquals(PanelHost.Content, host) || !IsVisible) return;
@@ -65,10 +79,11 @@ public partial class MainWindow
         Field(page, "Движение", motion);
         page.Children.Add(stage);
         page.Children.Add(useTheme);
-        page.Children.Add(Actions(Button("Установить питомца", () =>
+        page.Children.Add(Actions(Button(staged["replacesExisting"]?.GetValue<bool>() == true ? "Обновить питомца" : "Установить питомца", () =>
         {
             var installed = PetPackages.Install(token, Pending, Pets);
             SelectPet(Value(installed, "id"), useTheme.IsChecked == true);
+            Desktop?.ReloadPet();
             OpenSection("pets");
         }, true)));
         page.Children.Add(status);

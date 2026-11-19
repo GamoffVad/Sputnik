@@ -68,6 +68,7 @@ jobs:
           foreach ($arch in @('x64','x86')) {
             Copy-Item "artifacts/win7/v$env:APP_VERSION/SputnikSetup-$env:APP_VERSION-win7-$arch.exe" "artifacts/release/Sputnik-$env:APP_VERSION-Windows-7-$arch.exe"
           }
+          & ./installer/Build-Pet-Packages.ps1 -OutputDir artifacts/release
           Get-ChildItem artifacts/release -File | Sort-Object Name | ForEach-Object {
             $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             "$hash  $($_.Name)"
@@ -80,6 +81,8 @@ jobs:
           path: |
             artifacts/release/Sputnik-*.exe
             artifacts/release/Sputnik-*-Portable.zip
+            artifacts/release/*.pet
+            artifacts/release/pets.json
             artifacts/release/SHA256SUMS.txt
           if-no-files-found: error
           compression-level: 0

@@ -64,6 +64,8 @@ partial class Check
         try
         {
             window.Show();
+            if (args.Contains("--pet-distribution-only")) { PetDistribution(window,data); return; }
+            if (args.Contains("--photo-sharing-only")) { PhotoSharing(data); return; }
             if (args.Contains("--sphere-preview-only")) { SpherePreview(window, data, app); return; }
             if (args.Contains("--glass-icons-only")) { GlassIcons(window,data); return; }
             if (args.Contains("--clipping-only") || args.Any(a=>a.StartsWith("--interactive-")))

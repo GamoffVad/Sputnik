@@ -37,7 +37,7 @@ if ($Target -eq 'modern-x64') {
 }
 if (Get-ChildItem -LiteralPath $payload -File -Filter '*WebView2*') { throw 'Obsolete WebView2 dependency in payload' }
 $pets = @(Get-Content -Raw -LiteralPath (Require-File 'wwwroot/assets/pets.json') | ConvertFrom-Json)
-if ($pets[0].id -ne 'klyaksa' -or 'knight-watchman' -notin $pets.id) { throw 'Required bundled pets are missing' }
+if ($pets.Count -ne 1 -or $pets[0].id -ne 'klyaksa') { throw 'Only Klyaksa may be bundled' }
 $assetCount = 0
 foreach ($pet in $pets) {
     foreach ($clip in $pet.animations) {
@@ -50,4 +50,5 @@ foreach ($pet in $pets) {
         }
     }
 }
+if ($assetCount -ne 8 -or @(Get-ChildItem -LiteralPath (Join-Path $payload 'wwwroot/assets') -Recurse -File -Filter '*.png').Count -ne 8) { throw 'Unexpected bundled pet assets' }
 [pscustomobject]@{ Target=$Target; Version=$info.FileVersion; Pets=$pets.Count; AnimationAssets=$assetCount; ApplicationSHA256=(Get-FileHash -LiteralPath $assembly).Hash }

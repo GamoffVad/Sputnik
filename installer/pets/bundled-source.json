@@ -1,0 +1,259 @@
+[
+  {
+    "id": "hudi",
+    "name": "HUDI",
+    "description": "Компаньон рабочего стола",
+    "theme": {
+      "name": "Графит",
+      "accent": "#a5e4f6",
+      "background": "#181c20",
+      "surface": "#23292f"
+    },
+    "animations": [
+      {
+        "name": "Ожидание",
+        "file": "assets/hudi.png",
+        "frameCount": 1,
+        "fps": 1
+      }
+    ]
+  },
+  {
+    "id": "kudryashka",
+    "name": "Кудряшка",
+    "description": "Четыре анимации из исходных роликов",
+    "theme": {
+      "name": "Сирень",
+      "accent": "#ead8ff",
+      "background": "#201b27",
+      "surface": "#2b2434"
+    },
+    "animations": [
+      {
+        "name": "Приветствие",
+        "file": "assets/wink.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 72,
+        "fps": 18
+      },
+      {
+        "name": "Повороты головы",
+        "file": "assets/seedance.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 71,
+        "fps": 18
+      },
+      {
+        "name": "Опора ладонью",
+        "file": "assets/palm.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 144,
+        "fps": 18
+      },
+      {
+        "name": "Анимация Kling",
+        "file": "assets/kling.png",
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 8,
+        "frameCount": 144,
+        "fps": 18
+      }
+    ]
+  },
+  {
+    "id": "klyaksa",
+    "name": "Клякса",
+    "description": "Озорная спутница с восемью анимациями",
+    "theme": {
+      "name": "Сумерки",
+      "accent": "#bac7ff",
+      "background": "#181b2c",
+      "surface": "#262b45"
+    },
+    "animations": [
+      {
+        "name": "Чих с сюрпризом",
+        "file": "assets/klyaksa/sneeze.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 84,
+        "fps": 21
+      },
+      {
+        "name": "Поймала равновесие",
+        "file": "assets/klyaksa/balance.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 84,
+        "fps": 21
+      },
+      {
+        "name": "Победный шажок",
+        "file": "assets/klyaksa/step.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 84,
+        "fps": 21
+      },
+      {
+        "name": "Удивлённо оглядывается",
+        "file": "assets/klyaksa/look.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 92,
+        "fps": 23
+      },
+      {
+        "name": "Ходит в разные стороны",
+        "file": "assets/klyaksa/walk.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 92,
+        "fps": 23
+      },
+      {
+        "name": "Радуется",
+        "file": "assets/klyaksa/joy.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 92,
+        "fps": 23
+      },
+      {
+        "name": "Подражает набору текста",
+        "file": "assets/klyaksa/typing.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 92,
+        "fps": 23
+      },
+      {
+        "name": "Нетерпеливо ждёт",
+        "file": "assets/klyaksa/waiting.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 12,
+        "frameCount": 92,
+        "fps": 23
+      }
+    ]
+  },
+  {
+    "id": "sand-watchman-clean",
+    "name": "Песчаный дозорный (чёткий контур)",
+    "description": "Молчаливый страж в тканевых обмотках и бронзовых доспехах.",
+    "theme": {
+      "name": "Песок и бронза",
+      "accent": "#CEA87A",
+      "background": "#241C19",
+      "surface": "#362A24"
+    },
+    "animations": [
+      {
+        "name": "На посту",
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
+        "frameCount": 120,
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-0-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-0-1.png",
+            "frames": 60
+          }
+        ]
+      },
+      {
+        "name": "Подозрительный шорох",
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
+        "frameCount": 120,
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-1-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-1-1.png",
+            "frames": 60
+          }
+        ]
+      },
+      {
+        "name": "Порыв ветра",
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
+        "frameCount": 120,
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-2-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-2-1.png",
+            "frames": 60
+          }
+        ]
+      },
+      {
+        "name": "Почтительный поклон",
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
+        "frameCount": 120,
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-3-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-3-1.png",
+            "frames": 60
+          }
+        ]
+      },
+      {
+        "name": "Задремал на посту",
+        "frameWidth": 720,
+        "frameHeight": 720,
+        "columns": 10,
+        "frameCount": 120,
+        "fps": 24,
+        "sheets": [
+          {
+            "file": "assets/sand-watchman-clean/clip-4-0.png",
+            "frames": 60
+          },
+          {
+            "file": "assets/sand-watchman-clean/clip-4-1.png",
+            "frames": 60
+          }
+        ]
+      }
+    ],
+    "displayScale": 1.538462
+  }
+]

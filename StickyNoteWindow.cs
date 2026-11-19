@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -153,6 +154,10 @@ internal sealed class StickyNoteWindow : Window
         }, 34));
         menuPanel.Children.Add(actions);
         var sharePanel = new StackPanel();
+        var shareStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, FontSize = 11, Margin = new Thickness(8, 3, 8, 4) };
+        shareStatus.UseTheme(TextBlock.ForegroundProperty, "Muted");
+        DockPanel.SetDock(shareStatus, Dock.Bottom);
+        layout.Children.Add(shareStatus);
         var shareFrame = new Border { Child = sharePanel, CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1), Padding = new Thickness(5) };
         shareFrame.UseTheme(Border.BackgroundProperty, "Surface");
         shareFrame.UseTheme(Border.BorderBrushProperty, "Edge");
@@ -175,9 +180,13 @@ internal sealed class StickyNoteWindow : Window
                     sharePanel.Children.Add(Button(label, label, () =>
                     {
                         shareMenu.IsOpen = false;
-                        try { NoteSharing.Open(channel, editor.Document); }
-                        catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception or UriFormatException)
-                        { MessageBox.Show(this, error.Message, "Поделиться заметкой"); }
+                        try
+                        {
+                            shareStatus.Text = NoteSharing.Open(channel, editor.Document) ?? "";
+                            shareStatus.Visibility = shareStatus.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+                        }
+                        catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception or UriFormatException or IOException or ExternalException or UnauthorizedAccessException)
+                        { shareStatus.Text = error.Message; shareStatus.Visibility = Visibility.Visible; }
                     }, 165));
                 }
                 if (configured.Length > 4)
@@ -188,6 +197,20 @@ internal sealed class StickyNoteWindow : Window
                         DrawChannels();
                     }, 165);
                     sharePanel.Children.Add(next);
+                }
+                if (NoteAttachments.Images(editor.Document).Length > 0)
+                {
+                    sharePanel.Children.Add(Button("Файлы фото", "Файлы фото", () =>
+                    {
+                        try
+                        {
+                            var files = NoteAttachments.Export(NoteAttachments.Images(editor.Document), System.IO.Path.Combine(App.DataDirectory, "shared-notes"));
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", "\"" + System.IO.Path.GetDirectoryName(files[0]) + "\"") { UseShellExecute = true });
+                            shareMenu.IsOpen = false;
+                        }
+                        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+                        { shareStatus.Text = error.Message; shareStatus.Visibility = Visibility.Visible; }
+                    }, 165));
                 }
                 sharePanel.Children.Add(Button("Настроить каналы", "Настроить каналы", () =>
                 {

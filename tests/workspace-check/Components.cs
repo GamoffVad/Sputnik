@@ -342,11 +342,14 @@ partial class Check
         var preview=(JsonObject)Invoke(petType,"Stage",Package(manifest),pending,library);
         Invoke(petType,"Install",preview["token"]!.ToString(),pending,library);
         Assert(((JsonArray)Invoke(petType,"Installed",library)).Count==1,"Pet install");
-        Reject(()=>Invoke(petType,"Stage",Package(manifest),pending,library),"Duplicate pet");
+        var replacement=(JsonObject)Invoke(petType,"Stage",Package(manifest),pending,library);
+        Assert(replacement["replacesExisting"]!.GetValue<bool>(),"Existing pet update not detected");
+        Invoke(petType,"Install",replacement["token"]!.ToString(),pending,library);
+        Assert(((JsonArray)Invoke(petType,"Installed",library)).Count==1 && Directory.GetDirectories(Path.Combine(data,"pet-backups")).Length==1,"Pet update or backup failed");
         manifest["id"]="qa-other"; manifest["animations"]![0]!["file"]="../sheet.png";
         Reject(()=>Invoke(petType,"Stage",Package(manifest),pending,library),"Pet path traversal");
         Reject(()=>Invoke(petType,"Install","../escape",pending,library),"Invalid stage token");
-        Console.WriteLine("PASS pet packages: PNG/manifest staging, install/list, duplicate ID, path traversal and token validation.");
+        Console.WriteLine("PASS pet packages: PNG/manifest staging, install/list/update with backup, path traversal and token validation.");
 
         manifest["id"]="qa-native"; manifest["schemaVersion"]=2;
         manifest["animations"]![0]!["file"]="sheet.png";

@@ -32,8 +32,6 @@ internal static class PetPackages
             throw new InvalidDataException("Недопустимый идентификатор питомца.");
         if (IsBundled(id))
             throw new InvalidDataException("Этот питомец уже входит в библиотеку Спутника.");
-        if (Directory.Exists(Path.Combine(library, id)))
-            throw new InvalidDataException("Питомец с таким идентификатором уже загружен.");
 
         string name = Required(manifest, "name", 60);
         string description = manifest["description"]?.ToString() ?? "";
@@ -143,6 +141,7 @@ internal static class PetPackages
             File.WriteAllText(Path.Combine(workspace, "pet.json"), result.ToJsonString());
             var preview = (JsonObject)result.DeepClone();
             preview["token"] = token;
+            preview["replacesExisting"] = Directory.Exists(Path.Combine(library, id));
             return preview;
         }
         catch
@@ -160,9 +159,21 @@ internal static class PetPackages
         var pet = JsonNode.Parse(File.ReadAllText(Path.Combine(source, "pet.json")))!.AsObject();
         string id = pet["id"]!.GetValue<string>();
         string destination = Path.Combine(library, id);
+        Directory.CreateDirectory(library);
+        string? backup = null;
         if (Directory.Exists(destination))
-            throw new InvalidDataException("Этот питомец уже в библиотеке.");
-        Directory.Move(source, destination);
+        {
+            var backups = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(library))!, "pet-backups");
+            Directory.CreateDirectory(backups);
+            backup = Path.Combine(backups, $"{id}-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}");
+            Directory.Move(destination, backup);
+        }
+        try { Directory.Move(source, destination); }
+        catch
+        {
+            if (backup is not null) Directory.Move(backup, destination);
+            throw;
+        }
         return pet;
     }
 

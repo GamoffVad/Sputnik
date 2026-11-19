@@ -223,6 +223,8 @@ internal sealed class DesktopPetWindow : Window
         PlayNext();
     }
 
+    internal void ReloadFromStore() { active = null; UpdateFromStore(); }
+
     public void UpdateFromStore()
     {
         var workspace = ReadWorkspace();

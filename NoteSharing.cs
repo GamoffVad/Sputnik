@@ -45,9 +45,29 @@ internal sealed class NoteSharing(string directory)
         Compatibility.ReplaceFile(temporary, FilePath);
     }
 
-    public static void Open(Channel channel, FlowDocument document)
+    public static string? Open(Channel channel, FlowDocument document)
     {
         string text = Text(document);
+        byte[][] images = NoteAttachments.Images(document);
+        if (images.Length > 0)
+        {
+            string[] files = NoteAttachments.Export(images, Path.Combine(App.DataDirectory, "shared-notes"));
+            var uri = new Uri(BuildUri(CurrentTemplate(channel), "Заметка из «Спутника»", text));
+            bool telegram = uri.Host.Equals("t.me", StringComparison.OrdinalIgnoreCase) && uri.AbsolutePath.TrimEnd('/') == "/share/url";
+            if (telegram && NoteAttachments.TryTelegram(files))
+            {
+                if (text.Length > 0) System.Windows.Clipboard.SetText(text);
+                return text.Length == 0 ? "Фото переданы в Telegram. Выберите получателя и подтвердите отправку." :
+                    "Фото переданы в Telegram. Выберите получателя. Текст заметки скопирован — вставьте его в подпись через Ctrl+V.";
+            }
+            // A web share link cannot carry local files. Keep the images available
+            // for paste/attachment instead of silently dropping them.
+            System.Windows.Clipboard.SetDataObject(NoteAttachments.PhotoClipboard(files), true);
+            var (photoTarget, photoFallback) = Targets(channel, text);
+            try { Launch(photoTarget); }
+            catch (Win32Exception error) when (photoFallback is not null && error.NativeErrorCode is (1155 or 2 or 3)) { Launch(photoFallback); }
+            return "Фото скопированы. Выберите чат и нажмите Ctrl+V. Если вставка недоступна, прикрепите PNG из «Файлы фото».";
+        }
         if (text.Length == 0) throw new InvalidOperationException("Добавьте текст в заметку.");
         var (target, fallback) = Targets(channel, text);
         try { Launch(target); }
@@ -55,6 +75,7 @@ internal sealed class NoteSharing(string directory)
         {
             Launch(fallback);
         }
+        return null;
     }
 
     internal static (string Primary, string? Fallback) Targets(Channel channel, string text)

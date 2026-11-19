@@ -31,6 +31,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         bool desktopOnly = e.Args.Contains("--desktop-only");
+        PetPackageRequests.Enqueue(e.Args, DataDirectory);
         showRequest = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Sputnik.OpenWorkspace");
         instance = new Mutex(true, @"Local\Sputnik.Desktop", out bool first);
         if (!first)
@@ -47,7 +48,8 @@ public partial class App : Application
         {
             StartDesktop();
             showWait = ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) =>
-                Dispatcher.BeginInvoke(() => ShowWorkspace("quick")), null, Timeout.Infinite, false);
+                Dispatcher.BeginInvoke(() => HandleOpenRequest(true)), null, Timeout.Infinite, false);
+            HandleOpenRequest(false);
         }
         catch (Exception error)
         {
@@ -78,6 +80,8 @@ public partial class App : Application
     private void StartDesktop()
     {
         Directory.CreateDirectory(DataDirectory);
+        try { LegacyPetMigration.Run(DataDirectory); }
+        catch (Exception error) { WriteDiagnostic("pet-migration", error.ToString()); }
         RefreshWindowMaterial();
         pet = new DesktopPetWindow(ShowWorkspace, ExitApp);
         pet.UpdateFromStore();
@@ -94,6 +98,15 @@ public partial class App : Application
                 MessageBox.Show("Не удалось настроить запуск Спутника при входе в Windows. " + error.Message, "Спутник");
             }
         }
+    }
+
+    private async void HandleOpenRequest(bool showWhenEmpty)
+    {
+        string[] packages = PetPackageRequests.Drain(DataDirectory);
+        if (packages.Length == 0) { if (showWhenEmpty) ShowWorkspace("quick"); return; }
+        ShowWorkspace("pets");
+        await Workspace().OpenPetPackage(packages[0]);
+        foreach (string path in packages.Skip(1)) PetPackageRequests.Enqueue([path], DataDirectory);
     }
 
     internal void ShowWorkspace(string section)
@@ -162,6 +175,7 @@ public partial class App : Application
     }
 
     internal void RefreshPet() { pet?.UpdateFromStore(); RefreshWindowMaterial(); }
+    internal void ReloadPet() { pet?.ReloadFromStore(); RefreshWindowMaterial(); }
     private static void RefreshWindowMaterial()
     {
         string path = Path.Combine(DataDirectory, "workspace.json");

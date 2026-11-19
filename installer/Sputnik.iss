@@ -57,6 +57,7 @@ MinVersion=10.0.17763
 #endif
 CloseApplications=yes
 RestartApplications=no
+ChangesAssociations=yes
 UninstallDisplayIcon={app}\Sputnik.exe
 OutputDir={#InstallerOutput}
 #ifdef LegacyArchitecture
@@ -115,6 +116,21 @@ Type: files; Name: "{app}\wwwroot\index.html"
 Type: files; Name: "{app}\wwwroot\app.js"
 Type: files; Name: "{app}\wwwroot\style.css"
 Type: files; Name: "{app}\wwwroot\assets\sand-watchman-clean\clip-?.png"
+Type: filesandordirs; Name: "{app}\wwwroot\assets\sand-watchman-clean"
+Type: filesandordirs; Name: "{app}\wwwroot\assets\knight-watchman"
+Type: files; Name: "{app}\wwwroot\assets\wink.png"
+Type: files; Name: "{app}\wwwroot\assets\seedance.png"
+Type: files; Name: "{app}\wwwroot\assets\palm.png"
+Type: files; Name: "{app}\wwwroot\assets\kling.png"
+
+[Registry]
+#if AppKey == "Sputnik.Desktop"
+Root: HKCU; Subkey: "Software\Classes\.pet"; ValueType: string; ValueName: ""; ValueData: "Sputnik.PetPackage"; Flags: createvalueifdoesntexist
+Root: HKCU; Subkey: "Software\Classes\.pet\OpenWithProgids"; ValueType: string; ValueName: "Sputnik.PetPackage"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\Sputnik.PetPackage"; ValueType: string; ValueName: ""; ValueData: "Питомец Спутника"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Sputnik.PetPackage\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Sputnik.exe,0"
+Root: HKCU; Subkey: "Software\Classes\Sputnik.PetPackage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Sputnik.exe"" ""%1"""
+#endif
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; Flags: unchecked
@@ -335,8 +351,52 @@ begin
       WriteInstallLog('Could not copy the detailed log. Original: ' + SourceLog);
 end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
+function BackupPetAssets(Source, Destination: String): Boolean;
+var
+  Item: TFindRec;
+  FromPath, ToPath: String;
 begin
+  Result := ForceDirectories(Destination);
+  if not Result then Exit;
+  if FindFirst(AddBackslash(Source) + '*', Item) then
+  try
+    repeat
+      if (Item.Name <> '.') and (Item.Name <> '..') and ((Item.Attributes and $400) = 0) then
+      begin
+        FromPath := AddBackslash(Source) + Item.Name;
+        ToPath := AddBackslash(Destination) + Item.Name;
+        if (Item.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
+        begin
+          if not BackupPetAssets(FromPath, ToPath) then Result := False;
+        end
+        else if (CompareText(ExtractFileExt(Item.Name), '.png') = 0) or (Item.Name = 'pets.json') then
+          if not FileExists(ToPath) and not FileCopy(FromPath, ToPath, True) then Result := False;
+      end;
+    until not FindNext(Item);
+  finally
+    FindClose(Item);
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Source, Destination: String;
+begin
+#if AppKey == "Sputnik.Desktop"
+  if CurStep = ssInstall then
+  begin
+    Source := ExpandConstant('{app}\wwwroot\assets');
+    Destination := ExpandConstant('{localappdata}\Sputnik\legacy-bundled-pets');
+    if FileExists(AddBackslash(Source) + 'pets.json') and not FileExists(AddBackslash(Destination) + 'backup-complete') then
+    begin
+      if not BackupPetAssets(Source, Destination) then
+        RaiseException('Could not preserve the existing pet assets. Installation stopped before replacing them.');
+      if not SaveStringToFile(AddBackslash(Destination) + 'backup-complete', '{#AppVersion}', False) then
+        RaiseException('Could not complete the pet backup.');
+      WriteInstallLog('Previous pet assets preserved for active-pet migration.');
+    end;
+  end;
+#endif
   if CurStep <> ssPostInstall then Exit;
   FilesInstalled := True;
   WriteInstallLog('Sputnik application files installed.');
@@ -357,9 +417,13 @@ end;
 
 procedure CurUninstallStepChanged(CurStep: TUninstallStep);
 var
-  StartupCommand, InstalledExe: String;
+  StartupCommand, InstalledExe, Association: String;
 begin
   if CurStep <> usUninstall then Exit;
+#if AppKey == "Sputnik.Desktop"
+  if RegQueryStringValue(HKCU, 'Software\Classes\.pet', '', Association) and (Association = 'Sputnik.PetPackage') then
+    RegDeleteValue(HKCU, 'Software\Classes\.pet', '');
+#endif
   InstalledExe := Lowercase(ExpandConstant('{app}\Sputnik.exe'));
   if RegQueryStringValue(HKCU, RunKey, 'Sputnik', StartupCommand) and
      (Pos('"' + InstalledExe + '" ', Lowercase(StartupCommand)) = 1) then
