@@ -1,0 +1,29 @@
+{
+  "id": "action-04",
+  "name": "Анимация Kling",
+  "status": "existing-animation",
+  "movement": "Существующая анимация; исходные кадры сохранены.",
+  "proposedTrigger": null,
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": {
+    "name": "Анимация Kling",
+    "file": "assets/kling.png",
+    "frameWidth": 256,
+    "frameHeight": 256,
+    "columns": 8,
+    "frameCount": 144,
+    "fps": 18
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

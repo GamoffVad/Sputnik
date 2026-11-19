@@ -1,0 +1,51 @@
+{
+  "id": "knight-watchman",
+  "name": "Рыцарь-дозорный",
+  "status": "available",
+  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      384,
+      384
+    ],
+    "rgbaSha256": "82181cecd578c3725cccec6e251db5f43cb9ffb58cb71a50bb2c4767fffc3259",
+    "origin": "Первый кадр .pet без масштабирования"
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "theme": "theme.json",
+  "package": {
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Шорох на посту",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Прыжок с балансом",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Рыцарский поклон",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Упрямый шарф",
+      "file": "animations/action-04/animation.json"
+    },
+    {
+      "id": "action-05",
+      "name": "Тихая победа",
+      "file": "animations/action-05/animation.json"
+    }
+  ]
+}

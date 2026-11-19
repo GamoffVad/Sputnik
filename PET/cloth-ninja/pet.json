@@ -1,0 +1,74 @@
+{
+  "id": "cloth-ninja",
+  "name": "Тканевый ниндзя",
+  "status": "reference-and-ideas",
+  "character": "Маленький ниндзя, который старается выглядеть невозмутимым, но постоянно попадает в забавные ситуации. Молчаливый, любопытный, ловкий и немного озорной. Движения быстрые и точные, с короткой комической развязкой.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      941,
+      1671
+    ],
+    "rgbaSha256": "a6a2d840b64a4f432b1a969a23d7d8395ca553cb7f9ea2507d7037ce8dbd9102",
+    "origin": "Изображение пользователя: удалён фон и выступающая слева часть меча"
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "theme": "theme.json",
+  "package": null,
+  "animations": [
+    {
+      "id": "stubborn-knot",
+      "name": "Узел с характером",
+      "file": "animations/stubborn-knot/animation.json"
+    },
+    {
+      "id": "secret-sneeze",
+      "name": "Секретный чих",
+      "file": "animations/secret-sneeze/animation.json"
+    },
+    {
+      "id": "unexpected-wind",
+      "name": "Ветер не по плану",
+      "file": "animations/unexpected-wind/animation.json"
+    },
+    {
+      "id": "hero-landing",
+      "name": "Геройское приземление",
+      "file": "animations/hero-landing/animation.json"
+    },
+    {
+      "id": "feint",
+      "name": "Обманный манёвр",
+      "file": "animations/feint/animation.json"
+    },
+    {
+      "id": "invisible-wall",
+      "name": "Невидимая стена",
+      "file": "animations/invisible-wall/animation.json"
+    },
+    {
+      "id": "forbidden-dance",
+      "name": "Танец запретной школы",
+      "file": "animations/forbidden-dance/animation.json"
+    },
+    {
+      "id": "deep-bow",
+      "name": "Слишком почтительный поклон",
+      "file": "animations/deep-bow/animation.json"
+    },
+    {
+      "id": "playful-spark",
+      "name": "Искра-озорница",
+      "file": "animations/playful-spark/animation.json"
+    },
+    {
+      "id": "paper-boomerang",
+      "name": "Бумажный бумеранг",
+      "file": "animations/paper-boomerang/animation.json"
+    }
+  ]
+}

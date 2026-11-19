@@ -1,0 +1,51 @@
+{
+  "id": "sand-watchman-clean",
+  "name": "Песчаный дозорный (чёткий контур)",
+  "status": "available",
+  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      720,
+      720
+    ],
+    "rgbaSha256": "768e2418a178cb1a0f94750c7a75ddc27a4bcd65140dbc161ea762fb3b518e4e",
+    "origin": "Первый кадр исходного PNG без масштабирования"
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "theme": "theme.json",
+  "package": {
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "На посту",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Подозрительный шорох",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Порыв ветра",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Почтительный поклон",
+      "file": "animations/action-04/animation.json"
+    },
+    {
+      "id": "action-05",
+      "name": "Задремал на посту",
+      "file": "animations/action-05/animation.json"
+    }
+  ]
+}

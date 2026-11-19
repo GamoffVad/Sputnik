@@ -1,0 +1,26 @@
+{
+  "id": "action-01",
+  "name": "Ожидание",
+  "status": "existing-animation",
+  "movement": "Существующая анимация; исходные кадры сохранены.",
+  "proposedTrigger": null,
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": {
+    "name": "Ожидание",
+    "file": "assets/hudi.png",
+    "frameCount": 1,
+    "fps": 1
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "klyaksa",
+  "name": "Клякса",
+  "status": "available",
+  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      384,
+      384
+    ],
+    "rgbaSha256": "a7b7f2f26955b71dc311494e73463de00193c51727801dd0670079ebe23e24d2",
+    "origin": "Первый кадр исходного PNG без масштабирования"
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "theme": "theme.json",
+  "package": null,
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Чих с сюрпризом",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Поймала равновесие",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Победный шажок",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Удивлённо оглядывается",
+      "file": "animations/action-04/animation.json"
+    },
+    {
+      "id": "action-05",
+      "name": "Ходит в разные стороны",
+      "file": "animations/action-05/animation.json"
+    },
+    {
+      "id": "action-06",
+      "name": "Радуется",
+      "file": "animations/action-06/animation.json"
+    },
+    {
+      "id": "action-07",
+      "name": "Подражает набору текста",
+      "file": "animations/action-07/animation.json"
+    },
+    {
+      "id": "action-08",
+      "name": "Нетерпеливо ждёт",
+      "file": "animations/action-08/animation.json"
+    }
+  ]
+}

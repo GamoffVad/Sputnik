@@ -1,0 +1,29 @@
+{
+  "id": "action-04",
+  "name": "Удивлённо оглядывается",
+  "status": "existing-animation",
+  "movement": "Существующая анимация; исходные кадры сохранены.",
+  "proposedTrigger": null,
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": {
+    "name": "Удивлённо оглядывается",
+    "file": "assets/klyaksa/look.png",
+    "frameWidth": 384,
+    "frameHeight": 384,
+    "columns": 12,
+    "frameCount": 92,
+    "fps": 23
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "action-05",
+  "name": "Задремал на посту",
+  "status": "existing-animation",
+  "movement": "Существующая анимация; исходные кадры сохранены.",
+  "proposedTrigger": null,
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": {
+    "name": "Задремал на посту",
+    "frameWidth": 720,
+    "frameHeight": 720,
+    "columns": 10,
+    "frameCount": 120,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "assets/sand-watchman-clean/clip-4-0.png",
+        "frames": 60
+      },
+      {
+        "file": "assets/sand-watchman-clean/clip-4-1.png",
+        "frames": 60
+      }
+    ]
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

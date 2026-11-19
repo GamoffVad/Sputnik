@@ -1,0 +1,21 @@
+{
+  "id": "paper-boomerang",
+  "name": "Бумажный бумеранг",
+  "status": "idea",
+  "movement": "Бросает бумажную звёздочку, складывает руки, замечает её возвращение и ловит за спиной.",
+  "proposedTrigger": "random-idle",
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": null,
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

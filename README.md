@@ -77,4 +77,5 @@ dotnet build -c Release
 - [Сборка офлайн-установщика](installer/README.md)
 - [Спецификация приложения и формата .pet](SPEC.md)
 - [Промпт подготовки и обработки анимаций питомцев](PET-ANIMATION-PROMPT.md)
+- [Референсы, палитры и планы анимаций каждого питомца](PET/README.md)
 - [Лицензии значков Lucide и Feather](wwwroot/assets/LUCIDE-LICENSE.txt)

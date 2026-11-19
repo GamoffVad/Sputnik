@@ -1,0 +1,46 @@
+{
+  "id": "kudryashka",
+  "name": "Кудряшка",
+  "status": "available",
+  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      256,
+      256
+    ],
+    "rgbaSha256": "065853b6d15402aef71611b801b67e37ef41b25842a7f2f0eaf07e471ccbad24",
+    "origin": "Первый кадр исходного PNG без масштабирования"
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "theme": "theme.json",
+  "package": {
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Приветствие",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Повороты головы",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Опора ладонью",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Анимация Kling",
+      "file": "animations/action-04/animation.json"
+    }
+  ]
+}

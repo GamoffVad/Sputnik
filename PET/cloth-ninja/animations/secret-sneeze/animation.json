@@ -1,0 +1,21 @@
+{
+  "id": "secret-sneeze",
+  "name": "Секретный чих",
+  "status": "idea",
+  "movement": "Сдерживает чих, зажимает лицо ладонями, мощно чихает всем телом и подпрыгивает.",
+  "proposedTrigger": "random-idle",
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": null,
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

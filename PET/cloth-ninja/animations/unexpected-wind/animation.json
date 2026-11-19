@@ -1,0 +1,21 @@
+{
+  "id": "unexpected-wind",
+  "name": "Ветер не по плану",
+  "status": "idea",
+  "movement": "Упирается ногами и наклоняется против порыва; ветер стихает, он едва не падает вперёд.",
+  "proposedTrigger": "random-idle",
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": null,
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "hudi",
+  "name": "HUDI",
+  "status": "available",
+  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      346,
+      720
+    ],
+    "rgbaSha256": "d0af8f58ba76a4f528f638ce20551d1b6efcedbad4668fa5e0678af462821bed",
+    "origin": "Первый кадр исходного PNG без масштабирования"
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "theme": "theme.json",
+  "package": {
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Ожидание",
+      "file": "animations/action-01/animation.json"
+    }
+  ]
+}

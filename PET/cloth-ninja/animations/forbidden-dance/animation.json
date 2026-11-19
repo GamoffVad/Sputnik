@@ -1,0 +1,21 @@
+{
+  "id": "forbidden-dance",
+  "name": "Танец запретной школы",
+  "status": "idea",
+  "movement": "Быстрые движения пятками и носками, скользящий шаг, оборот на одной ноге и строгая стойка.",
+  "proposedTrigger": "random-idle",
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": null,
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

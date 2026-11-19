@@ -1,0 +1,52 @@
+{
+  "id": "action-05",
+  "name": "Отдых",
+  "status": "existing-animation",
+  "movement": "Существующая анимация; исходные кадры сохранены.",
+  "proposedTrigger": null,
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": {
+    "name": "Отдых",
+    "frameWidth": 1280,
+    "frameHeight": 720,
+    "columns": 5,
+    "frameCount": 120,
+    "fps": 30,
+    "viewport": {
+      "x": 78.83333333333326,
+      "y": -195.66666666666686,
+      "width": 1128.3333333333335,
+      "height": 1128.3333333333335
+    },
+    "sheets": [
+      {
+        "file": "clip-4-0.png",
+        "frames": 30
+      },
+      {
+        "file": "clip-4-1.png",
+        "frames": 30
+      },
+      {
+        "file": "clip-4-2.png",
+        "frames": 30
+      },
+      {
+        "file": "clip-4-3.png",
+        "frames": 30
+      }
+    ]
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}

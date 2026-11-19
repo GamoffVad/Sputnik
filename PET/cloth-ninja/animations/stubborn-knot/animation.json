@@ -1,0 +1,21 @@
+{
+  "id": "stubborn-knot",
+  "name": "Узел с характером",
+  "status": "idea",
+  "movement": "Тянет пояс; узел неожиданно поддаётся, ниндзя отшатывается, разворачивается и завязывает его заново.",
+  "proposedTrigger": "random-idle",
+  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "existingClip": null,
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  }
+}
