@@ -15,6 +15,7 @@ try {
         Run-Dotnet run --no-build --project tests/workspace-check/Check.csproj -c Release -- $mode
     }
     Run-Dotnet run --project tests/fixed-area-check/Check.csproj -c Release
+    Run-Dotnet run --project tests/neutral-pose-check/Check.csproj -c Release
     if ($Legacy) {
         foreach ($architecture in @('x64', 'x86')) {
             Run-Dotnet build Sputnik.csproj -c Release -p:Win7=true "-p:PlatformTarget=$architecture" "-p:BaseIntermediateOutputPath=artifacts/win7/obj-$architecture/" --nologo

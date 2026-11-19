@@ -1,7 +1,7 @@
 {
   "id": "sand-watchman-clean",
-  "name": "Песчаный дозорный (чёткий контур)",
-  "description": "Молчаливый страж в тканевых обмотках и бронзовых доспехах.",
+  "name": "Песчаный Дозорный",
+  "description": "Страж в ткани и бронзе: пять прежних и десять новых анимаций. Общая опорная поза, мягкая тень, сохранённые ленты и эффекты.",
   "theme": {
     "name": "Песок и бронза",
     "accent": "#CEA87A",
@@ -25,7 +25,13 @@
           "file": "assets/sand-watchman-clean/clip-0-1.png",
           "frames": 60
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.5,
+        "y": -15.0,
+        "width": 720.0,
+        "height": 720.0
+      }
     },
     {
       "name": "Подозрительный шорох",
@@ -43,7 +49,13 @@
           "file": "assets/sand-watchman-clean/clip-1-1.png",
           "frames": 60
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.5,
+        "y": -15.0,
+        "width": 720.0,
+        "height": 720.0
+      }
     },
     {
       "name": "Порыв ветра",
@@ -61,7 +73,13 @@
           "file": "assets/sand-watchman-clean/clip-2-1.png",
           "frames": 60
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.5,
+        "y": -15.0,
+        "width": 720.0,
+        "height": 720.0
+      }
     },
     {
       "name": "Почтительный поклон",
@@ -79,7 +97,13 @@
           "file": "assets/sand-watchman-clean/clip-3-1.png",
           "frames": 60
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.5,
+        "y": -15.0,
+        "width": 720.0,
+        "height": 720.0
+      }
     },
     {
       "name": "Задремал на посту",
@@ -97,9 +121,304 @@
           "file": "assets/sand-watchman-clean/clip-4-1.png",
           "frames": 60
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.5,
+        "y": -15.0,
+        "width": 720.0,
+        "height": 720.0
+      }
+    },
+    {
+      "name": "Шарф с характером",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-01-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-01-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-01-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 12.0,
+        "y": 5.0,
+        "width": 948.0,
+        "height": 948.0
+      }
+    },
+    {
+      "name": "Дуэль с кисточкой",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-02-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-02-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-02-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 11.0,
+        "y": 3.5,
+        "width": 950.0,
+        "height": 950.0
+      }
+    },
+    {
+      "name": "Песчаный серфинг",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-03-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-03-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-03-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 10.0,
+        "y": 3.0,
+        "width": 952.0,
+        "height": 952.0
+      }
+    },
+    {
+      "name": "Прыжок стража",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-04-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-04-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-04-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 10.0,
+        "y": 3.0,
+        "width": 952.0,
+        "height": 952.0
+      }
+    },
+    {
+      "name": "Непослушный подол",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-05-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-05-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-05-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 10.0,
+        "y": 3.0,
+        "width": 952.0,
+        "height": 952.0
+      }
+    },
+    {
+      "name": "Золотой скарабей",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-06-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-06-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-06-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 6.0,
+        "y": 1.0,
+        "width": 960.0,
+        "height": 960.0
+      }
+    },
+    {
+      "name": "Боевой танец",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-07-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-07-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-07-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 10.0,
+        "y": 3.0,
+        "width": 952.0,
+        "height": 952.0
+      }
+    },
+    {
+      "name": "Узор лентой",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-08-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-08-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-08-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 12.0,
+        "y": 5.0,
+        "width": 948.0,
+        "height": 948.0
+      }
+    },
+    {
+      "name": "Невидимый соперник",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-09-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-09-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-09-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 10.0,
+        "y": 3.0,
+        "width": 952.0,
+        "height": 952.0
+      }
+    },
+    {
+      "name": "Песчаная левитация",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 96,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "new-10-0.png",
+          "frames": 32
+        },
+        {
+          "file": "new-10-1.png",
+          "frames": 32
+        },
+        {
+          "file": "new-10-2.png",
+          "frames": 32
+        }
+      ],
+      "viewport": {
+        "x": 10.5,
+        "y": 3.0,
+        "width": 952.0,
+        "height": 952.0
+      }
     }
   ],
   "displayScale": 1.538462,
-  "schemaVersion": 1
+  "schemaVersion": 3,
+  "neutral": {
+    "file": "neutral.png",
+    "viewport": {
+      "x": 12.0,
+      "y": 5.0,
+      "width": 948.0,
+      "height": 948.0
+    }
+  }
 }

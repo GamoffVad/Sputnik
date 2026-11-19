@@ -1,0 +1,64 @@
+{
+  "id": "stubborn-hem",
+  "name": "Непослушный подол",
+  "status": "ready",
+  "movement": "Наступает на край одежды, дважды подскакивает на одной ноге, освобождается и отряхивается.",
+  "rendering": "Нативный кадр 960x960, прозрачный фон, сохранённые реквизит, частицы и мягкая тень.",
+  "generation": {
+    "reference": "../../reference-original-flipped.png",
+    "firstFrame": "../../keyframes/new-ten/green-start.png",
+    "lastFrame": "../../keyframes/new-ten/green-end.png",
+    "model": "seedance_2_0",
+    "mode": "fast",
+    "resolution": "720p",
+    "nativeFrameSize": [
+      960,
+      960
+    ],
+    "durationSeconds": 4,
+    "fps": 24,
+    "audio": false,
+    "batchAuthorizedByUser": true,
+    "referenceAlreadyMirrored": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 9,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sharedNeutralPose": true,
+    "minimumSputnikVersion": "1.3.16",
+    "sharedNeutralFrame": "../../keyframes/delivery-start.png",
+    "source": "pet-package"
+  },
+  "existingClip": {
+    "name": "Непослушный подол",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 96,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "new-05-0.png",
+        "frames": 32
+      },
+      {
+        "file": "new-05-1.png",
+        "frames": 32
+      },
+      {
+        "file": "new-05-2.png",
+        "frames": 32
+      }
+    ],
+    "viewport": {
+      "x": 10.0,
+      "y": 3.0,
+      "width": 952.0,
+      "height": 952.0
+    }
+  }
+}

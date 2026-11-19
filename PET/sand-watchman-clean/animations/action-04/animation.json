@@ -21,7 +21,13 @@
         "file": "assets/sand-watchman-clean/clip-3-1.png",
         "frames": 60
       }
-    ]
+    ],
+    "viewport": {
+      "x": 0.5,
+      "y": -15.0,
+      "width": 720.0,
+      "height": 720.0
+    }
   },
   "generation": {
     "reference": "../../reference.png",

@@ -16,9 +16,25 @@
     "quotedDate": "2026-11-19",
     "characterHeightPercent": 50,
     "approvedSubmissionIndexes": [
-      1
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
     ],
-    "reviewEachClipBeforeNext": true
+    "reviewEachClipBeforeNext": false,
+    "allRemainingSubmittedConcurrently": true,
+    "nativeVideoFrameSize": [
+      960,
+      960
+    ],
+    "successfulClips": 10,
+    "quotedCreditsTotal": 100
   },
   "requirements": {
     "uniformGreenBackground": "#00FF00",
@@ -37,70 +53,91 @@
       "id": "scarf-with-character",
       "name": "Шарф с характером",
       "movement": "Конец шарфа закрывает лицо; Дозорный пригибается, делает шаг в сторону, ловит прикреплённую ленту и перебрасывает её за плечо.",
-      "status": "first-generation-authorized"
+      "status": "ready"
     },
     {
       "index": 2,
       "id": "tassel-duel",
       "name": "Дуэль с кисточкой",
       "movement": "Уклоняется от подвески чалмы, ловит её двумя руками и строго поправляет.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 3,
       "id": "sand-surfing",
       "name": "Песчаный серфинг",
       "movement": "Балансирует на маленькой волне песка, спрыгивает и возвращается на исходное место.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 4,
       "id": "guardian-jump",
       "name": "Прыжок стража",
       "movement": "Короткий разбег, прыжок с четвертью оборота, низкое приземление и резкое выпрямление.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 5,
       "id": "stubborn-hem",
       "name": "Непослушный подол",
       "movement": "Наступает на край одежды, дважды подскакивает на одной ноге, освобождается и отряхивается.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 6,
       "id": "golden-scarab",
       "name": "Золотой скарабей",
       "movement": "Приседает и ловит жука возле сапога; замечает его на плече и разворачивается следом.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 7,
       "id": "battle-dance",
       "name": "Боевой танец",
       "movement": "Быстрые удары пятками, скользящие шаги, движения плечами и короткий разворот в строгую стойку.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 8,
       "id": "ribbon-pattern",
       "name": "Узор лентой",
       "movement": "Рисует свободным концом шарфа восьмёрку с двумя боковыми шагами и поворотом корпуса.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 9,
       "id": "invisible-opponent",
       "name": "Невидимый соперник",
       "movement": "Уклон, блок и короткий выпад; заглядывает за плечо и невозмутимо возвращается.",
-      "status": "idea"
+      "status": "ready"
     },
     {
       "index": 10,
       "id": "sand-levitation",
       "name": "Песчаная левитация",
       "movement": "Небольшой вихрь приподнимает его; он перебирает ногами, балансирует и мягко приземляется.",
-      "status": "idea"
+      "status": "ready"
     }
-  ]
+  ],
+  "appendToExistingPet": {
+    "id": "sand-watchman-clean",
+    "keepExistingAnimations": 5,
+    "addNewAnimations": 10,
+    "targetAnimationCount": 15,
+    "preserveNativeResolution": true,
+    "matchGroundScalePaletteAndEndpoints": true
+  },
+  "delivery": {
+    "appendToExistingAnimations": true,
+    "originalAnimations": 5,
+    "newAnimations": 10,
+    "totalAnimations": 15,
+    "sharedNeutralPose": true,
+    "minimumSputnikVersion": "1.3.16",
+    "processingFrameSize": [
+      960,
+      960
+    ],
+    "framesPerNewAnimation": 96
+  }
 }

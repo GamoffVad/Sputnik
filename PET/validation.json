@@ -13,7 +13,7 @@
       "theme": "cloth-ninja/theme.json",
       "animations": 11,
       "bundled": false,
-      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet",
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pet-cloth-ninja-v1/cloth-ninja.pet",
       "referencePixelsVerified": true,
       "matchingReferenceKeyframesVerified": true,
       "package": "cloth-ninja/exports/cloth-ninja.pet",
@@ -110,7 +110,7 @@
       "theme": "quiet-ninja/theme.json",
       "animations": 5,
       "bundled": false,
-      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet",
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pet-quiet-ninja-v2/quiet-ninja.pet",
       "referencePixelsVerified": true,
       "matchingReferenceKeyframesVerified": true,
       "package": "quiet-ninja/exports/quiet-ninja.pet",
@@ -119,23 +119,23 @@
     },
     {
       "id": "sand-watchman-clean",
-      "name": "Песчаный дозорный (чёткий контур)",
+      "name": "Песчаный Дозорный",
       "folder": "sand-watchman-clean",
       "metadata": "sand-watchman-clean/pet.json",
       "reference": "sand-watchman-clean/reference.png",
       "referenceSize": [
-        720,
-        720
+        941,
+        1671
       ],
       "theme": "sand-watchman-clean/theme.json",
-      "animations": 5,
+      "animations": 15,
       "bundled": false,
-      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet",
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet",
       "referencePixelsVerified": true,
       "matchingReferenceKeyframesVerified": true,
       "package": "sand-watchman-clean/exports/sand-watchman-clean.pet",
-      "sha256": "d39c197d43ad68ddbf44524932ff040e7b6075f2c20c53dc66390e6247e70866",
-      "bytes": 78518400
+      "sha256": "d22ba5598550dfc841d5a6ecf42d68d1d1d94e3a4c340e599982a7fd02c66535",
+      "bytes": 306666900
     }
   ],
   "count": 7,

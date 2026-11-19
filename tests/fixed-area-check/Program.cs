@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -67,10 +69,29 @@ class Check
         var flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         var window = (Window)Activator.CreateInstance(type, new Action<string>(_ => { }), new Action(() => { }))!;
         object Call(string name, params object[] args) => type.GetMethod(name, flags)!.Invoke(window, args)!;
+        // Read fixture archives without changing the user's installed pet library.
+        var fixtureRoot = System.IO.Path.GetFullPath("artifacts/fixed-area-check/library-" + Guid.NewGuid().ToString("N"));
+        var packages = typeof(Sputnik.App).Assembly.GetType("Sputnik.PetPackages")!;
+        void SelectPet(string petId)
+        {
+            if (petId == "klyaksa") { Call("SelectFromStore", petId, null); return; }
+            string library = System.IO.Path.Combine(fixtureRoot, "pets");
+            string pending = System.IO.Path.Combine(fixtureRoot, "pending");
+            string folder = System.IO.Path.Combine(library, petId);
+            if (!System.IO.Directory.Exists(folder))
+            {
+                var preview = (JsonObject)packages.GetMethod("Stage")!.Invoke(null, new object[] {
+                    System.IO.Path.GetFullPath($"PET/{petId}/exports/{petId}.pet"), pending, library })!;
+                packages.GetMethod("Install")!.Invoke(null, new object[] { preview["token"]!.ToString(), pending, library });
+            }
+            var metadata = System.IO.File.ReadAllText(System.IO.Path.Combine(folder, "pet.json"));
+            var pet = JsonSerializer.Deserialize(metadata, type.GetNestedType("Pet", BindingFlags.NonPublic)!, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Call("UsePet", pet, folder, null);
+        }
         try
         {
             Call("UpdateFromStore");
-            Call("SelectFromStore", "knight-watchman", null);
+            SelectPet("knight-watchman");
             window.Show();
             window.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             var timer = (DispatcherTimer)type.GetField("timer", flags)!.GetValue(window)!;
@@ -91,10 +112,10 @@ class Check
             var physicalBaseline = PhysicalSupport();
             foreach (string petId in new[] { "cloth-ninja", "klyaksa", "hudi", "kudryashka", "sand-watchman-clean", "quiet-ninja", "knight-watchman" })
             {
-                Call("SelectFromStore", petId, null);
+                SelectPet(petId);
                 var selectedPet = type.GetField("active", flags)!.GetValue(window)!;
                 if (!Equals(selectedPet.GetType().GetProperty("Id")!.GetValue(selectedPet), petId))
-                    throw new Exception($"Switch test requires installed pet {petId}; fallback would conceal a regression.");
+                    throw new Exception($"Fixture pet {petId} fell back to a different pet.");
                 foreach (double scale in new[] { 100d, 160d, 80d, 100d })
                 {
                     Call("ApplyAppearanceSizes", scale, 100d, 100d, 10d, false);

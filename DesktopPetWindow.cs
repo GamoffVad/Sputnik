@@ -17,6 +17,12 @@ internal sealed class DesktopPetWindow : Window
 {
     private const double DefaultPetSize = 230;
     private sealed record AnimationSheet(string File, int Frames);
+    private sealed class NeutralPose
+    {
+        public required string File { get; init; }
+        public PetViewport? Viewport { get; init; }
+        public int BlendFrames { get; init; } = 3;
+    }
     private sealed class AnimationClip
     {
         public required string Name { get; init; }
@@ -50,6 +56,7 @@ internal sealed class DesktopPetWindow : Window
         public required AnimationClip[] Animations { get; init; }
         public PetTheme? Theme { get; init; }
         public double DisplayScale { get; init; } = 1;
+        public NeutralPose? Neutral { get; init; }
     }
 
 
@@ -70,6 +77,8 @@ internal sealed class DesktopPetWindow : Window
     private AnimationClip? current;
     private BitmapSource? sheet;
     private BitmapSource? displayedFrame;
+    private BitmapSource? neutralFrame;
+    private PetViewport? displayedViewport;
     private string? sheetFile;
     private string? preloadedFile;
     private Task<BitmapSource?>? preloaded;
@@ -101,6 +110,13 @@ internal sealed class DesktopPetWindow : Window
         sprite.RenderTransform = idle;
         RenderOptions.SetBitmapScalingMode(sprite, BitmapScalingMode.NearestNeighbor);
         Content = sprite;
+        sprite.SizeChanged += (_, _) =>
+        {
+            if (active?.Neutral is not { BlendFrames: > 0 } || current is null || lastFrame <= 0 || lastFrame >= current.FrameCount - 1) return;
+            int frame = lastFrame;
+            lastFrame = -1;
+            ShowFrame(frame);
+        };
         controls = new DesktopControls(this, openWorkspace, exitApp);
         sprite.MouseRightButtonUp += (_, args) =>
         {
@@ -354,7 +370,7 @@ internal sealed class DesktopPetWindow : Window
         var visible = new Rect(0, 0, 1, 1);
         if (right >= left)
         {
-            var viewport = current.Viewport?.Bounds ?? new Rect(0, 0, width, height);
+            var viewport = displayedViewport?.Bounds ?? new Rect(0, 0, width, height);
             double ratio = viewport.Width / viewport.Height;
             double w = Math.Min(1, ratio), h = Math.Min(1, 1 / ratio);
             visible = new Rect((1 - w) / 2 + w * (left - viewport.X) / viewport.Width,
@@ -432,6 +448,8 @@ internal sealed class DesktopPetWindow : Window
         current = null;
         sheet = null;
         displayedFrame = null;
+        neutralFrame = null;
+        displayedViewport = null;
         sheetFile = null;
         preloaded = null;
         preloadedFile = null;
@@ -565,6 +583,16 @@ internal sealed class DesktopPetWindow : Window
     {
         if (index == lastFrame || current is null || sheet is null) return;
 
+        if (active?.Neutral is { } neutral && (index == 0 || index == current.FrameCount - 1))
+        {
+            neutralFrame ??= ReadSheet(Path.Combine(root, neutral.File));
+            displayedFrame = neutralFrame;
+            displayedViewport = neutral.Viewport;
+            sprite.Source = PetFrames.Present(neutralFrame, neutral.Viewport);
+            lastFrame = index;
+            return;
+        }
+
         var part = current.Locate(index);
         if (sheetFile != part.File)
         {
@@ -592,7 +620,22 @@ internal sealed class DesktopPetWindow : Window
             frame.Freeze();
             displayedFrame = frame;
         }
-        sprite.Source = PetFrames.Present(displayedFrame, current.Viewport);
+        displayedViewport = current.Viewport;
+        ImageSource presentation = PetFrames.Present(displayedFrame, displayedViewport);
+        if (active?.Neutral is { BlendFrames: > 0 } pose && neutralFrame is not null)
+        {
+            var dpi = VisualTreeHelper.GetDpi(sprite);
+            var pixels = new Size(Math.Max(1, sprite.ActualWidth > 0 ? sprite.ActualWidth : Width) * dpi.DpiScaleX,
+                Math.Max(1, sprite.ActualHeight > 0 ? sprite.ActualHeight : Height) * dpi.DpiScaleY);
+            presentation = PetFrames.Transition(presentation, PetFrames.Present(neutralFrame, pose.Viewport),
+                index, current.FrameCount, pose.BlendFrames, pixels, RenderOptions.GetBitmapScalingMode(sprite));
+            if (presentation is BitmapSource combined && !ReferenceEquals(combined, displayedFrame))
+            {
+                displayedFrame = combined;
+                displayedViewport = null;
+            }
+        }
+        sprite.Source = presentation;
         lastFrame = index;
     }
 }

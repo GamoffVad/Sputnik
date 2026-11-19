@@ -72,14 +72,15 @@ def main():
             download = 'https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/Sputnik-1.3.14-Windows-10-11-x64.exe'
         else:
             local = folder / 'exports' / f'{pet_id}.pet'
-            source = local if pet_id == 'cloth-ninja' and local.exists() else args.packages / f'{pet_id}.pet'
-            checksum = sha(source)
-            if pet_id in published:
-                assert checksum == published[pet_id]['sha256'], (pet_id, 'published hash mismatch')
+            pin_path = REPO / 'installer/pets' / f'{pet_id}-source.json'
+            pin = read(pin_path) if pin_path.exists() else None
+            expected = pin['sha256'] if pin else published[pet_id]['sha256']
+            candidates = [args.packages / f'{pet_id}.pet', local]
+            source = next((candidate for candidate in candidates if candidate.exists() and sha(candidate) == expected), None)
+            assert source is not None, (pet_id, 'no package matches the published checksum')
+            checksum = expected
+            if not pin:
                 assert source.stat().st_size == published[pet_id]['bytes']
-            else:
-                assert pet_id == 'cloth-ninja'
-                assert checksum == read(folder / 'exports/package-qa.json')['packageSha256']
             destination = folder / 'exports' / f'{pet_id}.pet'
             if source.resolve() != destination.resolve():
                 if destination.exists():
@@ -95,15 +96,15 @@ def main():
                     native_reference = sheet.convert('RGBA').crop((0, 0, first_clip.get('frameWidth', sheet.width), first_clip.get('frameHeight', sheet.height)))
             assert manifest['id'] == pet_id
             assert manifest['theme'] == theme
-            download = f'https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/{pet_id}.pet'
+            download = pin['url'] if pin else f'https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/{pet_id}.pet'
             pet['bundled'] = False
             pet['package'] = {'file': f'exports/{pet_id}.pet', 'url': download,
                               'sha256': checksum, 'bytes': destination.stat().st_size,
                               'schemaVersion': manifest['schemaVersion'],
-                              'compatibleWindows': '1.3.14',
-                              'releaseTag': 'pet-cloth-ninja-v1' if pet_id == 'cloth-ninja' else 'v1.3.14'}
+                              'compatibleWindows': '1.3.16' if manifest['schemaVersion'] == 3 else '1.3.14',
+                              'releaseTag': download.split('/download/')[1].split('/')[0]}
         save(folder / 'package-manifest.json', manifest)
-        delivery_reference = folder / ('keyframes/delivery-start.png' if pet_id == 'cloth-ninja' else 'reference.png')
+        delivery_reference = folder / pet.get('packageFrameReference', 'keyframes/delivery-start.png' if pet_id == 'cloth-ninja' else 'reference.png')
         with Image.open(delivery_reference) as reference:
             assert native_reference.size == reference.size and native_reference.tobytes() == reference.convert('RGBA').tobytes(), (pet_id, 'reference differs from current package first frame')
         assert len(pet['animations']) == len(manifest['animations'])
@@ -145,7 +146,16 @@ def main():
         table.append(f"| [{entry['name']}]({entry['metadata']}) | [{w}×{h}]({entry['reference']}) | {entry['animations']} | [" + ('В приложении' if entry['bundled'] else '.pet') + f"]({entry['downloadUrl']}) |")
         folder = ROOT / entry['id']
         package_note = 'Встроен в установщик; отдельный пакет не требуется.' if entry['bundled'] else f"Готовый локальный пакет: `exports/{entry['id']}.pet`. [Скачать .pet]({entry['downloadUrl']})."
-        (folder / 'README.md').write_text(f"# {entry['name']}\n\n[Референс в исходном качестве, {w}×{h}](reference.png) · [Метаданные](pet.json) · [Тема](theme.json) · [Манифест ресурсов](package-manifest.json)\n\n![Референс](reference.png)\n\nАнимаций: {entry['animations']}. {package_note}\n\nОпорные кадры: `keyframes/start.png` и `keyframes/end.png` — точные копии исходного референса.\nОписания движений: `animations/<id>/animation.json`. Рабочие материалы, обработанные кадры и готовые пакеты: `source/`, `renders/`, `exports/`.\n", encoding='utf-8')
+        pet = read(folder / 'pet.json')
+        original = pet['reference'].get('originalFile')
+        original_note = ''
+        if original:
+            ow, oh = pet['reference']['originalSize']
+            original_note = f"\n\n[Исходное изображение пользователя, {ow}×{oh}]({original}) · [Горизонтальное отражение без изменения пикселей]({pet['reference']['mirroredOriginalFile']})."
+            if pet.get('packageFrameReference'):
+                original_note += f" Кадр прежних ресурсов сохранён отдельно в `{pet['packageFrameReference']}`."
+        neutral_note = '\n\nПакет v3 использует отдельный общий кадр `neutral`: он отображается в начале и конце всех анимаций. Требуется Спутник 1.3.16 или новее.' if (pet.get('package') or {}).get('schemaVersion') == 3 else ''
+        (folder / 'README.md').write_text(f"# {entry['name']}\n\n[Референс в исходном качестве, {w}×{h}](reference.png) · [Метаданные](pet.json) · [Тема](theme.json) · [Манифест ресурсов](package-manifest.json)\n\n![Референс](reference.png){original_note}\n\nАнимаций: {entry['animations']}. {package_note}{neutral_note}\n\nОпорные кадры: `keyframes/start.png` и `keyframes/end.png` — точные копии основного референса.\nОписания движений: `animations/<id>/animation.json`. Рабочие материалы, обработанные кадры и готовые пакеты: `source/`, `renders/`, `exports/`.\n", encoding='utf-8')
     intro = '# Питомцы и исходные референсы\n\nВсе семь питомцев имеют отдельную папку с референсом, темой, опорными кадрами, описаниями анимаций и манифестом готовых ресурсов. [Машиночитаемый каталог](catalog.json) · [Результат проверки структуры](validation.json).\n\n'
     structure = '''\n\n```text
 PET/<id>/
@@ -162,9 +172,9 @@ PET/<id>/
   exports/<id>.pet
 ```
 
-Референсы сохранены как RGBA PNG без изменения исходного разрешения. У шести существующих питомцев референс совпадает с первым нативным кадром актуальных ресурсов. У тканевого ниндзя `reference.png` — исходный референс 941×1671 для генерации; `keyframes/delivery-start.png` и `delivery-end.png` — общая зеркальная поза готовых анимаций 960×960. Исходное изображение не заменяется кадром другого размера.
+Референсы сохранены как RGBA PNG без изменения исходного разрешения. У пяти питомцев референс совпадает с первым нативным кадром ресурсов. У тканевого ниндзя и Песчаного Дозорного `reference.png` — референс пользователя 941×1671 для генерации; `keyframes/delivery-start.png` и `delivery-end.png` — общая поза готовых анимаций 960×960. Кадр прежних ресурсов Дозорного 720×720 сохранён отдельно в `reference-legacy-frame.png`. Исходное изображение не заменяется кадром другого размера.
 
-`start.png` и `end.png` побайтово совпадают с основным референсом каждого питомца. Это опорные кадры для будущих анимаций, а не заявление о совпадении концов всех старых роликов. У тихого ниндзя проверены 10 общих концов; у тканевого — 22.
+`start.png` и `end.png` побайтово совпадают с основным референсом каждого питомца. Это опорные кадры для будущих анимаций, а не заявление о совпадении концов всех старых роликов. У тихого ниндзя проверены 10 общих концов; у тканевого — 22. У Песчаного Дозорного формат v3 использует один общий PNG в начале и конце всех 15 анимаций; требуется Спутник Windows 1.3.16 или новее.
 
 У тканевого ниндзя готовы 11 согласованных анимаций, включая дополнительный танец. Все итоговые кадры зеркальные; сохранены детали, реквизит, эффекты и мягкая тень. [Описание движений](cloth-ninja/ANIMATIONS.md).
 

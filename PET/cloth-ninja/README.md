@@ -4,7 +4,7 @@
 
 ![Референс](reference.png)
 
-Анимаций: 11. Готовый локальный пакет: `exports/cloth-ninja.pet`. [Скачать .pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet).
+Анимаций: 11. Готовый локальный пакет: `exports/cloth-ninja.pet`. [Скачать .pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-cloth-ninja-v1/cloth-ninja.pet).
 
-Опорные кадры: `keyframes/start.png` и `keyframes/end.png` — точные копии исходного референса.
+Опорные кадры: `keyframes/start.png` и `keyframes/end.png` — точные копии основного референса.
 Описания движений: `animations/<id>/animation.json`. Рабочие материалы, обработанные кадры и готовые пакеты: `source/`, `renders/`, `exports/`.

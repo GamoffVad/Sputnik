@@ -89,6 +89,7 @@ public partial class MainWindow
         page.Children.Add(status);
 
         int revision = 0;
+        Task<BitmapSource?>? neutralTask = null;
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000d / 30) };
         var elapsed = new Stopwatch();
         void Stop() { revision++; timer.Stop(); }
@@ -109,6 +110,11 @@ public partial class MainWindow
             try
             {
                 var atlases = await Task.Run(() => paths.Select(DesktopPetWindow.ReadSheet).ToArray());
+                var neutral = staged["neutral"] as JsonObject;
+                neutralTask ??= Task.Run(() => neutral is null ? null : DesktopPetWindow.ReadSheet(Path.Combine(folder, Value(neutral, "file"))));
+                var neutralFrame = await neutralTask;
+                var neutralViewport = neutral?["viewport"]?.Deserialize<PetViewport>(
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (sequence != revision || !page.IsVisible) return;
                 int columns = clip["columns"]!.GetValue<int>(), width = clip["frameWidth"]!.GetValue<int>(), height = clip["frameHeight"]!.GetValue<int>();
                 int count = clip["frameCount"]!.GetValue<int>(), fps = clip["fps"]!.GetValue<int>();
@@ -121,11 +127,24 @@ public partial class MainWindow
                     int index = (int)(elapsed.Elapsed.TotalSeconds * fps) % count;
                     if (index == last) return;
                     last = index;
+                    if (neutralFrame is not null && (index == 0 || index == count - 1))
+                    {
+                        image.Source = PetFrames.Present(neutralFrame, neutralViewport);
+                        return;
+                    }
                     int part = 0;
                     while (index >= counts[part]) index -= counts[part++];
                     var frame = new CroppedBitmap(atlases[part], new Int32Rect(index % columns * width, index / columns * height, width, height));
                     frame.Freeze();
-                    image.Source = PetFrames.Present(frame, viewport);
+                    ImageSource presentation = PetFrames.Present(frame, viewport);
+                    if (neutralFrame is not null)
+                    {
+                        var dpi = VisualTreeHelper.GetDpi(image);
+                        var pixels = new Size(Math.Max(1, image.ActualWidth) * dpi.DpiScaleX, Math.Max(1, image.ActualHeight) * dpi.DpiScaleY);
+                        presentation = PetFrames.Transition(presentation, PetFrames.Present(neutralFrame, neutralViewport),
+                            last, count, neutral?["blendFrames"]?.GetValue<int>() ?? 3, pixels, RenderOptions.GetBitmapScalingMode(image));
+                    }
+                    image.Source = presentation;
                 }
                 timer.Stop();
                 timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000d / 30) };

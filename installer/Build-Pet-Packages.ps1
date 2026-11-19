@@ -2,7 +2,8 @@
 param(
     [Parameter(Mandatory)][string] $OutputDir,
     [string] $NinjaPackage,
-    [string] $ClothNinjaPackage
+    [string] $ClothNinjaPackage,
+    [string] $SandWatchmanPackage
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -11,7 +12,7 @@ $out = (Resolve-Path -LiteralPath $OutputDir).Path
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $catalog = @(Get-Content -Raw -LiteralPath "$PSScriptRoot/pets/bundled-source.json" | ConvertFrom-Json)
 $exported = @()
-foreach ($pet in $catalog | Where-Object id -NE 'klyaksa') {
+foreach ($pet in $catalog | Where-Object { $_.id -notin @('klyaksa', 'sand-watchman-clean') }) {
     $pet | Add-Member -NotePropertyName schemaVersion -NotePropertyValue 1
     $package = Join-Path $out ($pet.id + '.pet')
     if (Test-Path -LiteralPath $package) { throw "Output already exists: $package" }
@@ -44,6 +45,19 @@ foreach ($pet in $catalog | Where-Object id -NE 'klyaksa') {
     } finally { $zip.Dispose() }
     $exported += [pscustomobject]@{ id=$pet.id; name=$pet.name; file=($pet.id + '.pet'); theme=$pet.theme }
 }
+$sandPin = Get-Content -Raw -LiteralPath "$PSScriptRoot/pets/sand-watchman-clean-source.json" | ConvertFrom-Json
+$sandDownloaded = !$SandWatchmanPackage
+if (!$SandWatchmanPackage) {
+    $SandWatchmanPackage = Join-Path $out 'sand-watchman-clean.download'
+    Invoke-WebRequest -Uri $sandPin.url -OutFile $SandWatchmanPackage
+}
+try {
+    if ((Get-FileHash -LiteralPath $SandWatchmanPackage -Algorithm SHA256).Hash -ne $sandPin.sha256) { throw 'Sand Watchman checksum mismatch.' }
+    Copy-Item -LiteralPath $SandWatchmanPackage -Destination (Join-Path $out 'sand-watchman-clean.pet')
+} finally {
+    if ($sandDownloaded -and (Test-Path -LiteralPath $SandWatchmanPackage)) { Remove-Item -LiteralPath $SandWatchmanPackage }
+}
+$exported += [pscustomobject]@{ id='sand-watchman-clean'; name='Песчаный Дозорный'; file='sand-watchman-clean.pet'; theme=$sandPin.theme }
 Copy-Item -LiteralPath "$root/pets/knight-watchman.pet" -Destination (Join-Path $out 'knight-watchman.pet')
 $exported += [pscustomobject]@{ id='knight-watchman'; name='Рыцарь-дозорный'; file='knight-watchman.pet' }
 $pin = Get-Content -Raw -LiteralPath "$PSScriptRoot/pets/quiet-ninja-source.json" | ConvertFrom-Json

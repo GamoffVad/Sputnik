@@ -6,7 +6,7 @@
 | --- | --- |
 | [hudi.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet) | HUDI |
 | [kudryashka.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet) | Кудряшка |
-| [sand-watchman-clean.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet) | Песчаный дозорный, чёткий контур |
+| [sand-watchman-clean.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet) | Песчаный Дозорный, 15 анимаций |
 | [knight-watchman.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet) | Рыцарь-дозорный |
 | [quiet-ninja.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet) | Тихий ниндзя |
 | [cloth-ninja.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet) | Тканевый ниндзя, 11 анимаций |
@@ -20,3 +20,5 @@
 Пакет «Тихий ниндзя» использует формат 2 с областью отображения исходных кадров 1280×720. Для него нужен **Спутник Windows 1.3.13 или новее**; рекомендуется актуальная 1.3.14. Поддержка этого пакета в macOS 0.2.2 отсутствует.
 
 «Тканевый ниндзя» проверен в **Спутнике Windows 1.3.14**; macOS 0.2.2 его не поддерживает. [Отдельный выпуск питомца, превью и QA](https://github.com/GamoffVad/Sputnik/releases/tag/pet-cloth-ninja-v1).
+
+Обновлённый «Песчаный Дозорный» содержит пять прежних анимаций 720×720 и десять новых 960×960. Исходные PNG не уменьшаются. Общий кадр перехода хранится в формате v3; требуется **Спутник Windows 1.3.16 или новее**. macOS 0.2.2 этот формат не поддерживает; для неё остаётся [прежний пакет из пяти анимаций](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet).

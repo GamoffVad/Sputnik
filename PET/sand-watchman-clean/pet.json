@@ -1,16 +1,16 @@
 {
   "id": "sand-watchman-clean",
-  "name": "Песчаный дозорный (чёткий контур)",
+  "name": "Песчаный Дозорный",
   "status": "available",
-  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "character": "Невозмутимый, дисциплинированный, ловкий и немного гордый страж с любопытством и сухим юмором.",
   "reference": {
     "file": "reference.png",
     "size": [
-      720,
-      720
+      941,
+      1671
     ],
-    "rgbaSha256": "768e2418a178cb1a0f94750c7a75ddc27a4bcd65140dbc161ea762fb3b518e4e",
-    "origin": "Первый кадр исходного PNG без масштабирования",
+    "rgbaSha256": "3b4dcb637fa17f17ecf195dadd42c55ac1154aa7756d38a9bc55bd2200879d25",
+    "origin": "Исходный референс пользователя 941×1671; точное горизонтальное отражение без изменения разрешения.",
     "originalFile": "reference-original.png",
     "mirroredOriginalFile": "reference-original-flipped.png",
     "originalSize": [
@@ -22,17 +22,24 @@
   "keyframes": {
     "start": "keyframes/start.png",
     "end": "keyframes/end.png",
-    "filesIdentical": true
+    "filesIdentical": true,
+    "deliveryStart": "keyframes/delivery-start.png",
+    "deliveryEnd": "keyframes/delivery-end.png",
+    "deliveryRuntimeFirstLastPixelIdentical": true,
+    "deliveryNativeSize": [
+      960,
+      960
+    ]
   },
   "theme": "theme.json",
   "package": {
     "file": "exports/sand-watchman-clean.pet",
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet",
-    "sha256": "d39c197d43ad68ddbf44524932ff040e7b6075f2c20c53dc66390e6247e70866",
-    "bytes": 78518400,
-    "schemaVersion": 1,
-    "compatibleWindows": "1.3.14",
-    "releaseTag": "v1.3.14"
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet",
+    "sha256": "d22ba5598550dfc841d5a6ecf42d68d1d1d94e3a4c340e599982a7fd02c66535",
+    "bytes": 306666900,
+    "schemaVersion": 3,
+    "compatibleWindows": "1.3.16",
+    "releaseTag": "pet-sand-watchman-v2"
   },
   "animations": [
     {
@@ -59,6 +66,56 @@
       "id": "action-05",
       "name": "Задремал на посту",
       "file": "animations/action-05/animation.json"
+    },
+    {
+      "id": "scarf-with-character",
+      "name": "Шарф с характером",
+      "file": "animations/scarf-with-character/animation.json"
+    },
+    {
+      "id": "tassel-duel",
+      "name": "Дуэль с кисточкой",
+      "file": "animations/tassel-duel/animation.json"
+    },
+    {
+      "id": "sand-surfing",
+      "name": "Песчаный серфинг",
+      "file": "animations/sand-surfing/animation.json"
+    },
+    {
+      "id": "guardian-jump",
+      "name": "Прыжок стража",
+      "file": "animations/guardian-jump/animation.json"
+    },
+    {
+      "id": "stubborn-hem",
+      "name": "Непослушный подол",
+      "file": "animations/stubborn-hem/animation.json"
+    },
+    {
+      "id": "golden-scarab",
+      "name": "Золотой скарабей",
+      "file": "animations/golden-scarab/animation.json"
+    },
+    {
+      "id": "battle-dance",
+      "name": "Боевой танец",
+      "file": "animations/battle-dance/animation.json"
+    },
+    {
+      "id": "ribbon-pattern",
+      "name": "Узор лентой",
+      "file": "animations/ribbon-pattern/animation.json"
+    },
+    {
+      "id": "invisible-opponent",
+      "name": "Невидимый соперник",
+      "file": "animations/invisible-opponent/animation.json"
+    },
+    {
+      "id": "sand-levitation",
+      "name": "Песчаная левитация",
+      "file": "animations/sand-levitation/animation.json"
     }
   ],
   "bundled": false,
@@ -71,5 +128,6 @@
     "filesIdentical": true,
     "referencePixelsResampled": false,
     "characterHeightPercent": 50
-  }
+  },
+  "packageFrameReference": "reference-legacy-frame.png"
 }

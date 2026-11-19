@@ -4,13 +4,13 @@
 
 | Питомец | Референс PNG | Анимации | Загрузка |
 | --- | --- | ---: | --- |
-| [Тканевый ниндзя](cloth-ninja/pet.json) | [941×1671](cloth-ninja/reference.png) | 11 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet) |
+| [Тканевый ниндзя](cloth-ninja/pet.json) | [941×1671](cloth-ninja/reference.png) | 11 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-cloth-ninja-v1/cloth-ninja.pet) |
 | [HUDI](hudi/pet.json) | [346×720](hudi/reference.png) | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet) |
 | [Клякса](klyaksa/pet.json) | [384×384](klyaksa/reference.png) | 8 | [В приложении](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/Sputnik-1.3.14-Windows-10-11-x64.exe) |
 | [Рыцарь-дозорный](knight-watchman/pet.json) | [384×384](knight-watchman/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet) |
 | [Кудряшка](kudryashka/pet.json) | [256×256](kudryashka/reference.png) | 4 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet) |
-| [Тихий ниндзя](quiet-ninja/pet.json) | [1280×720](quiet-ninja/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet) |
-| [Песчаный дозорный (чёткий контур)](sand-watchman-clean/pet.json) | [720×720](sand-watchman-clean/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/sand-watchman-clean.pet) |
+| [Тихий ниндзя](quiet-ninja/pet.json) | [1280×720](quiet-ninja/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-quiet-ninja-v2/quiet-ninja.pet) |
+| [Песчаный Дозорный](sand-watchman-clean/pet.json) | [941×1671](sand-watchman-clean/reference.png) | 15 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet) |
 
 ```text
 PET/<id>/
@@ -27,9 +27,9 @@ PET/<id>/
   exports/<id>.pet
 ```
 
-Референсы сохранены как RGBA PNG без изменения исходного разрешения. У шести существующих питомцев референс совпадает с первым нативным кадром актуальных ресурсов. У тканевого ниндзя `reference.png` — исходный референс 941×1671 для генерации; `keyframes/delivery-start.png` и `delivery-end.png` — общая зеркальная поза готовых анимаций 960×960. Исходное изображение не заменяется кадром другого размера.
+Референсы сохранены как RGBA PNG без изменения исходного разрешения. У пяти питомцев референс совпадает с первым нативным кадром ресурсов. У тканевого ниндзя и Песчаного Дозорного `reference.png` — референс пользователя 941×1671 для генерации; `keyframes/delivery-start.png` и `delivery-end.png` — общая поза готовых анимаций 960×960. Кадр прежних ресурсов Дозорного 720×720 сохранён отдельно в `reference-legacy-frame.png`. Исходное изображение не заменяется кадром другого размера.
 
-`start.png` и `end.png` побайтово совпадают с основным референсом каждого питомца. Это опорные кадры для будущих анимаций, а не заявление о совпадении концов всех старых роликов. У тихого ниндзя проверены 10 общих концов; у тканевого — 22.
+`start.png` и `end.png` побайтово совпадают с основным референсом каждого питомца. Это опорные кадры для будущих анимаций, а не заявление о совпадении концов всех старых роликов. У тихого ниндзя проверены 10 общих концов; у тканевого — 22. У Песчаного Дозорного формат v3 использует один общий PNG в начале и конце всех 15 анимаций; требуется Спутник Windows 1.3.16 или новее.
 
 У тканевого ниндзя готовы 11 согласованных анимаций, включая дополнительный танец. Все итоговые кадры зеркальные; сохранены детали, реквизит, эффекты и мягкая тень. [Описание движений](cloth-ninja/ANIMATIONS.md).
 

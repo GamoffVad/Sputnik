@@ -9,13 +9,13 @@ namespace Sputnik;
 
 internal static class PetPackages
 {
-    private const long Limit = 256L * 1024 * 1024;
+    private const long Limit = 512L * 1024 * 1024;
 
     public static JsonObject Stage(string path, string pending, string library)
     {
         Directory.CreateDirectory(pending);
         using var archive = ZipFile.OpenRead(path);
-        if (archive.Entries.Count > 40 || archive.Entries.Any(entry => entry.Length > Limit) ||
+        if (archive.Entries.Count > 64 || archive.Entries.Any(entry => entry.Length > Limit) ||
             archive.Entries.Sum(entry => entry.Length) > Limit)
             throw new InvalidDataException("Пакет слишком велик.");
 
@@ -25,8 +25,11 @@ internal static class PetPackages
 
         using var stream = entry.Open();
         var manifest = JsonNode.Parse(stream)?.AsObject() ?? throw new InvalidDataException("Некорректный манифест.");
-        if (manifest["schemaVersion"]?.GetValue<int>() is not (1 or 2))
-            throw new InvalidDataException("Поддерживаются пакеты версий 1 и 2.");
+        int version = manifest["schemaVersion"]?.GetValue<int>() ?? 0;
+        if (version is not (1 or 2 or 3))
+            throw new InvalidDataException("Поддерживаются пакеты версий 1, 2 и 3.");
+        if (version == 3 && manifest["neutral"] is not JsonObject)
+            throw new InvalidDataException("Добавьте общий опорный кадр питомца.");
         string id = Required(manifest, "id", 50);
         if (!Regex.IsMatch(id, @"\A[a-z0-9][a-z0-9-]{0,48}\z"))
             throw new InvalidDataException("Недопустимый идентификатор питомца.");
@@ -60,6 +63,17 @@ internal static class PetPackages
         Directory.CreateDirectory(workspace);
         try
         {
+            JsonObject? neutral = null;
+            if (manifest["neutral"] is { } neutralNode)
+            {
+                var source = neutralNode as JsonObject ?? throw new InvalidDataException("Некорректный опорный кадр.");
+                var dimensions = ExtractPng(entries, Required(source, "file", 160), workspace, "neutral.png");
+                neutral = new JsonObject { ["file"] = "neutral.png" };
+                if (source["blendFrames"] is not null)
+                    neutral["blendFrames"] = Number(source, "blendFrames", 0, 8);
+                if (source["viewport"] is { } region)
+                    neutral["viewport"] = ReadViewport(region, dimensions.Width, dimensions.Height);
+            }
             var clips = new JsonArray();
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int index = 0; index < animations.Count; index++)
@@ -74,39 +88,11 @@ internal static class PetPackages
                 int fps = Number(clip, "fps", 1, 60);
                 var installed = new JsonObject { ["name"] = title, ["frameWidth"] = width, ["frameHeight"] = height, ["columns"] = columns, ["frameCount"] = count, ["fps"] = fps };
                 if (clip["viewport"] is { } region)
-                {
-                    if (region is not JsonObject viewport)
-                        throw new InvalidDataException("Некорректная область отображения.");
-                    double ReadCoordinate(string key)
-                    {
-                        if (viewport[key] is not JsonValue value || !value.TryGetValue<double>(out var number) ||
-                            double.IsNaN(number) || double.IsInfinity(number) || Math.Abs(number) > 8192)
-                            throw new InvalidDataException("Некорректная область отображения.");
-                        return number;
-                    }
-                    double x = ReadCoordinate("x"), y = ReadCoordinate("y");
-                    double viewWidth = ReadCoordinate("width"), viewHeight = ReadCoordinate("height");
-                    if (viewWidth < 1 || viewHeight < 1 || x >= width || y >= height ||
-                        x + viewWidth <= 0 || y + viewHeight <= 0)
-                        throw new InvalidDataException("Область отображения не содержит кадр.");
-                    installed["viewport"] = new JsonObject
-                    {
-                        ["x"] = x, ["y"] = y, ["width"] = viewWidth, ["height"] = viewHeight
-                    };
-                }
+                    installed["viewport"] = ReadViewport(region, width, height);
                 void ExtractSheet(JsonObject source, string asset, int frames)
                 {
-                    string file = Required(source, "file", 160);
-                    if (!Regex.IsMatch(file, @"\A(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.png\z", RegexOptions.IgnoreCase) ||
-                        !entries.TryGetValue(file, out var image))
-                        throw new InvalidDataException("Укажите корректный путь к PNG-листу.");
-                    string target = Path.Combine(workspace, asset);
-                    image.ExtractToFile(target);
-                    using var png = File.OpenRead(target);
-                    var frame = new PngBitmapDecoder(png, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
-                    if (frame.PixelWidth > 8192 || frame.PixelHeight > 8192 ||
-                        (long)frame.PixelWidth * frame.PixelHeight > 32_000_000 ||
-                        frame.PixelWidth != width * columns || frame.PixelHeight != height * ((frames + columns - 1) / columns))
+                    var dimensions = ExtractPng(entries, Required(source, "file", 160), workspace, asset);
+                    if (dimensions.Width != width * columns || dimensions.Height != height * ((frames + columns - 1) / columns))
                         throw new InvalidDataException("Размер PNG не соответствует сетке кадров.");
                 }
                 if (clip["sheets"] is JsonArray sheets)
@@ -136,6 +122,7 @@ internal static class PetPackages
             }
 
             var result = new JsonObject { ["id"] = id, ["name"] = name, ["description"] = description, ["theme"] = cleanTheme, ["animations"] = clips };
+            if (neutral is not null) result["neutral"] = neutral;
             if (manifest["displayScale"] is JsonValue value && value.TryGetValue<double>(out double scale) && scale is >= 0.75 and <= 1.6)
                 result["displayScale"] = scale;
             File.WriteAllText(Path.Combine(workspace, "pet.json"), result.ToJsonString());
@@ -149,6 +136,36 @@ internal static class PetPackages
             Directory.Delete(workspace, true);
             throw;
         }
+    }
+
+    private static (int Width, int Height) ExtractPng(IReadOnlyDictionary<string, ZipArchiveEntry> entries, string file, string workspace, string asset)
+    {
+        if (!Regex.IsMatch(file, @"\A(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.png\z", RegexOptions.IgnoreCase) ||
+            !entries.TryGetValue(file, out var image))
+            throw new InvalidDataException("Укажите корректный путь к PNG.");
+        string target = Path.Combine(workspace, asset);
+        image.ExtractToFile(target);
+        using var png = File.OpenRead(target);
+        var frame = new PngBitmapDecoder(png, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
+        if (frame.PixelWidth > 8192 || frame.PixelHeight > 8192 || (long)frame.PixelWidth * frame.PixelHeight > 32_000_000)
+            throw new InvalidDataException("Размер PNG слишком велик.");
+        return (frame.PixelWidth, frame.PixelHeight);
+    }
+
+    private static JsonObject ReadViewport(JsonNode region, int width, int height)
+    {
+        if (region is not JsonObject viewport) throw new InvalidDataException("Некорректная область отображения.");
+        double ReadCoordinate(string key)
+        {
+            if (viewport[key] is not JsonValue value || !value.TryGetValue<double>(out var number) ||
+                double.IsNaN(number) || double.IsInfinity(number) || Math.Abs(number) > 8192)
+                throw new InvalidDataException("Некорректная область отображения.");
+            return number;
+        }
+        double x = ReadCoordinate("x"), y = ReadCoordinate("y"), viewWidth = ReadCoordinate("width"), viewHeight = ReadCoordinate("height");
+        if (viewWidth < 1 || viewHeight < 1 || x >= width || y >= height || x + viewWidth <= 0 || y + viewHeight <= 0)
+            throw new InvalidDataException("Область отображения не содержит кадр.");
+        return new JsonObject { ["x"] = x, ["y"] = y, ["width"] = viewWidth, ["height"] = viewHeight };
     }
 
     public static JsonObject Install(string token, string pending, string library)
