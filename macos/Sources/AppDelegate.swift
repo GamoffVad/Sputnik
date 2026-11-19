@@ -259,6 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         try await prepareSmokeTest(store: store, server: server, pet: pet)
                         try await MacStickyNotes.verifyMultipleNotes(in: store.dataDirectory, palette: pet.palette)
                         try StickyShareChannel.verifyTargets()
+                        try NoteAttachments.verify(in: store.dataDirectory)
                         let workArea = CGRect(x: -1200, y: 20, width: 1200, height: 760)
                         let outside = CGRect(x: -1300, y: 710, width: 230, height: 230)
                         guard workArea.contains(DesktopPet.clamped(outside, to: workArea)) else {
@@ -280,8 +281,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pet.onMenu = { [weak self] in self?.toggleMenu() }
             pet.onQuick = { [weak self] in self?.openSection("quick") }
             pet.onNotes = { [weak self] in self?.openSection("notes") }
-            pet.onClick = { [weak self] in self?.showFavorites() }
+            pet.onClick = { [weak self] in
+                guard let self else { return }
+                if !self.showFavorites() { self.openSection("favorites") }
+            }
             pet.onMove = { [weak self] in self?.followPet() }
+            pet.onDragBegin = { [weak self] in self?.hideFavorites() }
             pet.window.orderFrontRegardless()
             DispatchQueue.main.async { [weak self] in
                 guard let self, browser == nil else { return }
@@ -510,7 +515,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             browser.ready = true
             if smokeTest {
                 Task { @MainActor [weak self, weak browser] in
-                    guard let self, let browser else { return }
+                    guard let self, let browser, let pet = self.pet else { return }
                     do {
                         try await verifyHeading("Питомцы", in: browser)
                         openSection("motion")
@@ -667,8 +672,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // or changing their layout settings reanchors them to the pet.
     }
 
-    func showFavorites() {
-        guard let pet, let store else { return }
+    @discardableResult
+    func showFavorites() -> Bool {
+        guard let pet, let store else { return false }
         hideFavorites(animated: false)
         let active = store.readWorkspace()
         let favorites = (active["favorites"] as? [[String: Any]] ?? []).filter { item in
@@ -676,7 +682,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   let target = item["target"] as? String else { return false }
             return !target.isEmpty
         }
-        guard !favorites.isEmpty else { return }
+        guard !favorites.isEmpty else { return false }
         let diameter = CGFloat(max(30, min(86, 54 * ((active["sphereScale"] as? NSNumber)?.doubleValue ?? 100)/100)))
         sphereSpacing = CGFloat((active["sphereSpread"] as? NSNumber)?.doubleValue ?? 100)/100
         sphereOffset = CGFloat((active["sphereOffset"] as? NSNumber)?.doubleValue ?? 15)
@@ -730,6 +736,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             animation.duration = 0.16
             spheres.forEach { $0.animator().alphaValue = 1 }
         }
+        return true
     }
 
     private func symbolForFavorite(_ icon: String?) -> String {

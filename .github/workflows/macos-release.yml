@@ -5,7 +5,7 @@ on:
       version:
         description: macOS version without v
         required: true
-        default: '0.2.0'
+        default: '0.2.2'
         type: string
       publish:
         description: Publish tested preview without Apple notarization
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-15-intel, xcode-27]
+        runner: [macos-26-intel, xcode-27]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     steps:
@@ -61,7 +61,8 @@ jobs:
           hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "release/$dmg"
           app="$mount_point/Sputnik.app"
           codesign --verify --strict --verbose=2 "$app"
-          xcrun lipo "$app/Contents/MacOS/Sputnik" -verify_arch arm64 x86_64
+          architectures=" $(xcrun lipo -archs "$app/Contents/MacOS/Sputnik") "
+          [[ "$architectures" == *" arm64 "* && "$architectures" == *" x86_64 "* ]]
           "$app/Contents/MacOS/Sputnik" --smoke-test
   publish:
     needs: [build, smoke]

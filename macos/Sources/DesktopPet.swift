@@ -177,6 +177,7 @@ private final class DesktopSprite: NSView {
     var clicked: ((NSEvent) -> Void)?
     var context: (() -> Void)?
     var moved: (() -> Void)?
+    var dragBegan: (() -> Void)?
     var preferredSize: CGFloat = 230
     private var dragPoint: CGPoint?
     private var start: CGPoint = .zero
@@ -204,6 +205,7 @@ private final class DesktopSprite: NSView {
         let mouse = NSEvent.mouseLocation
         let delta = CGPoint(x: mouse.x - dragPoint.x, y: mouse.y - dragPoint.y)
         guard dragged || hypot(delta.x, delta.y) > 4 else { return }
+        if !dragged { dragBegan?() }
         dragged = true
         let area = (NSScreen.screens.first { $0.frame.contains(mouse) } ?? window.screen ?? NSScreen.main)?.visibleFrame
         var frame = window.frame
@@ -211,7 +213,6 @@ private final class DesktopSprite: NSView {
         if let area {
             let size = min(preferredSize, min(area.width, area.height))
             frame.size = CGSize(width: size, height: size)
-            frame = DesktopPet.clamped(frame, to: area)
         }
         window.setFrame(frame, display: false)
         moved?()
@@ -233,6 +234,7 @@ final class DesktopPet: NSObject {
     var onNotes: (() -> Void)?
     var onMove: (() -> Void)?
     var onClick: (() -> Void)?
+    var onDragBegin: (() -> Void)?
     private let sprite: DesktopSprite
     private let bundled: [DesktopPetManifest]
     private let bundledRoot: URL
@@ -288,6 +290,7 @@ final class DesktopPet: NSObject {
         }
         sprite.context = { [weak self] in self?.onMenu?() }
         sprite.moved = { [weak self] in self?.onMove?() }
+        sprite.dragBegan = { [weak self] in self?.onDragBegin?() }
         let timer = Timer(timeInterval: 1 / 60, target: self, selector: #selector(advance), userInfo: nil, repeats: true)
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
@@ -330,14 +333,15 @@ final class DesktopPet: NSObject {
         let scale = (workspace["petScale"] as? NSNumber)?.doubleValue ?? 100
         let displayScale = max(0.75, min(1.6, selected?.displayScale ?? 1))
         sprite.preferredSize = 230 * max(0.6, min(1.6, scale / 100)) * displayScale
-        constrainToScreen()
+        resizeToFit()
     }
 
     @objc private func screenParametersChanged() {
-        constrainToScreen()
+        resizeToFit()
         onMove?()
     }
 
+    // One-time clamp for the very first placement, matching Windows' Loaded-only ClampPetFrame call.
     private func constrainToScreen() {
         guard let area = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else { return }
         let width = min(sprite.preferredSize, min(area.width, area.height))
@@ -345,6 +349,16 @@ final class DesktopPet: NSObject {
         let new = CGRect(x: old.midX - width / 2, y: old.minY, width: width, height: width)
         let fitted = Self.clamped(new, to: area)
         if old != fitted { window.setFrame(fitted, display: true) }
+    }
+
+    // Re-centers on scale/display changes without re-clamping to the screen, matching Windows'
+    // unclamped ApplyPetSize so the pet doesn't teleport back once it has been dragged near an edge.
+    private func resizeToFit() {
+        guard let area = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else { return }
+        let width = min(sprite.preferredSize, min(area.width, area.height))
+        let old = window.frame
+        let new = CGRect(x: old.midX - width / 2, y: old.minY, width: width, height: width)
+        if old != new { window.setFrame(new, display: true) }
     }
 
     func setPlayback(_ command: String, index: Int) {

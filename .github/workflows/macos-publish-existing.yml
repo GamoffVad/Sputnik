@@ -1,0 +1,87 @@
+name: macOS — verify and publish existing build
+on:
+  workflow_dispatch:
+    inputs:
+      source_run:
+        description: Run with successful build and Apple Silicon smoke test
+        required: true
+        type: string
+      version:
+        description: Version of the existing artifact
+        required: true
+        type: string
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: macos-release-${{ inputs.version }}
+  cancel-in-progress: false
+jobs:
+  verify-publish:
+    runs-on: macos-26-intel
+    timeout-minutes: 15
+    steps:
+      - name: Verify source checks
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ inputs.source_run }}
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ && "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/jobs" > "$RUNNER_TEMP/source-jobs.json"
+          jq -e '.jobs | any(.name == "build" and .conclusion == "success")' "$RUNNER_TEMP/source-jobs.json"
+          jq -e '.jobs | any(.name == "smoke (xcode-27)" and .conclusion == "success")' "$RUNNER_TEMP/source-jobs.json"
+          sha=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" --jq .head_sha)
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: Sputnik-macOS-${{ inputs.version }}-Universal
+          path: release
+          run-id: ${{ inputs.source_run }}
+          github-token: ${{ github.token }}
+      - name: Verify and launch the same DMG on Intel
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$(uname -m)" == x86_64 ]]
+          sw_vers
+          dmg="Sputnik-$APP_VERSION-macOS-Universal.dmg"
+          (cd release && shasum -a 256 --check "$dmg.sha256")
+          hdiutil verify -quiet "release/$dmg"
+          mount_point="$(mktemp -d)"
+          trap 'hdiutil detach "$mount_point" -quiet || true; rmdir "$mount_point"' EXIT
+          hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "release/$dmg"
+          app="$mount_point/Sputnik.app"
+          [[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$app/Contents/Info.plist")" == "$APP_VERSION" ]]
+          codesign --verify --strict --verbose=2 "$app"
+          architectures=" $(xcrun lipo -archs "$app/Contents/MacOS/Sputnik") "
+          [[ "$architectures" == *" arm64 "* && "$architectures" == *" x86_64 "* ]]
+          "$app/Contents/MacOS/Sputnik" --smoke-test
+      - name: Publish verified macOS preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          tag="macos-v$APP_VERSION"
+          dmg="Sputnik-$APP_VERSION-macOS-Universal.dmg"
+          notes="docs/releases/macos-$APP_VERSION.md"
+          test -f "$notes"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to replace it.' >&2
+            exit 1
+          fi
+          gh release create "$tag" --target "$SOURCE_SHA" --title "Спутник $APP_VERSION — macOS" --notes-file "$notes" --prerelease --draft --repo "$GITHUB_REPOSITORY"
+          gh release upload "$tag" "release/$dmg#macOS — Apple Silicon и Intel (.dmg)" "release/$dmg.sha256#Контрольная сумма SHA-256" --repo "$GITHUB_REPOSITORY"
+          actual=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "'"$dmg"'") | .digest')
+          expected="sha256:$(shasum -a 256 "release/$dmg" | cut -d' ' -f1)"
+          test "$actual" = "$expected"
+          gh release edit "$tag" --draft=false --latest=false --repo "$GITHUB_REPOSITORY"
