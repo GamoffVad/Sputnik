@@ -3,6 +3,10 @@ using System.IO;
 using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Automation;
+using System.Windows.Input;
+using System.Windows.Media;
+using Shape = System.Windows.Shapes.Shape;
 using System.Windows.Threading;
 
 namespace Sputnik;
@@ -55,6 +59,39 @@ public partial class MainWindow
             Language = System.Windows.Markup.XmlLanguage.GetLanguage("ru-RU")
         };
         var time = Input("Время (ЧЧ:ММ)", initial.ToString("HH:mm", CultureInfo.InvariantCulture), 5);
+        time.Padding = new Thickness(10, 4, 35, 4);
+        time.ToolTip = "Введите время в формате ЧЧ:ММ или четыре цифры";
+        var clock = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse("M8 1A7 7 0 1 0 8 15A7 7 0 1 0 8 1 M8 4V8L11 10"),
+            Width = 16, Height = 16, StrokeThickness = 1.4, Stretch = Stretch.Uniform,
+            StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 10, 0), IsHitTestVisible = false
+        };
+        clock.UseTheme(Shape.StrokeProperty, "Muted");
+        var timeField = new Grid();
+        timeField.Children.Add(time);
+        timeField.Children.Add(clock);
+        void NormalizeTime()
+        {
+            string value = time.Text.Trim();
+            if (value.Length == 4 && value.All(char.IsDigit))
+                time.Text = value.Insert(2, ":");
+        }
+        time.LostFocus += (_, _) => NormalizeTime();
+        time.PreviewKeyDown += (_, args) =>
+        {
+            if (args.Key is not (Key.Up or Key.Down)) return;
+            NormalizeTime();
+            if (!TimeSpan.TryParseExact(time.Text, @"hh\:mm", CultureInfo.InvariantCulture, out var current) ||
+                current >= TimeSpan.FromDays(1)) return;
+            int delta = (args.Key == Key.Up ? 1 : -1) * (time.CaretIndex <= 2 ? 60 : 1);
+            int total = ((int)current.TotalMinutes + delta + 1440) % 1440;
+            time.Text = $"{total / 60:00}:{total % 60:00}";
+            time.CaretIndex = delta is 60 or -60 ? 2 : 5;
+            args.Handled = true;
+        };
         var repeat = new ComboBox { MaxDropDownHeight = 325, ItemsSource = RepeatOptions.Select(option => option.Label).ToArray() };
         repeat.SelectedIndex = Math.Max(0, Array.FindIndex(RepeatOptions, option => option.Id == Value(existing, "repeat")));
         var minutes = Input("Интервал в минутах", Value(existing, "repeatMinutes", "10"), 9);
@@ -64,13 +101,14 @@ public partial class MainWindow
         repeat.SelectionChanged += (_, _) => UpdateRepeat();
         UpdateRepeat();
         Field(page, "Название", title);
-        Row(page, Labeled("Дата", date), Labeled("Время (ЧЧ:ММ)", time));
+        Row(page, Labeled("Дата", date), Labeled("Время (ЧЧ:ММ)", timeField));
         Field(page, "Частота повтора", repeat);
         page.Children.Add(custom);
 
         string id = Value(existing, "id", Guid.NewGuid().ToString());
-        var buttons = Actions(Button("Сохранить", () =>
+        var save = Button("Сохранить", () =>
         {
+            NormalizeTime();
             string label = title.Text.Trim();
             if (label.Length == 0 || date.SelectedDate is not { } day ||
                 !TimeSpan.TryParseExact(time.Text, @"hh\:mm", CultureInfo.InvariantCulture, out var hhmm) || hhmm >= TimeSpan.FromDays(1))
@@ -94,13 +132,36 @@ public partial class MainWindow
             });
             Desktop?.ResetReminder(id);
             OpenSection("reminders");
-        }, true));
-        if (existing is not null) buttons.Children.Add(Button("Удалить", () =>
+        }, true);
+        var saveIcon = WorkspaceUi.IconButton("Сохранить", "M3 2H12L15 5V15H1V2H3 M4 2V6H11V2 M4 15V10H12V15", true);
+        var saveGlyph = (System.Windows.Shapes.Path)saveIcon.Content;
+        saveIcon.Content = null;
+        saveGlyph.UseTheme(Shape.StrokeProperty, "AccentInk");
+        save.Content = saveGlyph;
+        save.Width = save.Height = 32;
+        save.Padding = new Thickness(6);
+        save.ToolTip = "Сохранить";
+        AutomationProperties.SetName(save, "Сохранить");
+        var buttons = Actions(save);
+        if (existing is not null)
         {
-            UpdateWorkspace(state => { var items = Items(state, "reminders"); items.Remove(items.FirstOrDefault(item => Value(item, "id") == id)); });
-            Desktop?.ResetReminder(id);
-            OpenSection("reminders");
-        }));
+            var remove = Button("Удалить", () =>
+            {
+                UpdateWorkspace(state => { var items = Items(state, "reminders"); items.Remove(items.FirstOrDefault(item => Value(item, "id") == id)); });
+                Desktop?.ResetReminder(id);
+                OpenSection("reminders");
+            });
+            var removeIcon = WorkspaceUi.IconButton("Удалить", "M3 4H13 M6 4V2H10V4 M4 4L5 14H11L12 4 M7 7V11 M9 7V11");
+            var removeGlyph = (System.Windows.Shapes.Path)removeIcon.Content;
+            removeIcon.Content = null;
+            removeGlyph.UseTheme(Shape.StrokeProperty, "Ink");
+            remove.Content = removeGlyph;
+            remove.Width = remove.Height = 32;
+            remove.Padding = new Thickness(6);
+            remove.ToolTip = "Удалить";
+            AutomationProperties.SetName(remove, "Удалить");
+            buttons.Children.Add(remove);
+        }
         page.Children.Add(buttons);
     }
 }
