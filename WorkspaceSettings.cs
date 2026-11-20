@@ -437,13 +437,15 @@ public partial class MainWindow
         try
         {
             if (await new SiteIcons(Favicons).Find(address) is not { } icon) return;
+            bool updated = false;
             UpdateWorkspace(workspace =>
             {
                 var items = workspace["favorites"] as JsonArray;
                 var match = items?.OfType<JsonObject>().FirstOrDefault(item =>
                     Value(item, "id") == id && Value(item, "target") == address && Value(item, "iconSource") == "site");
-                if (match is not null) match["siteIcon"] = icon;
+                if (match is not null) { match["siteIcon"] = icon; updated = true; }
             }, true);
+            if (updated && section == "favorites" && !editing) OpenSection("favorites");
         }
         catch (Exception error) when (error is IOException or System.Net.Http.HttpRequestException or InvalidOperationException or JsonException)
         {
