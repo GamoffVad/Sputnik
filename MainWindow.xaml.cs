@@ -118,12 +118,17 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("Браузер не может открыть этот адрес.");
             target = website.AbsoluteUri;
         }
-        else if (kind != "app" || !Compatibility.IsFullyQualifiedPath(target) || !File.Exists(target) ||
-                 !Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        else if (kind != "app" || !IsApplicationTarget(target))
             throw new InvalidOperationException("Выберите существующее приложение Windows (.exe).");
 
-        Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+        var start = new ProcessStartInfo(target) { UseShellExecute = true };
+        if (kind == "app") start.WorkingDirectory = Path.GetDirectoryName(target)!;
+        Process.Start(start);
     }
+
+    internal static bool IsApplicationTarget(string target) =>
+        Compatibility.IsFullyQualifiedPath(target) && File.Exists(target) &&
+        Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase);
 
     private static string WebsiteAddress(string address)
     {

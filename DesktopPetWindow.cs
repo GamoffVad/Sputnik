@@ -179,6 +179,7 @@ internal sealed class DesktopPetWindow : Window
             if (!moved) return;
             restingOrigin = new Point(Left, Top);
             supportPosition = new Point(Left + Width * supportAnchor.X, Top + Height * supportAnchor.Y);
+            SavePetPosition();
             if (resumeAfterDrag) elapsed.Start();
             controls.FollowPet();
         }
@@ -187,7 +188,12 @@ internal sealed class DesktopPetWindow : Window
         {
             Rect area = SystemParameters.WorkArea;
             double size = Math.Min(preferredSize, Math.Min(area.Width, area.Height));
-            var frame = DesktopControls.ClampPetFrame(new Rect(area.Right - size - 24, area.Bottom - size - 18, size, size), area);
+            var origin = LoadPetPosition() ?? new Point(area.Right - size - 24, area.Bottom - size - 18);
+            var desktop = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
+                SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+            if (!desktop.Contains(new Point(origin.X + size / 2, origin.Y + size / 2)))
+                origin = new Point(area.Right - size - 24, area.Bottom - size - 18);
+            var frame = new Rect(origin, new Size(size, size));
             Width = Height = frame.Width;
             Left = frame.Left;
             Top = frame.Top;
@@ -211,6 +217,39 @@ internal sealed class DesktopPetWindow : Window
     }
 
     internal void PositionPanel(Window panel, string section) => controls.PositionPanel(panel, section);
+
+    private static string PositionPath => Path.Combine(App.DataDirectory, "pet-position.json");
+
+    private void SavePetPosition()
+    {
+        try
+        {
+            Directory.CreateDirectory(App.DataDirectory);
+            string temporary = PositionPath + ".tmp";
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new { left = Left, top = Top }));
+            Compatibility.ReplaceFile(temporary, PositionPath);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            App.WriteDiagnostic("pet-position", error.ToString());
+        }
+    }
+
+    private static Point? LoadPetPosition()
+    {
+        try
+        {
+            if (!File.Exists(PositionPath)) return null;
+            var value = JsonNode.Parse(File.ReadAllText(PositionPath));
+            double left = value!["left"]!.GetValue<double>(), top = value["top"]!.GetValue<double>();
+            return double.IsNaN(left) || double.IsInfinity(left) || double.IsNaN(top) || double.IsInfinity(top)
+                ? null : new Point(left, top);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or NullReferenceException)
+        {
+            return null;
+        }
+    }
     internal bool HasContextMenu => controls.HasContextMenu;
     internal void ShowFavoriteSpheres() => controls.ShowSpheres();
     internal void PositionBubble(Window bubble) => controls.PositionBubble(bubble);
@@ -252,9 +291,7 @@ internal sealed class DesktopPetWindow : Window
         if (desired != active?.Id) SelectFromStore(desired, workspace);
         else ApplyMotionSettings(workspace);
         var favorites = (workspace?["favorites"] as JsonArray)?.OfType<JsonObject>()
-            .Select(item => new DesktopControls.Favorite(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "",
-                item["target"]?.ToString() ?? "", item["icon"]?.ToString() ?? "", item["siteIcon"]?.ToString() ?? "",
-                item["monochrome"]?.GetValue<bool>() == true))
+            .Select(DesktopControls.Favorite.FromSettings)
             .Where(item => item.Kind is "site" or "app" && item.Title.Length > 0 && item.Target.Length > 0)
             .ToArray() ?? [];
         var manual = workspace?["customTheme"] as JsonObject;

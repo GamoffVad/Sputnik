@@ -19,17 +19,23 @@ public partial class MainWindow
 
     private void ShowReminders()
     {
-        var page = PageFields("Напоминания", Button("Добавить", () => EditReminder(null), true));
+        Button Icon(string label, string geometry, Action action, bool primary = false)
+        {
+            var button = WorkspaceUi.IconButton(label, geometry, primary);
+            button.Click += (_, _) => action();
+            return button;
+        }
+        var page = PageFields("Напоминания", Icon("Добавить напоминание", "M8 2V14 M2 8H14", () => EditReminder(null), true));
         var reminders = WorkspaceData()["reminders"] as JsonArray ?? new JsonArray();
         foreach (var reminder in reminders.OfType<JsonObject>().OrderBy(ReminderScheduler.IsDone).ThenBy(ReminderScheduler.Due))
         {
             long timestamp = ReminderScheduler.Due(reminder);
             string detail = ReminderScheduler.AsLocalTime(timestamp)?.ToString("g") ?? "Укажите дату";
             if (ReminderScheduler.IsDone(reminder))
-                Entry(page, Value(reminder, "title"), detail + " · Выполнено", Button("Изменить", () => EditReminder(reminder)));
+                Entry(page, Value(reminder, "title"), detail + " · Выполнено", Icon("Изменить", "M10 2L14 6 M2 10L10 2 14 6 6 14H2Z", () => EditReminder(reminder)));
             else
                 Entry(page, Value(reminder, "title"), detail,
-                    Button("Изменить", () => EditReminder(reminder)), Button("Готово", () =>
+                    Icon("Изменить", "M10 2L14 6 M2 10L10 2 14 6 6 14H2Z", () => EditReminder(reminder)), Icon("Готово", "M2 8L6 12 14 3", () =>
                     {
                         ReminderScheduler.Update(Store, Value(reminder, "id"), "done");
                         OpenSection("reminders");
@@ -155,17 +161,27 @@ internal sealed class ReminderScheduler : IDisposable
     {
         string id = item["id"]?.ToString() ?? "";
         if (id.Length == 0) return;
-        var top = new StackPanel { Margin = new Thickness(12) };
-        var heading = new TextBlock { Text = "Напоминание", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 6) };
+        var layout = new DockPanel { Margin = new Thickness(12, 8, 12, 12) };
+        var header = new DockPanel { Margin = new Thickness(0, 0, 0, 5) };
+        DockPanel.SetDock(header, Dock.Top);
+        layout.Children.Add(header);
+        var close = WorkspaceUi.IconButton("Закрыть напоминание", "M4 4 L12 12 M12 4 L4 12");
+        close.Width = close.Height = 28;
+        close.Padding = new Thickness(5);
+        DockPanel.SetDock(close, Dock.Right);
+        header.Children.Add(close);
+        var heading = new TextBlock { Text = "Напоминание", FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
         heading.UseTheme(TextBlock.ForegroundProperty, "Accent");
-        top.Children.Add(heading);
+        header.Children.Add(heading);
+        var content = new StackPanel();
         var message = new TextBlock { Text = item["title"]?.ToString(), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
         message.UseTheme(TextBlock.ForegroundProperty, "Ink");
-        top.Children.Add(message);
+        content.Children.Add(message);
         var row = new WrapPanel();
-        top.Children.Add(row);
-        var frame = new Border { Child = new ScrollViewer { Content = top, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled }, BorderThickness = new Thickness(1) };
+        content.Children.Add(row);
+        layout.Children.Add(new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
+        var frame = new Border { Child = layout, BorderThickness = new Thickness(1) };
         frame.UseTheme(Border.BackgroundProperty, "Surface");
         frame.UseTheme(Border.BorderBrushProperty, "Edge");
         var window = new Window
@@ -176,15 +192,26 @@ internal sealed class ReminderScheduler : IDisposable
         };
         window.UseTheme(Window.FontFamilyProperty, "Font");
         RoundedWindow.Apply(window, frame);
-        foreach (var choice in new[] { ("Готово", "done"), ("На 10 мин", "snooze"), ("Закрыть", "dismiss") })
+        void Dismiss()
+        {
+            dismissed.Add(id);
+            window.Close();
+        }
+        close.Click += (_, _) => Dismiss();
+        window.PreviewKeyDown += (_, args) =>
+        {
+            if (args.Key != System.Windows.Input.Key.Escape) return;
+            args.Handled = true;
+            Dismiss();
+        };
+        foreach (var choice in new[] { ("Готово", "done"), ("На 10 мин", "snooze") })
         {
             var button = new Button { Content = choice.Item1, Padding = new Thickness(7, 3, 7, 3), Margin = new Thickness(0, 0, 5, 0) };
             button.Click += (_, _) =>
             {
                 try
                 {
-                    if (choice.Item2 == "dismiss") dismissed.Add(id);
-                    else Update(store, id, choice.Item2);
+                    Update(store, id, choice.Item2);
                     window.Close();
                 }
                 catch (Exception error) { MessageBox.Show(window, error.Message, "Напоминание"); }

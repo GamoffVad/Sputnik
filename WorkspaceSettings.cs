@@ -277,8 +277,7 @@ public partial class MainWindow
         foreach (var item in favorites.OfType<JsonObject>())
         {
             string title = Value(item, "title"), target = Value(item, "target"), kind = Value(item, "kind");
-            var favorite = new DesktopControls.Favorite(kind, title, target, Value(item, "icon"),
-                Value(item, "siteIcon"), item["monochrome"]?.GetValue<bool>() == true);
+            var favorite = DesktopControls.Favorite.FromSettings(item);
             var outline = new System.Windows.Shapes.Path
             {
                 Data = FavoriteIcons.Get(favorite.Icon) ?? FavoriteIcons.Get(kind == "app" ? "cpu" : "globe"),
@@ -286,7 +285,7 @@ public partial class MainWindow
                 StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round
             };
             outline.UseTheme(System.Windows.Shapes.Shape.StrokeProperty, "Accent");
-            var icon = new Viewbox { Child = DesktopControls.ReadSiteIcon(favorite) ?? outline, Width = 24, Height = 24,
+            var icon = new Viewbox { Child = DesktopControls.ReadFavoriteIcon(favorite) ?? outline, Width = 24, Height = 24,
                 Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center };
             var caption = Text(title, size: 13.5);
             caption.FontWeight = FontWeights.SemiBold;
@@ -340,15 +339,12 @@ public partial class MainWindow
         var kind = new ComboBox { ItemsSource = new[] { "Сайт", "Программа" }, SelectedIndex = Value(existing, "kind") == "app" ? 1 : 0 };
         var title = Input("Название", Value(existing, "title"), 80);
         var target = Input("Адрес или путь", Value(existing, "target"));
-        const string automaticLabel = "Значок сайта автоматически";
-        var icons = new ComboBox { SelectedValuePath = "Tag", MaxDropDownHeight = 270, IsTextSearchEnabled = true };
+        var icons = new ComboBox { MaxDropDownHeight = 270, IsTextSearchEnabled = true };
         AutomationProperties.SetName(icons, "Значок");
         var iconGrid = new FrameworkElementFactory(typeof(WrapPanel));
         iconGrid.SetValue(FrameworkElement.WidthProperty, 308d);
         icons.ItemsPanel = new ItemsPanelTemplate(iconGrid);
-        var automaticItem = new ComboBoxItem { Content = automaticLabel, Tag = automaticLabel,
-            Width = 308, Height = 36, Padding = new Thickness(8, 4, 8, 4) };
-        AutomationProperties.SetName(automaticItem, automaticLabel);
+        var automaticItem = new ComboBoxItem { Width = 308, Height = 36, Padding = new Thickness(8, 4, 8, 4) };
         icons.Items.Add(automaticItem);
         foreach (string name in FavoriteIcons.Names)
         {
@@ -364,16 +360,25 @@ public partial class MainWindow
             HoverCard.Attach(choice, name);
             icons.Items.Add(choice);
         }
-        icons.SelectedValue = Value(existing, "iconSource") == "library" ? Value(existing, "icon") : automaticLabel;
-        if (icons.SelectedIndex < 0) icons.SelectedIndex = 0;
         var monochrome = new CheckBox { Content = "Монохромный", IsChecked = existing?["monochrome"]?.GetValue<bool>() == true };
         var browse = Button("Выбрать приложение", () =>
         {
             if (Choose("Приложение Windows (*.exe)|*.exe") is { } file) target.Text = file;
         });
-        void UpdateKind() => browse.Visibility = kind.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        void UpdateKind()
+        {
+            bool app = kind.SelectedIndex == 1;
+            browse.Visibility = app ? Visibility.Visible : Visibility.Collapsed;
+            string label = app ? "Значок программы автоматически" : "Значок сайта автоматически";
+            automaticItem.Content = label;
+            AutomationProperties.SetName(automaticItem, label);
+            TextSearch.SetText(automaticItem, label);
+        }
         kind.SelectionChanged += (_, _) => UpdateKind();
         UpdateKind();
+        string savedIcon = Value(existing, "icon");
+        icons.SelectedItem = Value(existing, "iconSource") is "site" or "app" ? automaticItem :
+            icons.Items.OfType<ComboBoxItem>().FirstOrDefault(choice => Equals(choice.Tag, savedIcon)) ?? automaticItem;
         Field(page, "Тип", kind);
         Field(page, "Название", title);
         Field(page, "Адрес или путь", target);
@@ -393,28 +398,30 @@ public partial class MainWindow
             }
             bool site = kind.SelectedIndex != 1;
             if (site) value = WebsiteAddress(value);
-            else if (!Compatibility.IsFullyQualifiedPath(value) || !File.Exists(value) || !Path.GetExtension(value).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+            else if (!IsApplicationTarget(value))
             {
                 status.Text = "Выберите существующее приложение Windows (.exe).";
                 target.Focus();
                 return;
             }
-            string selected = icons.SelectedValue as string ?? automaticLabel;
-            bool automatic = site && selected == automaticLabel;
+            string? selected = (icons.SelectedItem as ComboBoxItem)?.Tag as string;
+            string iconSource = selected is null ? (site ? "site" : "app") : "library";
             var favorite = new JsonObject
             {
                 ["id"] = id, ["kind"] = site ? "site" : "app", ["title"] = label, ["target"] = value,
-                ["icon"] = selected == automaticLabel ? site ? "globe" : "cpu" : selected,
-                ["iconSource"] = automatic ? "site" : "library", ["monochrome"] = monochrome.IsChecked == true
+                ["icon"] = selected ?? (site ? "globe" : "cpu"),
+                ["iconSource"] = iconSource, ["monochrome"] = monochrome.IsChecked == true
             };
             UpdateWorkspace(state =>
             {
                 var items = Items(state, "favorites");
                 var previous = items.FirstOrDefault(item => Value(item, "id") == id);
+                if (iconSource == "site" && Value(previous, "target") == value && Value(previous, "iconSource") == "site" &&
+                    SiteIcons.IsCachedName(Value(previous, "siteIcon"))) favorite["siteIcon"] = Value(previous, "siteIcon");
                 if (previous is null) items.Add(favorite); else items[items.IndexOf(previous)] = favorite;
             }, true);
             OpenSection("favorites");
-            if (automatic) _ = AddFavoriteSiteIcon(id, value);
+            if (iconSource == "site" && favorite["siteIcon"] is null) _ = AddFavoriteSiteIcon(id, value);
         }, true));
         if (existing is not null) actions.Children.Add(Button("Удалить", () =>
         {

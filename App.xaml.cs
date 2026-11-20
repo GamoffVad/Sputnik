@@ -116,7 +116,7 @@ public partial class App : Application
         {
             workspace?.Hide();
             notes ??= new StickyNotes(DataDirectory, window => pet?.PositionPanel(window, "sticky"), () => ShowWorkspace("sharing"));
-            notes.Toggle(reposition: pet?.HasContextMenu == true);
+            notes.Toggle();
             pet?.SetNotesChecked(notes.IsVisible);
             return;
         }

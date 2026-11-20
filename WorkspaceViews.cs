@@ -100,9 +100,9 @@ public partial class MainWindow
         return button;
     }
 
-    private Button AsyncButton(string label, Func<Task> action, bool primary = false)
+    private Button AsyncButton(string label, Func<Task> action, bool primary = false, string? icon = null)
     {
-        var button = Button(label, () => { }, primary);
+        var button = icon is null ? Button(label, () => { }, primary) : WorkspaceUi.IconButton(label, icon, primary);
         button.Click += async (_, _) =>
         {
             button.IsEnabled = false;
