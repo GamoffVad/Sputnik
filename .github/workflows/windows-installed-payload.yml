@@ -32,9 +32,14 @@ jobs:
           if ($env:APP_VERSION -notmatch '^\d+\.\d+\.\d+\.\d+$') { throw 'Expected four-part version' }
           if ($env:RELEASE_TAG -ne "v$env:APP_VERSION") { throw 'Tag mismatch' }
           if ($env:EXPECTED_HASH -notmatch '^[a-f0-9]{64}$') { throw 'Invalid hash' }
-          gh release download $env:RELEASE_TAG --pattern "Sputnik-$env:APP_VERSION-installed-payload.zip" --dir artifacts/input --repo $env:GITHUB_REPOSITORY
-          if ($LASTEXITCODE) { throw 'Payload download failed' }
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases" --paginate | ConvertFrom-Json
+          $release = $releases | Where-Object { $_.tag_name -eq $env:RELEASE_TAG -and $_.draft } | Select-Object -First 1
+          $asset = $release.assets | Where-Object { $_.name -eq "Sputnik-$env:APP_VERSION-installed-payload.zip" } | Select-Object -First 1
+          if (!$asset) { throw 'Draft payload asset not found' }
+          New-Item -ItemType Directory -Force artifacts/input | Out-Null
           $zip = "artifacts/input/Sputnik-$env:APP_VERSION-installed-payload.zip"
+          gh api -H 'Accept: application/octet-stream' "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)" > $zip
+          if ($LASTEXITCODE) { throw 'Payload download failed' }
           if ((Get-FileHash -LiteralPath $zip).Hash.ToLowerInvariant() -ne $env:EXPECTED_HASH) { throw 'Payload checksum mismatch' }
           Expand-Archive -LiteralPath $zip -DestinationPath artifacts/payload
           $exe = Get-Item -LiteralPath artifacts/payload/Sputnik.exe
