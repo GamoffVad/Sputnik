@@ -15,14 +15,14 @@
   "keyframes": {
     "start": "keyframes/start.png",
     "end": "keyframes/end.png",
-    "filesIdentical": true
+    "filesIdentical": false
   },
   "package": {
     "file": "exports/christmas-tree.pet",
     "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/christmas-tree.pet",
-    "sha256": "9b4996711daee25567ca0c294424472f9f648ea21e336d646b7e92adc56f773b",
-    "bytes": 1324928974,
-    "schemaVersion": 3,
+    "sha256": "4eb1a343ae5c19792708e8fff0c91341bcfd023eacfebf2dd6648dffd03bed69",
+    "bytes": 748681660,
+    "schemaVersion": 2,
     "releaseTag": "pets-2026-11-22"
   },
   "animations": [
@@ -93,13 +93,8 @@
     },
     {
       "id": "action-14",
-      "name": "Поворот с поклоном",
-      "file": "animations/action-14/animation.json"
-    },
-    {
-      "id": "action-15",
       "name": "Праздничный прыжок",
-      "file": "animations/action-15/animation.json"
+      "file": "animations/action-14/animation.json"
     }
   ],
   "workspaceSchemaVersion": 1,

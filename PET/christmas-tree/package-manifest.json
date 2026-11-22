@@ -1,7 +1,7 @@
 {
   "id": "christmas-tree",
   "name": "Праздничная ёлка",
-  "description": "Десять анимаций праздничной ёлки с подарками.",
+  "description": "14 движений ёлки без референсных вставок, смешивания и повторного поклона; исходное разрешение и точная прозрачность.",
   "theme": {
     "name": "Праздничная хвоя",
     "accent": "#91B879",
@@ -9,38 +9,31 @@
     "surface": "#273328"
   },
   "displayScale": 1,
-  "neutral": {
-    "file": "asset-000.png",
-    "blendFrames": 8
-  },
+  "schemaVersion": 2,
   "animations": [
     {
       "name": "Танец",
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-001.png",
+          "file": "motion-01-00.png",
           "frames": 32
         },
         {
-          "file": "asset-002.png",
+          "file": "motion-01-01.png",
           "frames": 32
         },
         {
-          "file": "asset-003.png",
+          "file": "motion-01-02.png",
           "frames": 32
         },
         {
-          "file": "asset-004.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-005.png",
-          "frames": 17
+          "file": "motion-01-03.png",
+          "frames": 31
         }
       ]
     },
@@ -49,28 +42,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-006.png",
+          "file": "motion-02-00.png",
           "frames": 32
         },
         {
-          "file": "asset-007.png",
+          "file": "motion-02-01.png",
           "frames": 32
         },
         {
-          "file": "asset-008.png",
+          "file": "motion-02-02.png",
           "frames": 32
         },
         {
-          "file": "asset-009.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-010.png",
-          "frames": 17
+          "file": "motion-02-03.png",
+          "frames": 31
         }
       ]
     },
@@ -79,28 +68,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-011.png",
+          "file": "motion-03-00.png",
           "frames": 32
         },
         {
-          "file": "asset-012.png",
+          "file": "motion-03-01.png",
           "frames": 32
         },
         {
-          "file": "asset-013.png",
+          "file": "motion-03-02.png",
           "frames": 32
         },
         {
-          "file": "asset-014.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-015.png",
-          "frames": 17
+          "file": "motion-03-03.png",
+          "frames": 31
         }
       ]
     },
@@ -109,28 +94,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-016.png",
+          "file": "motion-04-00.png",
           "frames": 32
         },
         {
-          "file": "asset-017.png",
+          "file": "motion-04-01.png",
           "frames": 32
         },
         {
-          "file": "asset-018.png",
+          "file": "motion-04-02.png",
           "frames": 32
         },
         {
-          "file": "asset-019.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-020.png",
-          "frames": 17
+          "file": "motion-04-03.png",
+          "frames": 31
         }
       ]
     },
@@ -139,28 +120,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-021.png",
+          "file": "motion-05-00.png",
           "frames": 32
         },
         {
-          "file": "asset-022.png",
+          "file": "motion-05-01.png",
           "frames": 32
         },
         {
-          "file": "asset-023.png",
+          "file": "motion-05-02.png",
           "frames": 32
         },
         {
-          "file": "asset-024.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-025.png",
-          "frames": 17
+          "file": "motion-05-03.png",
+          "frames": 31
         }
       ]
     },
@@ -169,28 +146,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-026.png",
+          "file": "motion-06-00.png",
           "frames": 32
         },
         {
-          "file": "asset-027.png",
+          "file": "motion-06-01.png",
           "frames": 32
         },
         {
-          "file": "asset-028.png",
+          "file": "motion-06-02.png",
           "frames": 32
         },
         {
-          "file": "asset-029.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-030.png",
-          "frames": 17
+          "file": "motion-06-03.png",
+          "frames": 31
         }
       ]
     },
@@ -199,28 +172,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-031.png",
+          "file": "motion-07-00.png",
           "frames": 32
         },
         {
-          "file": "asset-032.png",
+          "file": "motion-07-01.png",
           "frames": 32
         },
         {
-          "file": "asset-033.png",
+          "file": "motion-07-02.png",
           "frames": 32
         },
         {
-          "file": "asset-034.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-035.png",
-          "frames": 17
+          "file": "motion-07-03.png",
+          "frames": 31
         }
       ]
     },
@@ -229,28 +198,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-036.png",
+          "file": "motion-08-00.png",
           "frames": 32
         },
         {
-          "file": "asset-037.png",
+          "file": "motion-08-01.png",
           "frames": 32
         },
         {
-          "file": "asset-038.png",
+          "file": "motion-08-02.png",
           "frames": 32
         },
         {
-          "file": "asset-039.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-040.png",
-          "frames": 17
+          "file": "motion-08-03.png",
+          "frames": 31
         }
       ]
     },
@@ -259,28 +224,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-041.png",
+          "file": "motion-09-00.png",
           "frames": 32
         },
         {
-          "file": "asset-042.png",
+          "file": "motion-09-01.png",
           "frames": 32
         },
         {
-          "file": "asset-043.png",
+          "file": "motion-09-02.png",
           "frames": 32
         },
         {
-          "file": "asset-044.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-045.png",
-          "frames": 17
+          "file": "motion-09-03.png",
+          "frames": 31
         }
       ]
     },
@@ -289,28 +250,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-046.png",
+          "file": "motion-10-00.png",
           "frames": 32
         },
         {
-          "file": "asset-047.png",
+          "file": "motion-10-01.png",
           "frames": 32
         },
         {
-          "file": "asset-048.png",
+          "file": "motion-10-02.png",
           "frames": 32
         },
         {
-          "file": "asset-049.png",
-          "frames": 32
-        },
-        {
-          "file": "asset-050.png",
-          "frames": 17
+          "file": "motion-10-03.png",
+          "frames": 31
         }
       ]
     },
@@ -319,48 +276,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-051.png",
-          "frames": 16
+          "file": "motion-11-00.png",
+          "frames": 32
         },
         {
-          "file": "asset-052.png",
-          "frames": 16
+          "file": "motion-11-01.png",
+          "frames": 32
         },
         {
-          "file": "asset-053.png",
-          "frames": 16
+          "file": "motion-11-02.png",
+          "frames": 32
         },
         {
-          "file": "asset-054.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-055.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-056.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-057.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-058.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-059.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-060.png",
-          "frames": 1
+          "file": "motion-11-03.png",
+          "frames": 31
         }
       ]
     },
@@ -369,48 +302,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-061.png",
-          "frames": 16
+          "file": "motion-12-00.png",
+          "frames": 32
         },
         {
-          "file": "asset-062.png",
-          "frames": 16
+          "file": "motion-12-01.png",
+          "frames": 32
         },
         {
-          "file": "asset-063.png",
-          "frames": 16
+          "file": "motion-12-02.png",
+          "frames": 32
         },
         {
-          "file": "asset-064.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-065.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-066.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-067.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-068.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-069.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-070.png",
-          "frames": 1
+          "file": "motion-12-03.png",
+          "frames": 31
         }
       ]
     },
@@ -419,98 +328,24 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-071.png",
-          "frames": 16
+          "file": "motion-13-00.png",
+          "frames": 32
         },
         {
-          "file": "asset-072.png",
-          "frames": 16
+          "file": "motion-13-01.png",
+          "frames": 32
         },
         {
-          "file": "asset-073.png",
-          "frames": 16
+          "file": "motion-13-02.png",
+          "frames": 32
         },
         {
-          "file": "asset-074.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-075.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-076.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-077.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-078.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-079.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-080.png",
-          "frames": 1
-        }
-      ]
-    },
-    {
-      "name": "Поворот с поклоном",
-      "frameWidth": 960,
-      "frameHeight": 960,
-      "columns": 4,
-      "frameCount": 145,
-      "fps": 24,
-      "sheets": [
-        {
-          "file": "asset-081.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-082.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-083.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-084.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-085.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-086.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-087.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-088.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-089.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-090.png",
-          "frames": 1
+          "file": "motion-13-03.png",
+          "frames": 31
         }
       ]
     },
@@ -519,51 +354,26 @@
       "frameWidth": 960,
       "frameHeight": 960,
       "columns": 4,
-      "frameCount": 145,
+      "frameCount": 127,
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-091.png",
-          "frames": 16
+          "file": "motion-15-00.png",
+          "frames": 32
         },
         {
-          "file": "asset-092.png",
-          "frames": 16
+          "file": "motion-15-01.png",
+          "frames": 32
         },
         {
-          "file": "asset-093.png",
-          "frames": 16
+          "file": "motion-15-02.png",
+          "frames": 32
         },
         {
-          "file": "asset-094.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-095.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-096.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-097.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-098.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-099.png",
-          "frames": 16
-        },
-        {
-          "file": "asset-100.png",
-          "frames": 1
+          "file": "motion-15-03.png",
+          "frames": 31
         }
       ]
     }
-  ],
-  "schemaVersion": 3
+  ]
 }

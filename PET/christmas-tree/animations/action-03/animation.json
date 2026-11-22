@@ -7,28 +7,24 @@
     "frameWidth": 960,
     "frameHeight": 960,
     "columns": 4,
-    "frameCount": 145,
+    "frameCount": 127,
     "fps": 24,
     "sheets": [
       {
-        "file": "asset-011.png",
+        "file": "motion-03-00.png",
         "frames": 32
       },
       {
-        "file": "asset-012.png",
+        "file": "motion-03-01.png",
         "frames": 32
       },
       {
-        "file": "asset-013.png",
+        "file": "motion-03-02.png",
         "frames": 32
       },
       {
-        "file": "asset-014.png",
-        "frames": 32
-      },
-      {
-        "file": "asset-015.png",
-        "frames": 17
+        "file": "motion-03-03.png",
+        "frames": 31
       }
     ]
   },
@@ -38,6 +34,6 @@
     "preserveNativeResolution": true,
     "sourceAssetBytesVerified": true
   },
-  "runtimeReferenceBlending": true,
-  "durationSeconds": 6.041666666666667
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 5.291666666666667
 }

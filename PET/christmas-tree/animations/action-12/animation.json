@@ -7,48 +7,24 @@
     "frameWidth": 960,
     "frameHeight": 960,
     "columns": 4,
-    "frameCount": 145,
+    "frameCount": 127,
     "fps": 24,
     "sheets": [
       {
-        "file": "asset-061.png",
-        "frames": 16
+        "file": "motion-12-00.png",
+        "frames": 32
       },
       {
-        "file": "asset-062.png",
-        "frames": 16
+        "file": "motion-12-01.png",
+        "frames": 32
       },
       {
-        "file": "asset-063.png",
-        "frames": 16
+        "file": "motion-12-02.png",
+        "frames": 32
       },
       {
-        "file": "asset-064.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-065.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-066.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-067.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-068.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-069.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-070.png",
-        "frames": 1
+        "file": "motion-12-03.png",
+        "frames": 31
       }
     ]
   },
@@ -58,6 +34,6 @@
     "preserveNativeResolution": true,
     "sourceAssetBytesVerified": true
   },
-  "runtimeReferenceBlending": true,
-  "durationSeconds": 6.041666666666667
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 5.291666666666667
 }

@@ -1,54 +1,30 @@
 {
   "id": "action-14",
-  "name": "Поворот с поклоном",
+  "name": "Праздничный прыжок",
   "status": "installed-animation",
   "existingClip": {
-    "name": "Поворот с поклоном",
+    "name": "Праздничный прыжок",
     "frameWidth": 960,
     "frameHeight": 960,
     "columns": 4,
-    "frameCount": 145,
+    "frameCount": 127,
     "fps": 24,
     "sheets": [
       {
-        "file": "asset-081.png",
-        "frames": 16
+        "file": "motion-15-00.png",
+        "frames": 32
       },
       {
-        "file": "asset-082.png",
-        "frames": 16
+        "file": "motion-15-01.png",
+        "frames": 32
       },
       {
-        "file": "asset-083.png",
-        "frames": 16
+        "file": "motion-15-02.png",
+        "frames": 32
       },
       {
-        "file": "asset-084.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-085.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-086.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-087.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-088.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-089.png",
-        "frames": 16
-      },
-      {
-        "file": "asset-090.png",
-        "frames": 1
+        "file": "motion-15-03.png",
+        "frames": 31
       }
     ]
   },
@@ -58,6 +34,6 @@
     "preserveNativeResolution": true,
     "sourceAssetBytesVerified": true
   },
-  "runtimeReferenceBlending": true,
-  "durationSeconds": 6.041666666666667
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 5.291666666666667
 }
