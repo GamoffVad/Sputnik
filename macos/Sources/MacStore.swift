@@ -69,8 +69,15 @@ final class MacStore {
 
     func webPet(_ pet: [String: Any], path: String) -> [String: Any] {
         var copy = pet
+        func webNeutral(_ item: [String: Any]) -> [String: Any] {
+            var result = item
+            if let name = item["file"] as? String { result["file"] = path + "/" + name }
+            return result
+        }
+        if let neutral = pet["neutral"] as? [String: Any] { copy["neutral"] = webNeutral(neutral) }
         copy["animations"] = (pet["animations"] as? [[String: Any]] ?? []).map { clip in
             var clip = clip
+            if let neutral = clip["neutral"] as? [String: Any] { clip["neutral"] = webNeutral(neutral) }
             if let sheets = clip["sheets"] as? [[String: Any]] {
                 clip["sheets"] = sheets.map { source in
                     var sheet = source
@@ -138,7 +145,7 @@ final class MacStore {
 }
 
 enum PetArchive {
-    private static let maximum = 96 * 1024 * 1024
+    private static let maximum = 1024 * 1024 * 1024
 
     static func stage(_ source: URL, at directory: URL, library: URL, builtins: URL) throws -> [String: Any] {
         let fm = FileManager.default
@@ -161,11 +168,11 @@ enum PetArchive {
             }
             let manifestData = try extract("manifest.json", size: length, from: archive)
             guard let pet = try JSONSerialization.jsonObject(with: manifestData) as? [String: Any],
-                  (pet["schemaVersion"] as? Int) == 1,
+                  let schema = pet["schemaVersion"] as? Int, (1...3).contains(schema),
                   let id = pet["id"] as? String, matches(id, "^[a-z0-9][a-z0-9-]{0,48}$"),
                   let rawTheme = pet["theme"] as? [String: Any],
                   let clips = pet["animations"] as? [[String: Any]], (1...24).contains(clips.count) else {
-                throw MacError("Некорректный пакет питомца версии 1.")
+                throw MacError("Некорректный пакет питомца.")
             }
             let builtins = (try? JSONSerialization.jsonObject(with: Data(contentsOf: builtins))) as? [[String: Any]] ?? []
             guard !builtins.contains(where: { $0["id"] as? String == id }),
@@ -184,6 +191,43 @@ enum PetArchive {
             var animations = [[String: Any]]()
             var names = Set<String>()
             var extracted = 0
+            func readViewport(_ value: [String: Any], width: Int, height: Int) throws -> [String: Any] {
+                func number(_ key: String) throws -> Double {
+                    guard let n = value[key] as? NSNumber, n.doubleValue.isFinite,
+                          abs(n.doubleValue) <= 8192 else { throw MacError("Некорректная область отображения.") }
+                    return n.doubleValue
+                }
+                let x = try number("x"), y = try number("y"), w = try number("width"), h = try number("height")
+                guard w >= 1, h >= 1, x < Double(width), y < Double(height), x + w > 0, y + h > 0 else {
+                    throw MacError("Область отображения не содержит кадр.")
+                }
+                return ["x": x, "y": y, "width": w, "height": h]
+            }
+            func readNeutral(_ source: [String: Any], asset: String) throws -> [String: Any] {
+                let file = try field(source, "file", limit: 160)
+                guard matches(file, "^(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\\.[pP][nN][gG]$"),
+                      let size = lengths[file], size > 0, size <= 512 * 1024 * 1024 else {
+                    throw MacError("Некорректный опорный кадр.")
+                }
+                let data = try extract(file, size: size, from: archive)
+                guard let image = CGImageSourceCreateWithData(data as CFData, nil),
+                      CGImageSourceGetType(image).map({ ($0 as String) == UTType.png.identifier }) == true,
+                      let props = CGImageSourceCopyPropertiesAtIndex(image, 0, nil) as? [String: Any],
+                      let width = props[kCGImagePropertyPixelWidth as String] as? Int,
+                      let height = props[kCGImagePropertyPixelHeight as String] as? Int,
+                      width > 0, height > 0, width <= 2048, height <= 2048 else {
+                    throw MacError("Некорректный размер опорного кадра.")
+                }
+                try data.write(to: directory.appendingPathComponent(asset), options: .atomic)
+                var result: [String: Any] = ["file": asset]
+                if source["blendFrames"] != nil { result["blendFrames"] = try integer(source, "blendFrames", 0...8) }
+                if let viewport = source["viewport"] as? [String: Any] {
+                    result["viewport"] = try readViewport(viewport, width: width, height: height)
+                }
+                return result
+            }
+            let neutral = try (pet["neutral"] as? [String: Any]).map { try readNeutral($0, asset: "neutral.png") }
+            if schema == 3 && neutral == nil { throw MacError("Добавьте общий опорный кадр питомца.") }
             for (index, clip) in clips.enumerated() {
                 let title = try field(clip, "name", limit: 60)
                 guard names.insert(title.lowercased()).inserted else { throw MacError("Названия анимаций должны различаться.") }
@@ -194,12 +238,18 @@ enum PetArchive {
                 let fps = try integer(clip, "fps", 1...60)
                 var installed: [String: Any] = ["name": title, "frameWidth": w, "frameHeight": h,
                                                   "frameCount": count, "columns": columns, "fps": fps]
+                if let clipNeutral = clip["neutral"] as? [String: Any] {
+                    installed["neutral"] = try readNeutral(clipNeutral, asset: "neutral-\(index).png")
+                }
+                if let viewport = clip["viewport"] as? [String: Any] {
+                    installed["viewport"] = try readViewport(viewport, width: w, height: h)
+                }
                 func extractSheet(_ part: [String: Any], asset: String, frames: Int) throws {
                     let file = try field(part, "file", limit: 160)
                     guard matches(file, "^(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+\\.[pP][nN][gG]$"),
                           let size = lengths[file], size > 0 else { throw MacError("Некорректный PNG-лист.") }
                     extracted += size
-                    guard extracted <= maximum else { throw MacError("Суммарный размер листов превышает 96 МБ.") }
+                    guard size <= 512 * 1024 * 1024, extracted <= maximum else { throw MacError("Суммарный размер листов слишком велик.") }
                     let width = w * columns
                     let height = h * ((frames + columns - 1) / columns)
                     guard width <= 8192, height <= 8192, width * height <= 32_000_000 else {
@@ -239,6 +289,7 @@ enum PetArchive {
             try fm.removeItem(at: archive)
             var installed: [String: Any] = ["id": id, "name": name, "description": description,
                                             "theme": theme, "animations": animations]
+            if let neutral { installed["neutral"] = neutral }
             if let scale = pet["displayScale"] as? Double, (0.75...1.6).contains(scale) { installed["displayScale"] = scale }
             try JSONSerialization.data(withJSONObject: installed).write(to: directory.appendingPathComponent("pet.json"), options: .atomic)
             return installed
@@ -260,7 +311,7 @@ enum PetArchive {
         let count = u16(end+10)
         let size = u32(end+12)
         var offset = u32(end+16)
-        guard (1...40).contains(count), u16(end+8) == count, offset + size == end else { throw error }
+        guard (1...128).contains(count), u16(end+8) == count, offset + size == end else { throw error }
         var listed = [String: Int]()
         var total = 0
         for _ in 0..<count {

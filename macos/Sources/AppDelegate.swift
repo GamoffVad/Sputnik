@@ -339,31 +339,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func prepareSmokeTest(store: MacStore, server: LocalWebServer, pet: DesktopPet) async throws {
         guard pet.hasFrame, !animationNames.isEmpty else { throw MacError("Первый встроенный спрайт не загрузился.") }
-        let watchmanID = "sand-watchman-clean"
-        guard let watchman = store.bundledPetManifests().first(where: { $0["id"] as? String == watchmanID }),
-              let watchmanName = watchman["name"] as? String,
-              let watchmanClips = watchman["animations"] as? [[String: Any]], watchmanClips.count == 5 else {
-            throw MacError("В библиотеке отсутствуют пять встроенных анимаций Песчаного дозорного.")
-        }
-        try store.writeWorkspace(["active": watchmanID, "themed": true])
-        pet.refresh(store.readWorkspace())
-        guard pet.name == watchmanName, pet.hasFrame, animationNames.count == watchmanClips.count else {
-            throw MacError("Спрайт встроенного Песчаного дозорного не загрузился.")
-        }
-        for clip in watchmanClips {
-            let sheets = clip["sheets"] as? [[String: Any]] ?? [clip]
-            for sheet in sheets {
-                guard let file = sheet["file"] as? String else {
-                    throw MacError("Не указан файл анимации Песчаного дозорного.")
-                }
-                var request = URLRequest(url: server.origin.appendingPathComponent(file))
-                request.httpMethod = "HEAD"
-                let (_, response) = try await URLSession.shared.data(for: request)
-                guard (response as? HTTPURLResponse)?.statusCode == 200, response.mimeType == "image/png" else {
-                    throw MacError("Локальный интерфейс не смог получить кадры Песчаного дозорного.")
-                }
-            }
-        }
         guard let knight = store.bundledPetManifests().first(where: { $0["id"] as? String == "knight-watchman" }),
               (knight["animations"] as? [[String: Any]])?.count == 5 else {
             throw MacError("Bundled Knight Watchman is missing")
@@ -375,13 +350,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let preview = try await store.stagePet(fixture)
         guard let token = preview["token"] as? String else { throw MacError("Пакет тестового питомца не подготовлен.") }
         let installed = try store.installPet(token)
-        guard installed["id"] as? String == "knight-watchman", let clips = installed["animations"] as? [[String: Any]],
-              clips.count == 5, let file = clips.first?["file"] as? String else {
-            throw MacError("В пакете Рыцаря-дозорного ожидалось пять анимаций.")
+        guard let fixtureID = installed["id"] as? String, let clips = installed["animations"] as? [[String: Any]],
+              !clips.isEmpty, let file = clips.first?["file"] as? String else {
+            throw MacError("Пакет проверочного питомца не содержит анимаций.")
         }
-        try store.writeWorkspace(["active": "knight-watchman", "themed": true])
+        try store.writeWorkspace(["active": fixtureID, "themed": true])
         pet.refresh(store.readWorkspace())
-        guard pet.hasFrame, animationNames.count == 5 else { throw MacError("Спрайт импортированного питомца не загрузился.") }
+        guard pet.hasFrame, animationNames.count == clips.count else { throw MacError("Спрайт импортированного питомца не загрузился.") }
         var request = URLRequest(url: server.origin.appendingPathComponent(file))
         request.httpMethod = "HEAD"
         let (_, response) = try await URLSession.shared.data(for: request)

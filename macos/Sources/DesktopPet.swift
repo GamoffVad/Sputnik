@@ -113,6 +113,16 @@ class SputnikButton: NSButton {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
+private struct PetViewport: Decodable, Equatable {
+    let x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat
+}
+
+private struct PetNeutral: Decodable {
+    let file: String
+    let viewport: PetViewport?
+    let blendFrames: Int?
+}
+
 private struct DesktopClip: Decodable {
     struct Sheet: Decodable {
         let file: String
@@ -127,6 +137,8 @@ private struct DesktopClip: Decodable {
     let columns: Int?
     let frameCount: Int
     let fps: Int
+    let viewport: PetViewport?
+    let neutral: PetNeutral?
 
     func location(_ frame: Int) -> (page: Int, local: Int) {
         var offset = frame
@@ -169,11 +181,13 @@ private struct DesktopPetManifest: Decodable {
     let animations: [DesktopClip]
     let theme: Theme?
     let displayScale: CGFloat?
+    let neutral: PetNeutral?
 }
 
 @MainActor
 private final class DesktopSprite: NSView {
     var image: CGImage? { didSet { needsDisplay = true } }
+    var viewport: PetViewport? { didSet { needsDisplay = true } }
     var clicked: ((NSEvent) -> Void)?
     var context: (() -> Void)?
     var moved: (() -> Void)?
@@ -185,11 +199,17 @@ private final class DesktopSprite: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard let image, let ctx = NSGraphicsContext.current?.cgContext else { return }
-        let scale = min(bounds.width / CGFloat(image.width), bounds.height / CGFloat(image.height))
-        let size = CGSize(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
-        let rect = CGRect(x: (bounds.width - size.width) / 2, y: 0, width: size.width, height: size.height)
+        let view = viewport ?? PetViewport(x: 0, y: 0, width: CGFloat(image.width), height: CGFloat(image.height))
+        let scale = min(bounds.width / view.width, bounds.height / view.height)
+        let rect = CGRect(x: (bounds.width - view.width * scale) / 2 - view.x * scale,
+                          y: (bounds.height - view.height * scale) / 2 - (CGFloat(image.height) - view.y - view.height) * scale,
+                          width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
+        ctx.saveGState()
+        ctx.clip(to: CGRect(x: (bounds.width-view.width*scale)/2, y: (bounds.height-view.height*scale)/2,
+                            width: view.width*scale, height: view.height*scale))
         ctx.interpolationQuality = .none
         ctx.draw(image, in: rect)
+        ctx.restoreGState()
     }
 
     override var mouseDownCanMoveWindow: Bool { false }
@@ -370,10 +390,13 @@ final class DesktopPet: NSObject {
             if let stoppedAt { start += now - stoppedAt; self.stoppedAt = nil }
         case "clip", "shuffle":
             if command == "clip", selected?.animations.indices.contains(index) != true { return }
+            let finishCurrent = command == "clip" && current != index && stoppedAt == nil && lastFrame > 0 &&
+                current.map { lastFrame < (selected?.animations[$0].frameCount ?? 1) - 1 } == true
             cancelPreload()
             pinned = command == "clip" ? index : nil
             stoppedAt = nil
             pending.removeAll()
+            if finishCurrent { pending.append(index); return }
             playNext()
         default: break
         }
@@ -456,6 +479,7 @@ final class DesktopPet: NSObject {
                 currentPage = 0
                 current = index
                 lastFrame = 0
+                sprite.viewport = clip.viewport
                 sprite.image = first
                 start = CACurrentMediaTime()
                 if stoppedAt != nil { stoppedAt = start }
@@ -489,7 +513,10 @@ final class DesktopPet: NSObject {
                 preloadSegment(location.page + 1, for: clip)
             }
             lastFrame = index
-            if let sheet, let frame = clip.frame(location.local, in: sheet) { sprite.image = frame }
+            if let sheet, let frame = clip.frame(location.local, in: sheet) {
+                sprite.viewport = clip.viewport
+                sprite.image = frame
+            }
         }
     }
 }

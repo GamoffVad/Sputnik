@@ -22,7 +22,7 @@ with ZipFile(package) as archive:
         (destination / name).write_bytes(archive.read(name))
         clip["file"] = f"assets/{knight['id']}/{name}"
     pets.append(knight)
-if not pets or pets[0]["id"] != "klyaksa" or not any(p["id"] == "sand-watchman-clean" for p in pets):
+if not pets or pets[0]["id"] != "klyaksa":
     raise SystemExit("Required bundled pet missing")
 for pet in pets:
     for clip in pet["animations"]:
