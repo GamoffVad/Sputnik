@@ -144,7 +144,7 @@ def update_catalog(args):
     save(root/'validation.json',{'schemaVersion':1,'count':len(entries),'installedLibraryMatchesCatalog':True,
          'removedPets':removed,'allPackageAssetsByteVerified':True,'minimumWindowsVersion':'1.3.28.27',
          'pets':[{k:p[k] for k in ('id','animations','frames','sha256','bytes','entries')} for p in entries]})
-    text='# Питомцы «Спутника»\n\nКаталог соответствует установленной библиотеке на 22 ноября 2026 года: **10 питомцев**, включая встроенную Кляксу.\n\n'
+    text=f'# Питомцы «Спутника»\n\nКаталог соответствует установленной библиотеке на 22 ноября 2026 года: **{len(entries)} питомцев**, включая встроенную Кляксу.\n\n'
     text+='[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.27) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.5) · [Каталог JSON](catalog.json) · [Проверка](validation.json)\n\n'
     text+='Скачайте `.pet`, затем выберите **Питомцы → плюс → файл → Установить питомца**. Все PNG перенесены из установленной библиотеки побайтово. Настройки, заметки и данные подключения в пакеты не входят.\n\n'
     text+='| Питомец | Анимации | Кадры | Скачать |\n| --- | ---: | ---: | --- |\n'

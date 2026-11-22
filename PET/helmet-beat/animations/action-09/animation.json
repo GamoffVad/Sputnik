@@ -1,0 +1,51 @@
+{
+  "id": "action-09",
+  "name": "Басовый удар",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Басовый удар",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "motion-09-00.png",
+        "frames": 16
+      },
+      {
+        "file": "motion-09-01.png",
+        "frames": 16
+      },
+      {
+        "file": "motion-09-02.png",
+        "frames": 16
+      },
+      {
+        "file": "motion-09-03.png",
+        "frames": 16
+      },
+      {
+        "file": "motion-09-04.png",
+        "frames": 16
+      },
+      {
+        "file": "motion-09-05.png",
+        "frames": 16
+      },
+      {
+        "file": "motion-09-06.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 8,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}
