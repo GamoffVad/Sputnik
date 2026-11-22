@@ -261,6 +261,7 @@ final class DesktopPet: NSObject {
     private let dataRoot: URL
     private var selected: DesktopPetManifest?
     private var selectedFolder: URL
+    private var loadedManifestData: Data?
     private var timer: Timer?
     private var pending: [Int] = []
     private var unavailable: Set<Int> = []
@@ -325,7 +326,10 @@ final class DesktopPet: NSObject {
 
     func refresh(_ workspace: [String: Any]) {
         let desired = workspace["active"] as? String ?? "klyaksa"
-        if selected?.id != desired || !hasFrame {
+        let validID = desired.range(of: #"\A[a-z0-9][a-z0-9-]{0,48}\z"#, options: .regularExpression) != nil
+        let importedData = validID ? (try? Data(contentsOf: dataRoot.appendingPathComponent("pets").appendingPathComponent(desired).appendingPathComponent("pet.json"))) : nil
+        let changed = importedData != loadedManifestData
+        if selected?.id != desired || !hasFrame || changed {
             var folder = bundledRoot
             var manifest = bundled.first { $0.id == desired }
             if manifest == nil, desired.range(of: #"\A[a-z0-9][a-z0-9-]{0,48}\z"#, options: .regularExpression) != nil {
@@ -338,7 +342,7 @@ final class DesktopPet: NSObject {
                 folder = bundledRoot
                 manifest = bundled.first { $0.id == "klyaksa" } ?? bundled.first
             }
-            if selected?.id != manifest?.id || !hasFrame {
+            if selected?.id != manifest?.id || !hasFrame || changed {
                 setPet(manifest, folder: folder)
                 if !hasFrame, let fallback = bundled.first(where: { $0.id == "klyaksa" }), manifest?.id != fallback.id {
                     setPet(fallback, folder: bundledRoot)
@@ -412,6 +416,7 @@ final class DesktopPet: NSObject {
         cancelPreload()
         selected = manifest
         selectedFolder = folder
+        loadedManifestData = folder == bundledRoot ? nil : (try? Data(contentsOf: folder.appendingPathComponent("pet.json")))
         pending.removeAll()
         unavailable.removeAll()
         current = nil

@@ -1,8 +1,8 @@
 # Спутник для macOS
 
-[Скачать Спутник 0.2.4 — macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.4).
+[Скачать Спутник 0.2.5 — macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.5).
 
-Один образ `Sputnik-0.2.4-macOS-Universal.dmg` подходит для Apple Silicon и Intel, macOS 13 и новее. Откройте DMG и перенесите Sputnik в «Программы». Интернет для установки не нужен.
+Один образ `Sputnik-0.2.5-macOS-Universal.dmg` подходит для Apple Silicon и Intel, macOS 13 и новее. Откройте DMG и перенесите Sputnik в «Программы». Интернет для установки не нужен.
 
 Это предварительный выпуск с подписью ad hoc, без сертификата Developer ID и нотарификации Apple. Gatekeeper может блокировать запуск. [Официальная инструкция Apple](https://support.apple.com/ru-ru/102445). Приложение не отключает проверки безопасности системы.
 
@@ -17,7 +17,7 @@
 На Mac с Xcode/Command Line Tools из корня репозитория:
 
 ```bash
-SPUTNIK_SMOKE_TEST=1 bash macos/build.sh 0.2.4
+SPUTNIK_SMOKE_TEST=1 bash macos/build.sh 0.2.5
 ```
 
 Готовый DMG и SHA-256 находятся в `artifacts/macos`. Для необязательной подписи своим сертификатом можно передать `SPUTNIK_SIGN_IDENTITY`; публичный workflow по согласованию с владельцем выпускает сборки ad hoc.
