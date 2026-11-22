@@ -2,11 +2,20 @@
 
 Все восемь питомцев имеют отдельную папку с референсом, темой, опорными кадрами, описаниями анимаций и манифестом готовых ресурсов. [Машиночитаемый каталог](catalog.json) · [Результат проверки структуры](validation.json).
 
+
+## Скачать на Mac
+
+[**Спутник 0.2.4 для macOS — скачать DMG**](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.4/Sputnik-0.2.4-macOS-Universal.dmg) · [Страница выпуска](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.4)
+
+Образ подходит для **Apple Silicon и Intel, macOS 13+**. Перенесите Sputnik в «Программы». Ссылки публичные: вход в GitHub не нужен.
+
+**Питомцы:** скачайте нужный файл `.pet` в таблице ниже, затем откройте в приложении «Питомцы» → добавление питомца (+) и выберите файл. Для цветов персонажа включите палитру питомца. Клякса уже встроена в Mac-приложение.
+
 | Питомец | Референс PNG | Анимации | Загрузка |
 | --- | --- | ---: | --- |
 | [Тканевый ниндзя](cloth-ninja/pet.json) | [941×1671](cloth-ninja/reference.png) | 11 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-cloth-ninja-v1/cloth-ninja.pet) |
 | [HUDI](hudi/pet.json) | [346×720](hudi/reference.png) | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet) |
-| [Клякса](klyaksa/pet.json) | [384×384](klyaksa/reference.png) | 8 | [В приложении](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/Sputnik-1.3.14-Windows-10-11-x64.exe) |
+| [Клякса](klyaksa/pet.json) | [384×384](klyaksa/reference.png) | 8 | Встроена в приложение |
 | [Рыцарь-дозорный](knight-watchman/pet.json) | [384×384](knight-watchman/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet) |
 | [Кудряшка](kudryashka/pet.json) | [256×256](kudryashka/reference.png) | 4 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet) |
 | [Тихий ниндзя](quiet-ninja/pet.json) | [1280×720](quiet-ninja/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-quiet-ninja-v2/quiet-ninja.pet) |
