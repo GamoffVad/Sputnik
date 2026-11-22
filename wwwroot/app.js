@@ -1080,7 +1080,7 @@ function bindModelSettings() {
     } catch(error) {
       if(status.isConnected)status.textContent=error.message;
     }
-  });
+  },true);
 }
 document.addEventListener('submit',event=>{
   const form=event.target;

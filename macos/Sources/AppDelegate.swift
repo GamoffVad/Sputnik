@@ -566,7 +566,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         (() => {
           const popup = document.querySelector('#model-options');
           const bounds = popup.getBoundingClientRect();
-          const visible = bounds.width > 100 && bounds.height > 40 && bounds.bottom > 0 && bounds.top < innerHeight;
+          const visible = bounds.width > 100 && bounds.height > 40 && bounds.top >= 0 && bounds.bottom <= innerHeight &&
+            popup.contains(document.elementFromPoint(bounds.left + bounds.width/2, bounds.top + bounds.height/2));
           popup.querySelector('.model-options button').click();
           return visible && popup.hidden && document.querySelector('#model-form input[name=model]').value === 'smoke-model-a';
         })()
