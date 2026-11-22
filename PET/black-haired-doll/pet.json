@@ -20,8 +20,8 @@
   "package": {
     "file": "exports/black-haired-doll.pet",
     "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/black-haired-doll.pet",
-    "sha256": "821e17e9b663e521a6c52a806d0b201fcbf2bebac43e06c88dbd7842d790feba",
-    "bytes": 116041817,
+    "sha256": "a732b0bcf2bbc84e49c6a085ba02a84b6d3856270ac783cb8ea05641853eefe8",
+    "bytes": 113676664,
     "schemaVersion": 2,
     "releaseTag": "pets-2026-11-22"
   },
@@ -78,5 +78,17 @@
     }
   ],
   "workspaceSchemaVersion": 1,
-  "assetsManifest": "package-manifest.json"
+  "assetsManifest": "package-manifest.json",
+  "preview": {
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/black-haired-doll-before-after.mp4",
+    "sha256": "cc9b8dbecbc9243ebcc25e952f920de9296fe4f90949e00bd74f73daf47a902f",
+    "backgrounds": [
+      "black",
+      "white"
+    ],
+    "comparison": [
+      "before",
+      "after"
+    ]
+  }
 }
