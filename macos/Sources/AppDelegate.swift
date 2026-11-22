@@ -485,6 +485,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     fileprivate func execute(_ action: String, payload: Any?, browser: BrowserPanel) async throws -> Any? {
         guard let store else { return nil }
+        if smokeTest && action == "listModels" { return ["models": ["smoke-model-a", "smoke-model-b"]] }
         switch action {
         case "ready":
             browser.ready = true
@@ -500,6 +501,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         try await verifyHeading("Внешний вид", in: browser)
                         let controls = try await browser.web.evaluateJavaScript("Boolean(document.querySelector('#window-glass') && document.querySelector('#note-color-mode') && document.querySelector('#appearance-form button[type=submit] svg'))")
                         guard controls as? Bool == true else { throw MacError("Appearance controls missing") }
+                        try await verifyModelPicker(in: browser)
                         var settings = store.readWorkspace()
                         settings["windowGlass"] = true
                         settings["windowTransparency"] = 65
@@ -537,6 +539,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         default:
             return try await MacBridge.execute(action, payload: payload, store: store, app: self)
         }
+    }
+
+    private func verifyModelPicker(in browser: BrowserPanel) async throws {
+        openSection("model")
+        try await verifyHeading("Модель и API", in: browser)
+        let opened = try await browser.web.evaluateJavaScript("""
+        (() => {
+          const url = document.querySelector('#model-form input[name=url]');
+          url.value = 'https://api.example.test/v1';
+          url.dispatchEvent(new Event('input', {bubbles:true}));
+          const picker = document.querySelector('#model-picker');
+          picker.click();
+          return !document.querySelector('#model-options').hidden && picker.getAttribute('aria-expanded') === 'true';
+        })()
+        """)
+        guard opened as? Bool == true else { throw MacError("Model picker did not open after click") }
+        var ready = false
+        for _ in 0..<40 {
+            let count = try await browser.web.evaluateJavaScript("document.querySelectorAll('#model-options .model-options button').length")
+            if (count as? NSNumber)?.intValue == 2 { ready = true; break }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+        guard ready else { throw MacError("Model picker did not render fixture models") }
+        let selected = try await browser.web.evaluateJavaScript("""
+        (() => {
+          const popup = document.querySelector('#model-options');
+          const bounds = popup.getBoundingClientRect();
+          const visible = bounds.width > 100 && bounds.height > 40 && bounds.bottom > 0 && bounds.top < innerHeight;
+          popup.querySelector('.model-options button').click();
+          return visible && popup.hidden && document.querySelector('#model-form input[name=model]').value === 'smoke-model-a';
+        })()
+        """)
+        guard selected as? Bool == true else { throw MacError("Model picker selection/placement failed") }
+        openSection("theme")
+        try await verifyHeading("Внешний вид", in: browser)
     }
 
     private func verifyHeading(_ heading: String, in browser: BrowserPanel) async throws {
