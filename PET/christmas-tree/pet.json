@@ -20,8 +20,8 @@
   "package": {
     "file": "exports/christmas-tree.pet",
     "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/christmas-tree.pet",
-    "sha256": "4eb1a343ae5c19792708e8fff0c91341bcfd023eacfebf2dd6648dffd03bed69",
-    "bytes": 748681660,
+    "sha256": "518f010239fa0744fc0c480ade604e26c199c5e7b0629e455b0feee8ad3634c5",
+    "bytes": 694433353,
     "schemaVersion": 2,
     "releaseTag": "pets-2026-11-22"
   },
@@ -90,11 +90,6 @@
       "id": "action-13",
       "name": "Весёлый вихрь",
       "file": "animations/action-13/animation.json"
-    },
-    {
-      "id": "action-14",
-      "name": "Праздничный прыжок",
-      "file": "animations/action-14/animation.json"
     }
   ],
   "workspaceSchemaVersion": 1,

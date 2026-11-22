@@ -29,19 +29,22 @@
     {
       "id": "christmas-tree",
       "name": "Праздничная ёлка",
-      "animations": 14,
-      "frames": 1778,
+      "animations": 13,
+      "frames": 1651,
       "bundled": false,
       "file": "christmas-tree.pet",
-      "bytes": 748681660,
-      "sha256": "4eb1a343ae5c19792708e8fff0c91341bcfd023eacfebf2dd6648dffd03bed69",
-      "entries": 57,
+      "bytes": 694433353,
+      "sha256": "518f010239fa0744fc0c480ade604e26c199c5e7b0629e455b0feee8ad3634c5",
+      "entries": 53,
       "sourceAssetsByteIdentical": true,
-      "uncompressedBytes": 748667235,
+      "uncompressedBytes": 694419879,
       "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/christmas-tree.pet",
       "optimization": {
-        "referenceFramesRemoved": 252,
-        "excludedAnimation": "Поворот с поклоном",
+        "referenceFramesRemoved": 234,
+        "excludedAnimations": [
+          "Поворот с поклоном",
+          "Праздничный прыжок"
+        ],
         "originalPackageBytes": 1324928974,
         "resolution": [
           960,

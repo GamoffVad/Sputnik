@@ -16,11 +16,11 @@
     },
     {
       "id": "christmas-tree",
-      "animations": 14,
-      "frames": 1778,
-      "sha256": "4eb1a343ae5c19792708e8fff0c91341bcfd023eacfebf2dd6648dffd03bed69",
-      "bytes": 748681660,
-      "entries": 57
+      "animations": 13,
+      "frames": 1651,
+      "sha256": "518f010239fa0744fc0c480ade604e26c199c5e7b0629e455b0feee8ad3634c5",
+      "bytes": 694433353,
+      "entries": 53
     },
     {
       "id": "cloth-ninja",

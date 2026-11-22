@@ -1,16 +1,16 @@
 {
-  "animations": 14,
+  "animations": 13,
   "originalFrames": 2175,
-  "frames": 1778,
-  "removedReferenceFrames": 252,
+  "frames": 1651,
+  "removedReferenceFrames": 234,
   "frameSize": [
     960,
     960
   ],
   "fps": 24,
   "runtimeReferenceBlending": false,
-  "bytes": 748681660,
-  "sha256": "4eb1a343ae5c19792708e8fff0c91341bcfd023eacfebf2dd6648dffd03bed69",
+  "bytes": 694433353,
+  "sha256": "518f010239fa0744fc0c480ade604e26c199c5e7b0629e455b0feee8ad3634c5",
   "alphaIdenticalForAllRetainedFrames": true,
   "maxVisibleRgbDelta": 2,
   "clips": [
@@ -678,67 +678,15 @@
           "psnr960": 52.27534775708841
         }
       ]
-    },
-    {
-      "name": "Праздничный прыжок",
-      "sourceFrames": 145,
-      "frames": 127,
-      "retainedSourceRange": [
-        9,
-        135
-      ],
-      "removedSourceIndices": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        136,
-        137,
-        138,
-        139,
-        140,
-        141,
-        142,
-        143,
-        144
-      ],
-      "alphaIdenticalForAllRetainedFrames": true,
-      "maxVisibleRgbDelta": 2,
-      "sourceFiles": {
-        "spin-5-0.png": "90364f91f47952c26d4207be1deab70451860a78857ec0d6189b27fc185cc3b4",
-        "spin-5-1.png": "68c2cdf9193ba4407834d79705258d671cc9a9683f40eb518d1f35f28950d310",
-        "spin-5-2.png": "6ac3e2d2b411dddebbb011d336069abc1949a73b401eaa5ca60d3eb59d88797b",
-        "spin-5-3.png": "37661179d0b2535c62d45f6ba791f79d1c422303022a47c6e73679f586c7adc9",
-        "spin-5-4.png": "02840e109778450dfc196c6880964ff348410c7c0ce205cd7cafa92cc6dff437",
-        "spin-5-5.png": "0dfaedd5d28345e108e9eb2987a120d0113b31554e5f214fff8305fb199e2fde",
-        "spin-5-6.png": "a8fde5c4cd04c18e9ca2043443b95938ad880e1910c639a19b8e437428822bbe",
-        "spin-5-7.png": "fdd2421f2e529df2a0f5a06e29801c57dcfbae05ca83eaca428643a33fe6c081",
-        "spin-5-8.png": "ee350d9d79010856817b6be80af3dcf6a5eac8b5da7446b8de2970ca9cd42cac",
-        "spin-5-9.png": "f9af1eda21ff84a71746e016a59dfe3457337fc899a8d43f55ba76952327fe2b"
-      },
-      "sampleMetrics": [
-        {
-          "background": 0,
-          "ssim960": 0.9985363179989918,
-          "psnr960": 51.83352220300324
-        },
-        {
-          "background": 255,
-          "ssim960": 0.9986466560995599,
-          "psnr960": 51.83352220300324
-        }
-      ]
     }
   ],
-  "excludedAnimation": "Поворот с поклоном",
-  "excludedAnimationSourceFrames": 145,
+  "excludedAnimationSourceFrames": 290,
+  "excludedAnimations": [
+    "Поворот с поклоном",
+    "Праздничный прыжок"
+  ],
   "originalPackageBytes": 1324928974,
-  "sizeReductionPercent": 43.49,
-  "windowsPlaybackVerifiedFrames": 1778,
+  "sizeReductionPercent": 47.59,
+  "windowsPlaybackVerifiedFrames": 1651,
   "packageSchemaVersion": 2
 }

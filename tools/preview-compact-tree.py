@@ -14,7 +14,7 @@ def frames(root,clip):
         with Image.open(root/sheet['file']) as atlas:
             for i in range(sheet['frames']):
                 yield atlas.crop(((i%4)*960,(i//4)*960,(i%4+1)*960,(i//4+1)*960)).convert('RGBA')
-container=av.open(str(out/'all-14-black-white-comparison.mp4'),'w')
+container=av.open(str(out/f"all-{len(new['animations'])}-black-white-comparison.mp4"),'w')
 stream=container.add_stream('libx264',rate=24);stream.width=620;stream.height=656;stream.pix_fmt='yuv420p'
 stream.options={'crf':'15','preset':'fast','threads':'2'}
 font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',16)
@@ -43,10 +43,10 @@ for clip in new['animations']:
     print('Previewed',clip['name'],flush=True)
 for packet in stream.encode():container.mux(packet)
 container.close()
-assert index==1778
+assert index==sum(c['frameCount'] for c in new['animations'])
 decoded=0
-with av.open(str(out/'all-14-black-white-comparison.mp4')) as video:
+with av.open(str(out/f"all-{len(new['animations'])}-black-white-comparison.mp4")) as video:
     for frame in video.decode(video=0):decoded+=1
-assert decoded==1778
+assert decoded==index
 (out/'preview-report.json').write_text(json.dumps({'framesWritten':index,'framesDecoded':decoded,'clips':seams},ensure_ascii=False,indent=2),encoding='utf-8')
-print('PASS preview: all 1778 frames decode',flush=True)
+print(f'PASS preview: all {index} frames decode',flush=True)

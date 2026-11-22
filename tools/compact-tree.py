@@ -102,25 +102,26 @@ def build(source, out):
     print(json.dumps({k:v for k,v in report.items() if k!='clips'},ensure_ascii=False),flush=True)
 
 def remove_duplicate_bow(out):
-    """Keep the greeting bow; omit the second forward-bending motion."""
+    """Keep the greeting bow; omit the second bow and holiday jump."""
     assets=out/'assets'
     manifest=json.loads((assets/'manifest.json').read_text(encoding='utf-8'))
     report=json.loads((out/'validation.json').read_text(encoding='utf-8'))
-    excluded='Поворот с поклоном'
-    assert len(manifest['animations']) in (14,15)
-    manifest['animations']=[c for c in manifest['animations'] if c['name']!=excluded]
-    assert len(manifest['animations'])==14
-    manifest['description']='14 движений ёлки без референсных вставок, смешивания и повторного поклона; исходное разрешение и точная прозрачность.'
+    excluded=['Поворот с поклоном','Праздничный прыжок']
+    assert len(manifest['animations']) in (13,14,15)
+    manifest['animations']=[c for c in manifest['animations'] if c['name'] not in excluded]
+    assert len(manifest['animations'])==13
+    manifest['description']='13 движений ёлки без референсных вставок, смешивания, повторного поклона и праздничного прыжка; исходное разрешение и точная прозрачность.'
     (assets/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     package=out/'christmas-tree.pet'
     with zipfile.ZipFile(package,'w',zipfile.ZIP_STORED) as archive:
         archive.write(assets/'manifest.json','manifest.json')
         for clip in manifest['animations']:
             for sheet in clip['sheets']: archive.write(assets/sheet['file'],sheet['file'])
-    with zipfile.ZipFile(package) as archive: assert archive.testzip() is None and len(archive.namelist())==57
-    report.update(animations=14,frames=1778,removedReferenceFrames=252,excludedAnimation=excluded,
-        excludedAnimationSourceFrames=145,bytes=package.stat().st_size,sha256=sha(package))
-    report['clips']=[c for c in report['clips'] if c['name']!=excluded]
+    with zipfile.ZipFile(package) as archive: assert archive.testzip() is None and len(archive.namelist())==53
+    report.pop('excludedAnimation',None)
+    report.update(animations=13,frames=1651,removedReferenceFrames=234,excludedAnimations=excluded,
+        excludedAnimationSourceFrames=290,bytes=package.stat().st_size,sha256=sha(package))
+    report['clips']=[c for c in report['clips'] if c['name'] not in excluded]
     (out/'validation.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({k:v for k,v in report.items() if k!='clips'},ensure_ascii=False),flush=True)
 

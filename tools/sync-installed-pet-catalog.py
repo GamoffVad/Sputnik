@@ -132,7 +132,7 @@ def update_catalog(args):
         (folder/'SHA256SUMS.txt').write_text(f"{record['sha256']}  {record['file']}\n",encoding='ascii')
         (folder/'README.md').write_text(f"# {record['name']}\n\n[Скачать `.pet`]({record['downloadUrl']}) · [Манифест](package-manifest.json) · [Тема](theme.json)\n\n"
             f"Актуальная установленная версия: **{record['animations']} анимаций, {record['frames']} кадров**. "
-            +("Ёлка оптимизирована без изменения разрешения и альфа-канала оставленных кадров; RGB отличается максимум на 2/255. Референсные вставки и повторный поклон удалены. [Параметры оптимизации](optimization.json).\n\n" if record.get('optimization') else
+            +("Ёлка оптимизирована без изменения разрешения и альфа-канала оставленных кадров; RGB отличается максимум на 2/255. Референсные вставки, повторный поклон и праздничный прыжок удалены. [Параметры оптимизации](optimization.json).\n\n" if record.get('optimization') else
             "PNG-ресурсы перенесены побайтово, без изменения размера, цвета и прозрачности.\n\n")+
             "Импорт: **Питомцы → плюс → файл `.pet` → Установить питомца**. Для полного набора рекомендуется Windows-версия Спутника 1.3.28.27 или новее.\n\n"
             +('Клякса также встроена в приложение.\n\n' if record['bundled'] else '')
@@ -150,7 +150,7 @@ def update_catalog(args):
     text+='| Питомец | Анимации | Кадры | Скачать |\n| --- | ---: | ---: | --- |\n'
     text+=''.join(f"| [{p['name']}]({p['id']}/README.md) | {p['animations']} | {p['frames']} | [.pet]({p['downloadUrl']}) |\n" for p in entries)
     text+='\nДля больших наборов используйте Windows-версию 1.3.28.27 или macOS 0.2.5 и новее. В macOS проверены сегментированные RGBA-листы, обновление питомца и пакеты без референса на Intel и Apple Silicon; каждый большой пакет отдельно на Mac не проверялся.\n\n'
-    if any(p.get('optimization') for p in entries):text+='Ёлка уменьшена на 43,5%, содержит 14 движений без референсных вставок и повторного поклона. [Подробности](christmas-tree/README.md).\n\n'
+    if any(p.get('optimization') for p in entries):text+='Ёлка уменьшена на 47,6%, содержит 13 движений без референсных вставок, повторного поклона и праздничного прыжка. [Подробности](christmas-tree/README.md).\n\n'
     text+='У брюнетки отключены референтные вставки и смешивания. В каждом её движении сохранены 97 исходных кадров.\n\nТяжёлые `.pet` публикуются в [едином выпуске библиотеки](https://github.com/GamoffVad/Sputnik/releases/tag/'+args.tag+'); в Git хранятся манифесты, референсы и описания. Старые выпуски доступны в истории.\n'
     (root/'README.md').write_text(text,encoding='utf-8')
 

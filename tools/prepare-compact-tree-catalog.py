@@ -13,8 +13,8 @@ for pet in catalog['pets']:
     if pet['id']=='christmas-tree':
         manifest=json.loads((args.compact/'assets/manifest.json').read_text(encoding='utf-8'))
         with zipfile.ZipFile(source) as archive: uncompressed=sum(i.file_size for i in archive.infolist() if i.filename!='manifest.json')
-        pet.update(animations=14,frames=1778,entries=57,bytes=check['bytes'],sha256=check['sha256'],uncompressedBytes=uncompressed)
-        pet['optimization']={'referenceFramesRemoved':252,'excludedAnimation':check['excludedAnimation'],
+        pet.update(animations=check['animations'],frames=check['frames'],entries=1+sum(len(c['sheets']) for c in manifest['animations']),bytes=check['bytes'],sha256=check['sha256'],uncompressedBytes=uncompressed)
+        pet['optimization']={'referenceFramesRemoved':check['removedReferenceFrames'],'excludedAnimations':check['excludedAnimations'],
             'originalPackageBytes':1324928974,'resolution':[960,960],'retainedAlphaIdentical':True,'maxVisibleRgbDelta':2}
         (args.out/'christmas-tree.manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     else: shutil.copy2(args.previous/(pet['id']+'.manifest.json'),args.out/(pet['id']+'.manifest.json'))

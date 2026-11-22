@@ -27,10 +27,10 @@ static class Check
         var assembly=typeof(Sputnik.App).Assembly;
         var packages=assembly.GetType("Sputnik.PetPackages")!;
         var preview=(JsonObject)Call(packages,"Stage",package,Path.Combine(data,"pending"),Path.Combine(data,"pets"))!;
-        Assert(preview["animations"]!.AsArray().Count==14&&preview["neutral"]==null,"Wrong clips or reference still present");
+        Assert(preview["animations"]!.AsArray().Count==13&&preview["neutral"]==null,"Wrong clips or reference still present");
         Call(packages,"Install",preview["token"]!.ToString(),Path.Combine(data,"pending"),Path.Combine(data,"pets"));
         string folder=Path.Combine(data,"pets","christmas-tree"),json=File.ReadAllText(Path.Combine(folder,"pet.json"));
-        if(args.Length>3&&args[3]=="install-only") {Console.WriteLine("PASS production Stage/Install: 14 animations, no reference");return;}
+        if(args.Length>3&&args[3]=="install-only") {Console.WriteLine("PASS production Stage/Install: 13 animations, no reference");return;}
         var app=new Application {ShutdownMode=ShutdownMode.OnExplicitShutdown};
         app.Resources.MergedDictionaries.Add(new ResourceDictionary{Source=new Uri("pack://application:,,,/Sputnik;component/Components/Controls.xaml")});
         Call(assembly.GetType("Sputnik.ThemePalette")!,"Fill",app.Resources,Activator.CreateInstance(assembly.GetType("Sputnik.PetTheme")!,"#91B879","#273328","#182119"));
@@ -66,8 +66,8 @@ static class Check
                     visited++;
                 }
             }
-            Assert(visited==1778&&hashes.Count>14,"Missing or static motions");
-            Console.WriteLine($"PASS actual WPF player: {visited} native frames exactly match imported PNG cells; no reference substitution or blending; 14 motions, 24 fps");
+            Assert(visited==1651&&hashes.Count>13,"Missing or static motions");
+            Console.WriteLine($"PASS actual WPF player: {visited} native frames exactly match imported PNG cells; no reference substitution or blending; 13 motions, 24 fps");
         }
         finally{window.Close();app.Shutdown();}
     }
