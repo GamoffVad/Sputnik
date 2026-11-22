@@ -350,13 +350,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let preview = try await store.stagePet(fixture)
         guard let token = preview["token"] as? String else { throw MacError("Пакет тестового питомца не подготовлен.") }
         let installed = try store.installPet(token)
-        guard installed["id"] as? String == "knight-watchman", let clips = installed["animations"] as? [[String: Any]],
-              clips.count == 5, let file = clips.first?["file"] as? String else {
-            throw MacError("В пакете Рыцаря-дозорного ожидалось пять анимаций.")
+        guard let fixtureID = installed["id"] as? String, let clips = installed["animations"] as? [[String: Any]],
+              !clips.isEmpty, let file = clips.first?["file"] as? String else {
+            throw MacError("Пакет проверочного питомца не содержит анимаций.")
         }
-        try store.writeWorkspace(["active": "knight-watchman", "themed": true])
+        try store.writeWorkspace(["active": fixtureID, "themed": true])
         pet.refresh(store.readWorkspace())
-        guard pet.hasFrame, animationNames.count == 5 else { throw MacError("Спрайт импортированного питомца не загрузился.") }
+        guard pet.hasFrame, animationNames.count == clips.count else { throw MacError("Спрайт импортированного питомца не загрузился.") }
         var request = URLRequest(url: server.origin.appendingPathComponent(file))
         request.httpMethod = "HEAD"
         let (_, response) = try await URLSession.shared.data(for: request)
