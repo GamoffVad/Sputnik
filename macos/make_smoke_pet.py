@@ -9,6 +9,7 @@ with zipfile.ZipFile(source) as old, zipfile.ZipFile(output,'w',zipfile.ZIP_STOR
     manifest['neutral']={'file':'neutral.png','blendFrames':8}
     manifest['animations'][0]['viewport']={'x':0,'y':0,'width':384,'height':384}
     new.writestr('manifest.json',json.dumps(manifest,ensure_ascii=False))
-    new.writestr('neutral.png',base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg=='))
+    new.writestr('neutral.png',base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=='))
     for clip in manifest['animations']:
         new.writestr(clip['file'],old.read(clip['file']))
+
