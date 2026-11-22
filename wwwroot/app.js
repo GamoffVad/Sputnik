@@ -1006,6 +1006,27 @@ function bindModelSettings() {
   });
   url.addEventListener('input',()=>{changeAddress();provider.value=modelProviderFor(address);});
   choose(model.model);
+  // Checking a new provider should not fail before its credentials are tested
+  // merely because the model catalog has not been opened yet.
+  form.ensureModel=async()=>{
+    const credentials=modelValues(form);
+    if(credentials.model)return;
+    const result=await call('listModels',{url:credentials.url,key:credentials.key,clearKey:credentials.clearKey});
+    const latest=modelValues(form);
+    if(!form.isConnected||latest.url!==credentials.url||latest.key!==credentials.key||latest.clearKey!==credentials.clearKey)
+      throw new Error('Параметры изменились. Нажмите «Проверить подключение» ещё раз.');
+    const ids=(result.models??[]).filter(id=>typeof id==='string'&&id.trim());
+    if(!ids.length){
+      choose('',true);manualModel.focus();
+      throw new Error('Сервер не вернул доступные модели. Укажите ID модели вручную.');
+    }
+    if(result.url){
+      url.value=address=result.url;provider.value=modelProviderFor(address);
+      if(!credentials.key&&credentials.url===model.url&&model.hasKey&&!credentials.clearKey)
+        throw new Error('Уточнён адрес API. Введите ключ для этого URL перед проверкой.');
+    }
+    choose(ids.includes(model.model)?model.model:ids[0]);
+  };
   control.onclick=()=>openPicker(control,async(panel,close)=>{
     panel.innerHTML='<input aria-label="Поиск модели" placeholder="Найти модель"><p role="status"></p><div class="model-options" role="group" aria-label="Доступные модели"></div><button type="button" class="model-option">Указать ID вручную</button>';
     const search=$('input',panel),status=$('[role="status"]',panel),list=$('.model-options',panel);
@@ -1149,7 +1170,7 @@ document.addEventListener('click',async event=>{
       case 'test-model': {
         const f=b.form;if(!f.reportValidity())break;
         const status=$('#model-status',f);b.disabled=true;status.textContent='Проверяю…';
-        try{status.textContent=await call('testModel',modelValues(f));}
+        try{await f.ensureModel();status.textContent=await call('testModel',modelValues(f));}
         catch(error){status.textContent=error.message;}
         finally{b.disabled=false;}break;
       }
