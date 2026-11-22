@@ -1,76 +1,128 @@
-name: Windows — package verified installed build
+name: Windows — build and release
+
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: Draft release with the explicitly provided installed payload
-        required: true
-        type: string
       version:
-        description: Four-part installed version
+        description: Release version without v
         required: true
         type: string
-      payload_sha256:
-        description: Expected SHA-256 of installed payload ZIP
-        required: true
+      publish:
+        description: Publish the installer and portable build as a GitHub release
+        default: true
+        type: boolean
+      source_ref:
+        description: Optional source tag or commit to rebuild
+        default: ''
         type: string
+
+concurrency:
+  group: windows-release-${{ inputs.version }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
+
 jobs:
-  package:
+  build:
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
-      - name: Download and verify installed build snapshot
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag }}
-          APP_VERSION: ${{ inputs.version }}
-          EXPECTED_HASH: ${{ inputs.payload_sha256 }}
-        run: |
-          if ($env:APP_VERSION -notmatch '^\d+\.\d+\.\d+\.\d+$') { throw 'Expected four-part version' }
-          if ($env:RELEASE_TAG -ne "v$env:APP_VERSION") { throw 'Tag mismatch' }
-          if ($env:EXPECTED_HASH -notmatch '^[a-f0-9]{64}$') { throw 'Invalid hash' }
-          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases" --paginate | ConvertFrom-Json
-          $release = $releases | Where-Object { $_.tag_name -eq $env:RELEASE_TAG -and $_.draft } | Select-Object -First 1
-          $asset = $release.assets | Where-Object { $_.name -eq "Sputnik-$env:APP_VERSION-installed-payload.zip" } | Select-Object -First 1
-          if (!$asset) { throw 'Draft payload asset not found' }
-          New-Item -ItemType Directory -Force artifacts/input | Out-Null
-          $zip = "artifacts/input/Sputnik-$env:APP_VERSION-installed-payload.zip"
-          gh api -H 'Accept: application/octet-stream' "repos/$env:GITHUB_REPOSITORY/releases/assets/$($asset.id)" > $zip
-          if ($LASTEXITCODE) { throw 'Payload download failed' }
-          if ((Get-FileHash -LiteralPath $zip).Hash.ToLowerInvariant() -ne $env:EXPECTED_HASH) { throw 'Payload checksum mismatch' }
-          Expand-Archive -LiteralPath $zip -DestinationPath artifacts/payload
-          $exe = Get-Item -LiteralPath artifacts/payload/Sputnik.exe
-          if ($exe.VersionInfo.FileVersion -ne $env:APP_VERSION) { throw 'Executable version mismatch' }
-      - name: Build installer
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build distribution and installer
         shell: pwsh
         env:
           APP_VERSION: ${{ inputs.version }}
         run: |
+          if ($env:APP_VERSION -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a version such as 1.2.0.' }
           $setup = Join-Path $env:RUNNER_TEMP 'innosetup-7.1.1-x64.exe'
           Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe' -OutFile $setup
-          if ((Get-FileHash $setup).Hash -ne '8A5A6711C3766A6E5FB74F280BA0E3551E719CE94538D901FDBD1F8F9920B3F0') { throw 'Compiler checksum mismatch' }
+          if ((Get-FileHash $setup).Hash -ne '8A5A6711C3766A6E5FB74F280BA0E3551E719CE94538D901FDBD1F8F9920B3F0') { throw 'Inno Setup checksum mismatch.' }
           $compilerDir = Join-Path $env:RUNNER_TEMP 'inno7'
-          $result = Start-Process $setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $compilerDir + '"')) -WindowStyle Hidden -Wait -PassThru
-          if ($result.ExitCode -ne 0) { throw 'Compiler setup failed' }
-          New-Item -ItemType Directory -Force artifacts/release | Out-Null
-          & (Join-Path $compilerDir 'ISCC.exe') "/DAppVersion=$env:APP_VERSION" /DVersionedOutput "/DPublishDir=$PWD/artifacts/payload" "/DInstallerOutput=$PWD/artifacts/release" installer/Sputnik.iss
-          if ($LASTEXITCODE) { throw 'Installer build failed' }
-          $installer = Get-ChildItem artifacts/release -Filter '*.exe' | Select-Object -First 1
-          if (!$installer -or $installer.Length -lt 1MB) { throw 'Installer missing or incomplete' }
-          $testDir = Join-Path $env:RUNNER_TEMP 'sputnik-test-install'
-          $run = Start-Process $installer.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $testDir + '"'),'/NOICONS') -WindowStyle Hidden -Wait -PassThru
-          if ($run.ExitCode -ne 0) { throw "Test installation failed: $($run.ExitCode)" }
-          foreach ($file in @('Sputnik.exe','Sputnik.dll','Sputnik.runtimeconfig.json')) {
-            if ((Get-FileHash -LiteralPath (Join-Path $testDir $file)).Hash -ne (Get-FileHash -LiteralPath (Join-Path 'artifacts/payload' $file)).Hash) { throw "Installed file mismatch: $file" }
+          $install = Start-Process $setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $compilerDir + '"')) -WindowStyle Hidden -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw 'Inno Setup installation failed.' }
+          $compiler = Join-Path $compilerDir 'ISCC.exe'
+          if (!(Test-Path $compiler)) { throw 'Inno Setup compiler not found.' }
+          $payload = Join-Path $PWD 'artifacts/payload'
+          $out = Join-Path $PWD 'artifacts/release'
+          dotnet publish Sputnik.csproj -c Release -r win-x64 --self-contained true -p:Version=$env:APP_VERSION -o $payload
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force $out | Out-Null
+          & ./installer/Prepare-Payload.ps1 -PublishDir $payload
+          & ./installer/Test-Payload.ps1 -PublishDir $payload -Version $env:APP_VERSION -Target modern-x64
+          Compress-Archive -Path "$payload/*" -DestinationPath "$out/Sputnik-$env:APP_VERSION-Windows-10-11-x64-Portable.zip"
+          & $compiler "/DAppVersion=$env:APP_VERSION" "/DVersionedOutput" "/DPublishDir=$payload" "/DInstallerOutput=$out" installer/Sputnik.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Move-Item -LiteralPath "$out/SputnikSetup-$env:APP_VERSION-win10-win11-x64.exe" -Destination "$out/Sputnik-$env:APP_VERSION-Windows-10-11-x64.exe"
+      - name: Build Windows 7 installers and checksums
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          $compiler = Join-Path $env:RUNNER_TEMP 'inno7/ISCC.exe'
+          & ./installer/Build-Windows7.ps1 -Version $env:APP_VERSION -Compiler $compiler
+          foreach ($arch in @('x64','x86')) {
+            Copy-Item "artifacts/win7/v$env:APP_VERSION/SputnikSetup-$env:APP_VERSION-win7-$arch.exe" "artifacts/release/Sputnik-$env:APP_VERSION-Windows-7-$arch.exe"
           }
-          (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $installer.Name | Set-Content artifacts/release/SHA256SUMS.txt -Encoding utf8
-      - uses: actions/upload-artifact@v4
+          & ./installer/Build-Pet-Packages.ps1 -OutputDir artifacts/release
+          Get-ChildItem artifacts/release -File | Sort-Object Name | ForEach-Object {
+            $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content artifacts/release/SHA256SUMS.txt -Encoding utf8
+      - name: Upload preview installer and portable build
+        if: ${{ !inputs.publish }}
+        uses: actions/upload-artifact@v4
         with:
-          name: Sputnik-Windows-${{ inputs.version }}-installed-build
-          path: artifacts/release/*
+          name: Sputnik-Windows-${{ inputs.version }}-preview
+          path: |
+            artifacts/release/Sputnik-*.exe
+            artifacts/release/Sputnik-*-Portable.zip
+            artifacts/release/*.pet
+            artifacts/release/pets.json
+            artifacts/release/SHA256SUMS.txt
           if-no-files-found: error
           compression-level: 0
-
+      - name: Publish release
+        if: inputs.publish
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v$env:APP_VERSION"
+          $repo = $env:GITHUB_REPOSITORY
+          $sourceCommit = git rev-parse HEAD
+          $existing = gh release view $tag --repo $repo --json isDraft 2>$null
+          $resume = $LASTEXITCODE -eq 0
+          if ($resume) {
+            if (!($existing | ConvertFrom-Json).isDraft) { throw "Release $tag is already published; use a new version." }
+            git fetch --depth=1 origin "refs/tags/$tag`:refs/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot verify draft tag.' }
+            $tagCommit = git rev-parse "$tag^{commit}"
+            if ($tagCommit -ne $sourceCommit) { throw 'Draft tag does not match the checked-out source.' }
+          }
+          $notes = "docs/releases/$env:APP_VERSION.md"
+          if (!$resume) {
+            if (Test-Path -LiteralPath $notes) {
+              gh release create $tag --repo $repo --target $sourceCommit --title "Спутник $env:APP_VERSION — Windows" --notes-file $notes --draft
+            } else {
+              gh release create $tag --repo $repo --target $sourceCommit --title "Спутник $env:APP_VERSION — Windows" --generate-notes --draft
+            }
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $files = @(Get-ChildItem artifacts/release -File | ForEach-Object FullName)
+          gh release upload $tag @files --clobber --repo $repo
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $release = (gh api "repos/$repo/releases" | ConvertFrom-Json) | Where-Object tag_name -EQ $tag | Select-Object -First 1
+          foreach ($file in $files) {
+            $name = Split-Path $file -Leaf
+            $asset = $release.assets | Where-Object name -EQ $name
+            $digest = 'sha256:' + (Get-FileHash $file).Hash.ToLowerInvariant()
+            if (!$asset -or $asset.state -ne 'uploaded' -or $asset.digest -ne $digest) { throw "Uploaded checksum mismatch: $name" }
+          }
+          gh release edit $tag --draft=false --latest --repo $repo
+          exit $LASTEXITCODE

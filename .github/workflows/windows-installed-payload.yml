@@ -15,7 +15,7 @@ on:
         required: true
         type: string
 permissions:
-  contents: read
+  contents: write
 jobs:
   package:
     runs-on: windows-2025
@@ -67,3 +67,4 @@ jobs:
           path: artifacts/release/*
           if-no-files-found: error
           compression-level: 0
+
