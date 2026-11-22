@@ -86,6 +86,12 @@ try {
     if ($clothDownloaded -and (Test-Path -LiteralPath $ClothNinjaPackage)) { Remove-Item -LiteralPath $ClothNinjaPackage }
 }
 $exported += [pscustomobject]@{ id='cloth-ninja'; name='Тканевый ниндзя'; file='cloth-ninja.pet' }
+$treePin = Get-Content -Raw -LiteralPath "$PSScriptRoot/pets/christmas-tree-source.json" | ConvertFrom-Json
+$treePath = Join-Path $out 'Christmas-Tree-10.pet'
+Invoke-WebRequest -Uri $treePin.url -OutFile $treePath
+if ((Get-Item -LiteralPath $treePath).Length -ne $treePin.bytes -or
+    (Get-FileHash -LiteralPath $treePath -Algorithm SHA256).Hash -ne $treePin.sha256) { throw 'Christmas Tree checksum or size mismatch.' }
+$exported += [pscustomobject]@{ id='christmas-tree'; name='Праздничная ёлка'; file='Christmas-Tree-10.pet'; theme=$treePin.theme }
 foreach ($item in $exported) {
     $file = Join-Path $out $item.file
     $item | Add-Member -NotePropertyName sha256 -NotePropertyValue ((Get-FileHash -LiteralPath $file).Hash.ToLowerInvariant())

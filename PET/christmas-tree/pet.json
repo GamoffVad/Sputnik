@@ -1,0 +1,89 @@
+{
+  "id": "christmas-tree",
+  "name": "Праздничная ёлка",
+  "status": "available",
+  "character": "Праздничная ёлка с бордовыми и золотыми украшениями, огоньками и подарками.",
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      960,
+      960
+    ],
+    "rgbaSha256": "d7c1f9e3a40ca0572c0732393a59f2db4b2c7b382937977bc668ad6f25cffe60",
+    "origin": "Общий прозрачный нейтральный кадр готовых анимаций, без изменения размера."
+  },
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true,
+    "deliveryRuntimeFirstLastPixelIdentical": true,
+    "deliveryNativeSize": [
+      960,
+      960
+    ]
+  },
+  "theme": "theme.json",
+  "package": {
+    "file": "exports/Christmas-Tree-10.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.21/Christmas-Tree-10.pet",
+    "sha256": "f61dc71438f94ee8a24b5b18945ea1304a2b083d7f2751c7ee8109ec5a49fc44",
+    "bytes": 894797977,
+    "schemaVersion": 3,
+    "releaseTag": "v1.3.28.21"
+  },
+  "animations": [
+    {
+      "id": "dance",
+      "name": "Танец",
+      "file": "animations/dance/animation.json"
+    },
+    {
+      "id": "shake",
+      "name": "Встряхивание",
+      "file": "animations/shake/animation.json"
+    },
+    {
+      "id": "magic-wave",
+      "name": "Волшебная волна",
+      "file": "animations/magic-wave/animation.json"
+    },
+    {
+      "id": "living-gift",
+      "name": "Живой подарок",
+      "file": "animations/living-gift/animation.json"
+    },
+    {
+      "id": "welcome-bow",
+      "name": "Приветственный поклон",
+      "file": "animations/welcome-bow/animation.json"
+    },
+    {
+      "id": "snowy-mood",
+      "name": "Снежное настроение",
+      "file": "animations/snowy-mood/animation.json"
+    },
+    {
+      "id": "playful-ornaments",
+      "name": "Шаловливые шары",
+      "file": "animations/playful-ornaments/animation.json"
+    },
+    {
+      "id": "golden-spiral",
+      "name": "Золотая спираль",
+      "file": "animations/golden-spiral/animation.json"
+    },
+    {
+      "id": "curious-gifts",
+      "name": "Любопытные подарки",
+      "file": "animations/curious-gifts/animation.json"
+    },
+    {
+      "id": "sleepy-tree",
+      "name": "Сонная ёлочка",
+      "file": "animations/sleepy-tree/animation.json"
+    }
+  ],
+  "bundled": false,
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
+}

@@ -136,11 +136,38 @@
       "package": "sand-watchman-clean/exports/sand-watchman-clean.pet",
       "sha256": "d22ba5598550dfc841d5a6ecf42d68d1d1d94e3a4c340e599982a7fd02c66535",
       "bytes": 306666900
+    },
+    {
+      "id": "christmas-tree",
+      "name": "Праздничная ёлка",
+      "folder": "christmas-tree",
+      "metadata": "christmas-tree/pet.json",
+      "reference": "christmas-tree/reference.png",
+      "referenceSize": [
+        960,
+        960
+      ],
+      "theme": "christmas-tree/theme.json",
+      "animations": 10,
+      "bundled": false,
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.21/Christmas-Tree-10.pet",
+      "referencePixelsVerified": true,
+      "matchingReferenceKeyframesVerified": true,
+      "package": "christmas-tree/exports/Christmas-Tree-10.pet",
+      "sha256": "f61dc71438f94ee8a24b5b18945ea1304a2b083d7f2751c7ee8109ec5a49fc44",
+      "bytes": 894797977
     }
   ],
-  "count": 7,
+  "count": 8,
   "allReferencesNativeRgba": true,
   "referenceKeyframesByteIdentical": true,
   "allAnimationMetadataLinked": true,
-  "allSixPublishedPackagesSha256Verified": true
+  "allSixPublishedPackagesSha256Verified": true,
+  "christmasTree": {
+    "nativeRgba": true,
+    "sharedEndpointsVerified": 20,
+    "animationMetadataLinked": 10,
+    "packageEntries": 52,
+    "packageSha256": "f61dc71438f94ee8a24b5b18945ea1304a2b083d7f2751c7ee8109ec5a49fc44"
+  }
 }

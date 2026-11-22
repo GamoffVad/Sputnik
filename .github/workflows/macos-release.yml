@@ -5,7 +5,7 @@ on:
       version:
         description: macOS version without v
         required: true
-        default: '0.2.2'
+        default: '0.2.4'
         type: string
       publish:
         description: Publish tested preview without Apple notarization
@@ -22,6 +22,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Verify model picker and pet palette regressions
+        run: |
+          node tests/model-picker-check.mjs
+          node tests/picker-popover-check.mjs
+          node tests/pet-theme-check.mjs
       - name: Prepare schema-3 pet import fixture
         run: |
           python3 macos/make_smoke_pet.py pets/knight-watchman.pet "$RUNNER_TEMP/smoke-pet.pet"

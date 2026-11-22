@@ -1,0 +1,8 @@
+{
+  "id": "christmas-tree",
+  "name": "Праздничная ёлка",
+  "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.21/Christmas-Tree-10.pet",
+  "sha256": "f61dc71438f94ee8a24b5b18945ea1304a2b083d7f2751c7ee8109ec5a49fc44",
+  "bytes": 894797977,
+  "theme": { "name": "Праздничная хвоя", "accent": "#91B879", "background": "#182119", "surface": "#273328" }
+}

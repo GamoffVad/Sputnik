@@ -213,7 +213,7 @@ public partial class MainWindow
     {
         current["active"] = id;
         current["themed"] = themed;
-        if (themed || Value(current, "appearanceMode") != "custom") current["appearanceMode"] = themed ? "pet" : "default";
+        current["appearanceMode"] = themed ? "pet" : "default";
     }, true);
 
     private async Task ImportPet()

@@ -1,0 +1,53 @@
+{
+  "id": "sleepy-tree",
+  "name": "Сонная ёлочка",
+  "status": "existing-animation",
+  "existingClip": {
+    "name": "Сонная ёлочка",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 145,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "motion-09-00.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-09-01.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-09-02.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-09-03.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-09-04.png",
+        "frames": 17
+      }
+    ]
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 9,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package",
+    "preserveNativeResolution": true
+  }
+}

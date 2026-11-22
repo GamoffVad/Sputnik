@@ -1,0 +1,53 @@
+{
+  "id": "magic-wave",
+  "name": "Волшебная волна",
+  "status": "existing-animation",
+  "existingClip": {
+    "name": "Волшебная волна",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 145,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "motion-02-00.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-02-01.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-02-02.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-02-03.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-02-04.png",
+        "frames": 17
+      }
+    ]
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 2,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package",
+    "preserveNativeResolution": true
+  }
+}

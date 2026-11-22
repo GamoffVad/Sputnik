@@ -8,18 +8,18 @@
 
 | Платформа | Версия | Загрузка |
 | --- | --- | --- |
-| macOS 13+, Apple Silicon и Intel | 0.2.2, предварительная | [Скачать DMG](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.2/Sputnik-0.2.2-macOS-Universal.dmg) |
-| Windows 10 / 11, x64 | 1.3.16 | [Установщик](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.16/Sputnik-1.3.16-Windows-10-11-x64.exe) |
+| macOS 13+, Apple Silicon и Intel | 0.2.4, предварительная | [Скачать DMG](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.4/Sputnik-0.2.4-macOS-Universal.dmg) |
+| Windows 10 / 11, x64 | 1.3.28.25 | [Установщик](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.25/SputnikSetup-1.3.28.25-win10-win11-x64.exe) |
 | Windows 7 SP1, x64 | 1.3.16 | [Установщик 64 бит](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.16/Sputnik-1.3.16-Windows-7-x64.exe) |
 | Windows 7 SP1, x86 | 1.3.16 | [Установщик 32 бита](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.16/Sputnik-1.3.16-Windows-7-x86.exe) |
 
-[Изменения Windows](docs/releases/1.3.16.md) · [Изменения macOS](docs/releases/macos-0.2.2.md) · [Архив выпусков](https://github.com/GamoffVad/Sputnik/releases)
+[Изменения Windows](docs/releases/1.3.28.25.md) · [Изменения macOS](docs/releases/macos-0.2.4.md) · [Архив выпусков](https://github.com/GamoffVad/Sputnik/releases)
 
 Версии платформ нумеруются отдельно: Windows использует WPF, macOS — AppKit/WebKit. Выпуск macOS подписан ad hoc, без Developer ID и нотарификации Apple. [Установка и сборка macOS](macos/README.md).
 
 ## Установка
 
-1. Скачайте файл `Sputnik-1.3.16-Windows-10-11-x64.exe` из [последнего выпуска](https://github.com/GamoffVad/Sputnik/releases/latest).
+1. Скачайте файл `SputnikSetup-1.3.28.25-win10-win11-x64.exe` из [последнего выпуска](https://github.com/GamoffVad/Sputnik/releases/latest).
 2. Запустите мастер, выберите папку и завершите установку. После скачивания интернет для установки не требуется.
 3. Откройте **Спутник** из меню «Пуск». При первом запуске на рабочем столе появится **Клякса**.
 
@@ -43,7 +43,7 @@
 
 ## Управление питомцем
 
-Окна открываются рядом с выбранным пунктом меню. Размер можно менять у заметок — за маркер в правом нижнем углу; остальные окна имеют заданный размер. Чат и список сайтов оформлены компактно, действия представлены значками с подсказками. В **Внешний вид → Цвет новых заметок** можно выбрать **Автоцвет**: новые заметки чередуют пять цветов. [Изменения выпуска 1.3.16](docs/releases/1.3.16.md).
+Окна открываются рядом с выбранным пунктом меню. Размер можно менять у заметок — за маркер в правом нижнем углу; остальные окна имеют заданный размер. Чат и список сайтов оформлены компактно, действия представлены значками с подсказками. В **Внешний вид → Цвет новых заметок** можно выбрать **Автоцвет**: новые заметки чередуют пять цветов. [Изменения выпуска 1.3.28.25](docs/releases/1.3.28.25.md).
 
 | Действие | Что открывается |
 | --- | --- |
@@ -62,7 +62,7 @@
 
 [Все отдельные пакеты питомцев](installer/pets/README.md) · [Все референсы и структура PET](PET/README.md) · [Тканевый ниндзя — 11 анимаций (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/cloth-ninja.pet) · [Тихий ниндзя (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/quiet-ninja.pet) · [Рыцарь-дозорный (.pet)](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet)
 
-У рыцаря пять анимаций со сглаженными переходами. Для установки откройте скачанный `.pet` двойным щелчком или через **Питомцы → Добавить питомца** и нажмите **Установить питомца**. Палитра из пакета применяется при включённом флажке **Применить палитру питомца**. Для «Тихого ниндзя» нужна Windows-версия 1.3.13 или новее; macOS 0.2.2 этот пакет пока не поддерживает.
+[Праздничная ёлка — 10 анимаций и собственная зелёная тема](PET/christmas-tree/README.md). Для установки откройте скачанный `.pet` двойным щелчком или через **Питомцы → плюс** и подтвердите установку. Палитра из пакета применяется при включённом флажке палитры питомца. Актуальная macOS-версия поддерживает пакеты схем 1–3, включая Тихого ниндзя, Песчаного Дозорного и ёлку.
 
 ## Сборка и материалы
 
