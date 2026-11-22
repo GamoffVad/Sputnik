@@ -370,10 +370,13 @@ final class DesktopPet: NSObject {
             if let stoppedAt { start += now - stoppedAt; self.stoppedAt = nil }
         case "clip", "shuffle":
             if command == "clip", selected?.animations.indices.contains(index) != true { return }
+            let finishCurrent = command == "clip" && current != index && stoppedAt == nil && lastFrame > 0 &&
+                current.map { lastFrame < (selected?.animations[$0].frameCount ?? 1) - 1 } == true
             cancelPreload()
             pinned = command == "clip" ? index : nil
             stoppedAt = nil
             pending.removeAll()
+            if finishCurrent { pending.append(index); return }
             playNext()
         default: break
         }
