@@ -8,7 +8,6 @@
     "background": "#1C1A1B",
     "surface": "#302B2C"
   },
-  "displayScale": 1.35,
   "animations": [
     {
       "name": "Танец с поворотом",
@@ -19,26 +18,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-000.png",
+          "file": "motion-01-00.png",
           "frames": 20
         },
         {
-          "file": "asset-001.png",
+          "file": "motion-01-01.png",
           "frames": 20
         },
         {
-          "file": "asset-002.png",
+          "file": "motion-01-02.png",
           "frames": 20
         },
         {
-          "file": "asset-003.png",
+          "file": "motion-01-03.png",
           "frames": 20
         },
         {
-          "file": "asset-004.png",
+          "file": "motion-01-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 832.0,
+        "height": 832.0
+      }
     },
     {
       "name": "Быстрые шаги",
@@ -49,26 +54,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-005.png",
+          "file": "motion-02-00.png",
           "frames": 20
         },
         {
-          "file": "asset-006.png",
+          "file": "motion-02-01.png",
           "frames": 20
         },
         {
-          "file": "asset-007.png",
+          "file": "motion-02-02.png",
           "frames": 20
         },
         {
-          "file": "asset-008.png",
+          "file": "motion-02-03.png",
           "frames": 20
         },
         {
-          "file": "asset-009.png",
+          "file": "motion-02-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": -0.40429688,
+        "y": -0.6875,
+        "width": 832.8125,
+        "height": 832.8125
+      }
     },
     {
       "name": "Радостный прыжок",
@@ -79,26 +90,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-010.png",
+          "file": "motion-03-00.png",
           "frames": 20
         },
         {
-          "file": "asset-011.png",
+          "file": "motion-03-01.png",
           "frames": 20
         },
         {
-          "file": "asset-012.png",
+          "file": "motion-03-02.png",
           "frames": 20
         },
         {
-          "file": "asset-013.png",
+          "file": "motion-03-03.png",
           "frames": 20
         },
         {
-          "file": "asset-014.png",
+          "file": "motion-03-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": -0.40429688,
+        "y": -0.6875,
+        "width": 832.8125,
+        "height": 832.8125
+      }
     },
     {
       "name": "Дерзкий разворот",
@@ -109,26 +126,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-015.png",
+          "file": "motion-04-00.png",
           "frames": 20
         },
         {
-          "file": "asset-016.png",
+          "file": "motion-04-01.png",
           "frames": 20
         },
         {
-          "file": "asset-017.png",
+          "file": "motion-04-02.png",
           "frames": 20
         },
         {
-          "file": "asset-018.png",
+          "file": "motion-04-03.png",
           "frames": 20
         },
         {
-          "file": "asset-019.png",
+          "file": "motion-04-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": -14.40039062,
+        "y": -14.0625,
+        "width": 860.4375,
+        "height": 860.4375
+      }
     },
     {
       "name": "Ловит равновесие",
@@ -139,26 +162,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-020.png",
+          "file": "motion-05-00.png",
           "frames": 20
         },
         {
-          "file": "asset-021.png",
+          "file": "motion-05-01.png",
           "frames": 20
         },
         {
-          "file": "asset-022.png",
+          "file": "motion-05-02.png",
           "frames": 20
         },
         {
-          "file": "asset-023.png",
+          "file": "motion-05-03.png",
           "frames": 20
         },
         {
-          "file": "asset-024.png",
+          "file": "motion-05-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 832.0,
+        "height": 832.0
+      }
     },
     {
       "name": "Нетерпение",
@@ -169,26 +198,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-025.png",
+          "file": "motion-06-00.png",
           "frames": 20
         },
         {
-          "file": "asset-026.png",
+          "file": "motion-06-01.png",
           "frames": 20
         },
         {
-          "file": "asset-027.png",
+          "file": "motion-06-02.png",
           "frames": 20
         },
         {
-          "file": "asset-028.png",
+          "file": "motion-06-03.png",
           "frames": 20
         },
         {
-          "file": "asset-029.png",
+          "file": "motion-06-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 832.0,
+        "height": 832.0
+      }
     },
     {
       "name": "Взмах волос",
@@ -199,26 +234,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-030.png",
+          "file": "motion-07-00.png",
           "frames": 20
         },
         {
-          "file": "asset-031.png",
+          "file": "motion-07-01.png",
           "frames": 20
         },
         {
-          "file": "asset-032.png",
+          "file": "motion-07-02.png",
           "frames": 20
         },
         {
-          "file": "asset-033.png",
+          "file": "motion-07-03.png",
           "frames": 20
         },
         {
-          "file": "asset-034.png",
+          "file": "motion-07-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 832.0,
+        "height": 832.0
+      }
     },
     {
       "name": "Прислушивается",
@@ -229,26 +270,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-035.png",
+          "file": "motion-08-00.png",
           "frames": 20
         },
         {
-          "file": "asset-036.png",
+          "file": "motion-08-01.png",
           "frames": 20
         },
         {
-          "file": "asset-037.png",
+          "file": "motion-08-02.png",
           "frames": 20
         },
         {
-          "file": "asset-038.png",
+          "file": "motion-08-03.png",
           "frames": 20
         },
         {
-          "file": "asset-039.png",
+          "file": "motion-08-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 832.0,
+        "height": 832.0
+      }
     },
     {
       "name": "Собирается с духом",
@@ -259,26 +306,32 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-040.png",
+          "file": "motion-09-00.png",
           "frames": 20
         },
         {
-          "file": "asset-041.png",
+          "file": "motion-09-01.png",
           "frames": 20
         },
         {
-          "file": "asset-042.png",
+          "file": "motion-09-02.png",
           "frames": 20
         },
         {
-          "file": "asset-043.png",
+          "file": "motion-09-03.png",
           "frames": 20
         },
         {
-          "file": "asset-044.png",
+          "file": "motion-09-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 832.0,
+        "height": 832.0
+      }
     },
     {
       "name": "Наклон головы",
@@ -289,27 +342,34 @@
       "fps": 24,
       "sheets": [
         {
-          "file": "asset-045.png",
+          "file": "motion-10-00.png",
           "frames": 20
         },
         {
-          "file": "asset-046.png",
+          "file": "motion-10-01.png",
           "frames": 20
         },
         {
-          "file": "asset-047.png",
+          "file": "motion-10-02.png",
           "frames": 20
         },
         {
-          "file": "asset-048.png",
+          "file": "motion-10-03.png",
           "frames": 20
         },
         {
-          "file": "asset-049.png",
+          "file": "motion-10-04.png",
           "frames": 17
         }
-      ]
+      ],
+      "viewport": {
+        "x": -3.63867188,
+        "y": -3.6875,
+        "width": 839.3125,
+        "height": 839.3125
+      }
     }
   ],
+  "displayScale": 1.35,
   "schemaVersion": 2
 }

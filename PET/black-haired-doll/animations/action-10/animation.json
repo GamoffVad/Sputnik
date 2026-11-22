@@ -11,26 +11,32 @@
     "fps": 24,
     "sheets": [
       {
-        "file": "asset-045.png",
+        "file": "motion-10-00.png",
         "frames": 20
       },
       {
-        "file": "asset-046.png",
+        "file": "motion-10-01.png",
         "frames": 20
       },
       {
-        "file": "asset-047.png",
+        "file": "motion-10-02.png",
         "frames": 20
       },
       {
-        "file": "asset-048.png",
+        "file": "motion-10-03.png",
         "frames": 20
       },
       {
-        "file": "asset-049.png",
+        "file": "motion-10-04.png",
         "frames": 17
       }
-    ]
+    ],
+    "viewport": {
+      "x": -3.63867188,
+      "y": -3.6875,
+      "width": 839.3125,
+      "height": 839.3125
+    }
   },
   "delivery": {
     "packageAnimationIndex": 9,
