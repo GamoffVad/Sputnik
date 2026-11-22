@@ -2,9 +2,7 @@
   "schemaVersion": 1,
   "count": 10,
   "installedLibraryMatchesCatalog": true,
-  "removedPets": [
-    "knight-watchman"
-  ],
+  "removedPets": [],
   "allPackageAssetsByteVerified": true,
   "minimumWindowsVersion": "1.3.28.27",
   "pets": [
@@ -18,11 +16,11 @@
     },
     {
       "id": "christmas-tree",
-      "animations": 15,
-      "frames": 2175,
-      "sha256": "9b4996711daee25567ca0c294424472f9f648ea21e336d646b7e92adc56f773b",
-      "bytes": 1324928974,
-      "entries": 102
+      "animations": 13,
+      "frames": 1651,
+      "sha256": "518f010239fa0744fc0c480ade604e26c199c5e7b0629e455b0feee8ad3634c5",
+      "bytes": 694433353,
+      "entries": 53
     },
     {
       "id": "cloth-ninja",

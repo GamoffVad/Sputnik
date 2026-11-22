@@ -114,6 +114,9 @@ final class MacStore {
         }
         var preview = webPet(manifest, path: "preview/\(token)")
         preview["token"] = token
+        if let id = manifest["id"] as? String {
+            preview["replacesExisting"] = fm.fileExists(atPath: pets.appendingPathComponent(id).path)
+        }
         return preview
     }
 
@@ -122,13 +125,27 @@ final class MacStore {
             throw MacError("Откройте файл питомца снова.")
         }
         let stage = pending.appendingPathComponent(token, isDirectory: true)
-        guard let info = read(stage.appendingPathComponent("pet.json")), let id = info["id"] as? String,
+        guard var info = read(stage.appendingPathComponent("pet.json")), let id = info["id"] as? String,
               id.range(of: "^[a-z0-9][a-z0-9-]{0,48}$", options: .regularExpression) != nil else {
             throw MacError("Пакет не найден. Откройте файл питомца снова.")
         }
+        // Reload images even when an update keeps the same animation metadata.
+        info["resourceRevision"] = UUID().uuidString.lowercased()
+        try write(info, to: stage.appendingPathComponent("pet.json"))
         let target = pets.appendingPathComponent(id, isDirectory: true)
-        guard !fm.fileExists(atPath: target.path) else { throw MacError("Этот питомец уже в библиотеке.") }
-        try fm.moveItem(at: stage, to: target)
+        var previous: URL?
+        if fm.fileExists(atPath: target.path) {
+            let backups = dataDirectory.appendingPathComponent("pet-backups", isDirectory: true)
+            try fm.createDirectory(at: backups, withIntermediateDirectories: true)
+            let backup = backups.appendingPathComponent(id + "-" + UUID().uuidString.lowercased(), isDirectory: true)
+            try fm.moveItem(at: target, to: backup)
+            previous = backup
+        }
+        do { try fm.moveItem(at: stage, to: target) }
+        catch {
+            if let previous { try fm.moveItem(at: previous, to: target) }
+            throw error
+        }
         return webPet(info, path: "pets/\(id)")
     }
 
@@ -145,7 +162,7 @@ final class MacStore {
 }
 
 enum PetArchive {
-    private static let maximum = 1024 * 1024 * 1024
+    private static let maximum = 2 * 1024 * 1024 * 1024
 
     static func stage(_ source: URL, at directory: URL, library: URL, builtins: URL) throws -> [String: Any] {
         let fm = FileManager.default
@@ -175,9 +192,8 @@ enum PetArchive {
                 throw MacError("Некорректный пакет питомца.")
             }
             let builtins = (try? JSONSerialization.jsonObject(with: Data(contentsOf: builtins))) as? [[String: Any]] ?? []
-            guard !builtins.contains(where: { $0["id"] as? String == id }),
-                  !fm.fileExists(atPath: library.appendingPathComponent(id).path) else {
-                throw MacError("Этот питомец уже в библиотеке.")
+            guard !builtins.contains(where: { $0["id"] as? String == id }) else {
+                throw MacError("Этот питомец уже входит в приложение.")
             }
             let name = try field(pet, "name", limit: 60)
             let description = pet["description"] as? String ?? ""
@@ -311,7 +327,7 @@ enum PetArchive {
         let count = u16(end+10)
         let size = u32(end+12)
         var offset = u32(end+16)
-        guard (1...128).contains(count), u16(end+8) == count, offset + size == end else { throw error }
+        guard (1...256).contains(count), u16(end+8) == count, offset + size == end else { throw error }
         var listed = [String: Int]()
         var total = 0
         for _ in 0..<count {

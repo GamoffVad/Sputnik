@@ -132,7 +132,8 @@ def update_catalog(args):
         (folder/'SHA256SUMS.txt').write_text(f"{record['sha256']}  {record['file']}\n",encoding='ascii')
         (folder/'README.md').write_text(f"# {record['name']}\n\n[Скачать `.pet`]({record['downloadUrl']}) · [Манифест](package-manifest.json) · [Тема](theme.json)\n\n"
             f"Актуальная установленная версия: **{record['animations']} анимаций, {record['frames']} кадров**. "
-            "PNG-ресурсы перенесены побайтово, без изменения размера, цвета и прозрачности.\n\n"
+            +("Ёлка оптимизирована без изменения разрешения и альфа-канала оставленных кадров; RGB отличается максимум на 2/255. Референсные вставки, повторный поклон и праздничный прыжок удалены. [Параметры оптимизации](optimization.json).\n\n" if record.get('optimization') else
+            "PNG-ресурсы перенесены побайтово, без изменения размера, цвета и прозрачности.\n\n")+
             "Импорт: **Питомцы → плюс → файл `.pet` → Установить питомца**. Для полного набора рекомендуется Windows-версия Спутника 1.3.28.27 или новее.\n\n"
             +('Клякса также встроена в приложение.\n\n' if record['bundled'] else '')
             +('Общий референс и переходные подстановки отключены. В пакете только исходные кадры движений.\n\n' if ident=='black-haired-doll' else '')
@@ -144,11 +145,12 @@ def update_catalog(args):
          'removedPets':removed,'allPackageAssetsByteVerified':True,'minimumWindowsVersion':'1.3.28.27',
          'pets':[{k:p[k] for k in ('id','animations','frames','sha256','bytes','entries')} for p in entries]})
     text='# Питомцы «Спутника»\n\nКаталог соответствует установленной библиотеке на 22 ноября 2026 года: **10 питомцев**, включая встроенную Кляксу.\n\n'
-    text+='[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.27) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.4) · [Каталог JSON](catalog.json) · [Проверка](validation.json)\n\n'
+    text+='[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.27) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.5) · [Каталог JSON](catalog.json) · [Проверка](validation.json)\n\n'
     text+='Скачайте `.pet`, затем выберите **Питомцы → плюс → файл → Установить питомца**. Все PNG перенесены из установленной библиотеки побайтово. Настройки, заметки и данные подключения в пакеты не входят.\n\n'
     text+='| Питомец | Анимации | Кадры | Скачать |\n| --- | ---: | ---: | --- |\n'
     text+=''.join(f"| [{p['name']}]({p['id']}/README.md) | {p['animations']} | {p['frames']} | [.pet]({p['downloadUrl']}) |\n" for p in entries)
-    text+='\nДля больших наборов (в частности, ёлки с 15 движениями) используйте Windows-версию 1.3.28.27 или новее. Совместимость всех новых пакетов с macOS отдельно не проверялась.\n\n'
+    text+='\nДля больших наборов используйте Windows-версию 1.3.28.27 или macOS 0.2.5 и новее. В macOS проверены сегментированные RGBA-листы, обновление питомца и пакеты без референса на Intel и Apple Silicon; каждый большой пакет отдельно на Mac не проверялся.\n\n'
+    if any(p.get('optimization') for p in entries):text+='Ёлка уменьшена на 47,6%, содержит 13 движений без референсных вставок, повторного поклона и праздничного прыжка. [Подробности](christmas-tree/README.md).\n\n'
     text+='У брюнетки отключены референтные вставки и смешивания. В каждом её движении сохранены 97 исходных кадров.\n\nТяжёлые `.pet` публикуются в [едином выпуске библиотеки](https://github.com/GamoffVad/Sputnik/releases/tag/'+args.tag+'); в Git хранятся манифесты, референсы и описания. Старые выпуски доступны в истории.\n'
     (root/'README.md').write_text(text,encoding='utf-8')
 

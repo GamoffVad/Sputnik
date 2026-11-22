@@ -339,22 +339,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func prepareSmokeTest(store: MacStore, server: LocalWebServer, pet: DesktopPet) async throws {
         guard pet.hasFrame, !animationNames.isEmpty else { throw MacError("Первый встроенный спрайт не загрузился.") }
-        guard let knight = store.bundledPetManifests().first(where: { $0["id"] as? String == "knight-watchman" }),
-              (knight["animations"] as? [[String: Any]])?.count == 5 else {
-            throw MacError("Bundled Knight Watchman is missing")
+        let bundled = store.bundledPetManifests()
+        guard bundled.count == 1, bundled.first?["id"] as? String == "klyaksa",
+              (bundled.first?["animations"] as? [[String: Any]])?.count == 8 else {
+            throw MacError("Shared Klyaksa-only bundled library is missing")
         }
-        try store.writeWorkspace(["active": "knight-watchman", "themed": true])
+        try store.writeWorkspace(["active": "klyaksa", "themed": true])
         pet.refresh(store.readWorkspace())
-        guard pet.hasFrame, animationNames.count == 5 else { throw MacError("Bundled Knight sprite failed") }
+        guard pet.hasFrame, animationNames.count == 8 else { throw MacError("Bundled Klyaksa sprite failed") }
         guard let fixture = ProcessInfo.processInfo.environment["SPUTNIK_TEST_PET"], !fixture.isEmpty else { return }
         let preview = try await store.stagePet(fixture)
         guard let token = preview["token"] as? String else { throw MacError("Пакет тестового питомца не подготовлен.") }
         let installed = try store.installPet(token)
         guard let fixtureID = installed["id"] as? String, let clips = installed["animations"] as? [[String: Any]],
-              !clips.isEmpty, let file = clips.first?["file"] as? String else {
+              clips.count == 15, clips.allSatisfy({ ($0["frameCount"] as? Int) == 145 && ($0["sheets"] as? [[String: Any]])?.count == 10 }),
+              let file = (clips.first?["sheets"] as? [[String: Any]])?.first?["file"] as? String else {
             throw MacError("Пакет проверочного питомца не содержит анимаций.")
         }
-        try store.writeWorkspace(["active": fixtureID, "themed": true])
+        try store.writeWorkspace(["active": fixtureID, "themed": true, "petScale": 110, "smokeMarker": "preserve-on-update"])
         pet.refresh(store.readWorkspace())
         guard pet.hasFrame, animationNames.count == clips.count else { throw MacError("Спрайт импортированного питомца не загрузился.") }
         var request = URLRequest(url: server.origin.appendingPathComponent(file))
@@ -362,6 +364,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let (_, response) = try await URLSession.shared.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200, response.mimeType == "image/png" else {
             throw MacError("Локальный интерфейс не смог получить кадры импортированного питомца.")
+        }
+        guard let update = ProcessInfo.processInfo.environment["SPUTNIK_TEST_PET_UPDATE"] else {
+            throw MacError("Missing pet update fixture")
+        }
+        let beforeSettings = try JSONSerialization.data(withJSONObject: store.readWorkspace(), options: [.sortedKeys])
+        let updatePreview = try await store.stagePet(update)
+        guard updatePreview["replacesExisting"] as? Bool == true, let updateToken = updatePreview["token"] as? String else {
+            throw MacError("Existing pet update was not recognized")
+        }
+        let updated = try store.installPet(updateToken)
+        guard updated["id"] as? String == fixtureID,
+              updated["name"] as? String == "Updated import fixture",
+              updated["neutral"] == nil,
+              (updated["animations"] as? [[String: Any]])?.allSatisfy({ ($0["frameCount"] as? Int) == 127 && $0["neutral"] == nil }) == true,
+              try JSONSerialization.data(withJSONObject: store.readWorkspace(), options: [.sortedKeys]) == beforeSettings else {
+            throw MacError("Pet update changed identity or workspace settings")
+        }
+        let backups = try FileManager.default.contentsOfDirectory(at: store.dataDirectory.appendingPathComponent("pet-backups"), includingPropertiesForKeys: nil)
+        guard backups.contains(where: { FileManager.default.fileExists(atPath: $0.appendingPathComponent("pet.json").path) }) else {
+            throw MacError("Previous pet was not backed up")
+        }
+        pet.refresh(store.readWorkspace())
+        guard pet.hasFrame, pet.name == "Updated import fixture", animationNames.count == 15 else {
+            throw MacError("Active pet did not reload after replacement")
         }
         testedPetImport = true
     }
@@ -510,7 +536,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         guard browser.panel.alphaValue == 1 else { throw MacError("Window text faded with glass") }
                         _ = try await execute("closePanel", payload: nil, browser: browser)
                         guard !browser.panel.isVisible else { throw MacError("Saved panel did not close") }
-                        let imported = testedPetImport ? ", imported five Knight Watchman animations" : ""
+                        let imported = testedPetImport ? ", imported and updated 15 segmented RGBA animations with backup and settings preservation" : ""
                         finishSmokeTest(true, "verified pet bounds, opened and saved three notes, verified note sharing links, switched sections in one WKWebView\(imported)")
                     } catch {
                         finishSmokeTest(false, error.localizedDescription)

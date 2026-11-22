@@ -5,7 +5,7 @@ on:
       version:
         description: macOS version without v
         required: true
-        default: '0.2.4'
+        default: '0.2.5'
         type: string
       publish:
         description: Publish tested preview without Apple notarization
@@ -29,13 +29,18 @@ jobs:
           node tests/pet-theme-check.mjs
       - name: Prepare schema-3 pet import fixture
         run: |
-          python3 macos/make_smoke_pet.py pets/knight-watchman.pet "$RUNNER_TEMP/smoke-pet.pet"
+          python3 macos/make_smoke_pet.py wwwroot/assets/pets.json "$RUNNER_TEMP/smoke-pet.pet"
           echo "SPUTNIK_TEST_PET=$RUNNER_TEMP/smoke-pet.pet" >> "$GITHUB_ENV"
+          echo "SPUTNIK_TEST_PET_UPDATE=$RUNNER_TEMP/smoke-pet-update.pet" >> "$GITHUB_ENV"
       - name: Build and smoke-test universal app
         env:
           APP_VERSION: ${{ inputs.version }}
           SPUTNIK_SMOKE_TEST: '1'
         run: bash macos/build.sh "$APP_VERSION"
+      - name: Include isolated import fixtures for native DMG checks
+        run: |
+          cp "$SPUTNIK_TEST_PET" artifacts/macos/import-smoke.pet
+          cp "$SPUTNIK_TEST_PET_UPDATE" artifacts/macos/import-smoke-update.pet
       - uses: actions/upload-artifact@v4
         with:
           name: Sputnik-macOS-${{ inputs.version }}-Universal
@@ -72,7 +77,7 @@ jobs:
           codesign --verify --strict --verbose=2 "$app"
           architectures=" $(xcrun lipo -archs "$app/Contents/MacOS/Sputnik") "
           [[ "$architectures" == *" arm64 "* && "$architectures" == *" x86_64 "* ]]
-          "$app/Contents/MacOS/Sputnik" --smoke-test
+          SPUTNIK_TEST_PET="$PWD/release/import-smoke.pet" SPUTNIK_TEST_PET_UPDATE="$PWD/release/import-smoke-update.pet" "$app/Contents/MacOS/Sputnik" --smoke-test
   publish:
     needs: [build, smoke]
     if: inputs.publish
