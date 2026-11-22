@@ -1,0 +1,25 @@
+{
+  "animations": 10,
+  "frames": 970,
+  "frameSize": [
+    960,
+    960
+  ],
+  "fps": 24,
+  "rgba": true,
+  "allOriginalFramesRetained": true,
+  "referenceFramesInserted": 0,
+  "runtimeReferenceBlending": false,
+  "minimumClearMarginPixelsIncludingShadow": 105,
+  "opaqueInteriorPixelsVerifiedUnchanged": 114161147,
+  "nativeWindowsPlayerVerifiedFrames": 970,
+  "nativeWindowsPlayerDpiChecks": [
+    100,
+    150
+  ],
+  "installedPngFilesByteVerified": 70,
+  "packageSha256": "ec2eed5efa2deb6766c5cc451a6cc3bd4ff168fb16a727fd7989b97cb2383bf7",
+  "packageBytes": 249202608,
+  "alphaProcessing": "Local Python, OpenCV and SciPy; soft edge and contact shadow; PNG atlases packed losslessly",
+  "endpointNote": "Generated start and end poses match the reference visually; pixels are not byte-identical. No frame substitution."
+}

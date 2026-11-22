@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "count": 10,
+  "count": 11,
   "installedLibraryMatchesCatalog": true,
   "removedPets": [],
   "allPackageAssetsByteVerified": true,
@@ -29,6 +29,14 @@
       "sha256": "3d3d5dd937689c3541485ef8d6485d4dced77008e4675b2e4eb3c62c58c509d8",
       "bytes": 246701770,
       "entries": 34
+    },
+    {
+      "id": "helmet-beat",
+      "animations": 10,
+      "frames": 970,
+      "sha256": "ec2eed5efa2deb6766c5cc451a6cc3bd4ff168fb16a727fd7989b97cb2383bf7",
+      "bytes": 249202608,
+      "entries": 71
     },
     {
       "id": "hudi",

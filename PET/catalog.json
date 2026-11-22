@@ -87,6 +87,29 @@
       "package": "cloth-ninja/exports/cloth-ninja.pet"
     },
     {
+      "id": "helmet-beat",
+      "name": "Бит",
+      "animations": 10,
+      "frames": 970,
+      "bundled": false,
+      "file": "helmet-beat.pet",
+      "bytes": 249202608,
+      "sha256": "ec2eed5efa2deb6766c5cc451a6cc3bd4ff168fb16a727fd7989b97cb2383bf7",
+      "entries": 71,
+      "sourceAssetsByteIdentical": true,
+      "uncompressedBytes": 249186419,
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/helmet-beat.pet",
+      "folder": "helmet-beat",
+      "metadata": "helmet-beat/pet.json",
+      "reference": "helmet-beat/reference.png",
+      "referenceSize": [
+        960,
+        960
+      ],
+      "theme": "helmet-beat/theme.json",
+      "package": "helmet-beat/exports/helmet-beat.pet"
+    },
+    {
       "id": "hudi",
       "name": "HUDI",
       "animations": 1,

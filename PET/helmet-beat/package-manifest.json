@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 2,
+  "id": "helmet-beat",
+  "name": "Бит",
+  "description": "Живой кибермеломан в зеркальном шлеме и наушниках. 10 самостоятельных движений без референсных вставок.",
+  "theme": {
+    "name": "Ночной бит",
+    "accent": "#B6A0E2",
+    "background": "#17141F",
+    "surface": "#282232"
+  },
+  "displayScale": 1.15,
+  "animations": [
+    {
+      "name": "Поймал бит",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-01-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-01-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-01-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-01-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-01-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-01-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-01-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Шаффл",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-02-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-02-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-02-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-02-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-02-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-02-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-02-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Поппинг",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-03-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-03-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-03-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-03-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-03-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-03-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-03-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Разминка",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-04-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-04-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-04-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-04-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-04-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-04-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-04-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Воздушный диджей",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-05-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-05-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-05-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-05-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-05-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-05-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-05-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Любопытный исследователь",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-06-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-06-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-06-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-06-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-06-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-06-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-06-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Поймал равновесие",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-07-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-07-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-07-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-07-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-07-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-07-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-07-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Поворот на бите",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-08-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-08-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-08-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-08-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-08-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-08-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-08-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Басовый удар",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-09-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-09-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-09-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-09-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-09-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-09-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-09-06.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Встряхнулся",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-10-00.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-10-01.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-10-02.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-10-03.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-10-04.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-10-05.png",
+          "frames": 16
+        },
+        {
+          "file": "motion-10-06.png",
+          "frames": 1
+        }
+      ]
+    }
+  ]
+}
