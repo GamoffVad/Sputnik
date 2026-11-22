@@ -60,6 +60,12 @@ jobs:
           if ($LASTEXITCODE) { throw 'Installer build failed' }
           $installer = Get-ChildItem artifacts/release -Filter '*.exe' | Select-Object -First 1
           if (!$installer -or $installer.Length -lt 1MB) { throw 'Installer missing or incomplete' }
+          $testDir = Join-Path $env:RUNNER_TEMP 'sputnik-test-install'
+          $run = Start-Process $installer.FullName -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $testDir + '"'),'/NOICONS') -WindowStyle Hidden -Wait -PassThru
+          if ($run.ExitCode -ne 0) { throw "Test installation failed: $($run.ExitCode)" }
+          foreach ($file in @('Sputnik.exe','Sputnik.dll','Sputnik.runtimeconfig.json')) {
+            if ((Get-FileHash -LiteralPath (Join-Path $testDir $file)).Hash -ne (Get-FileHash -LiteralPath (Join-Path 'artifacts/payload' $file)).Hash) { throw "Installed file mismatch: $file" }
+          }
           (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $installer.Name | Set-Content artifacts/release/SHA256SUMS.txt -Encoding utf8
       - uses: actions/upload-artifact@v4
         with:
