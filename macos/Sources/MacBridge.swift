@@ -174,7 +174,7 @@ enum MacBridge {
         let saved = store.readSettings("model.json")
         let model = ((draft["model"] ?? saved["model"]) as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !model.isEmpty, model.count <= 500 else {
-            throw MacError("Укажите базовый URL и ID модели в настройках.")
+            throw MacError("Выберите ID модели из списка или укажите его вручную. API-ключ ещё не проверялся.")
         }
         let (base, key) = try modelConnection(draft, saved: saved)
         return (base, model, key)
