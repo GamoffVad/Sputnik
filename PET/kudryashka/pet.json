@@ -2,30 +2,28 @@
   "id": "kudryashka",
   "name": "Кудряшка",
   "status": "available",
-  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "bundled": false,
   "reference": {
     "file": "reference.png",
     "size": [
       256,
       256
     ],
-    "rgbaSha256": "065853b6d15402aef71611b801b67e37ef41b25842a7f2f0eaf07e471ccbad24",
-    "origin": "Первый кадр исходного PNG без масштабирования"
+    "origin": "First native frame of the currently installed animation"
   },
+  "theme": "theme.json",
   "keyframes": {
     "start": "keyframes/start.png",
     "end": "keyframes/end.png",
-    "filesIdentical": true
+    "filesIdentical": false
   },
-  "theme": "theme.json",
   "package": {
     "file": "exports/kudryashka.pet",
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet",
-    "sha256": "282ba072910af6b0bcb701c6e4bbd2966d7fad5251e91ccb187771e103e4788a",
-    "bytes": 34380588,
-    "schemaVersion": 1,
-    "compatibleWindows": "1.3.14",
-    "releaseTag": "v1.3.14"
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kudryashka.pet",
+    "sha256": "90b1482354321cbc79b38c4339bb1496c24c3223764acb52ac0f8c56ad2f6add",
+    "bytes": 34381319,
+    "schemaVersion": 2,
+    "releaseTag": "pets-2026-11-22"
   },
   "animations": [
     {
@@ -49,7 +47,6 @@
       "file": "animations/action-04/animation.json"
     }
   ],
-  "bundled": false,
   "workspaceSchemaVersion": 1,
   "assetsManifest": "package-manifest.json"
 }

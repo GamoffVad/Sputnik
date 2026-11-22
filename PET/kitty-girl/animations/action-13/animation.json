@@ -1,0 +1,47 @@
+{
+  "id": "action-13",
+  "name": "Опирается на край",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Опирается на край",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 141,
+    "fps": 24,
+    "neutral": {
+      "file": "asset-049.png",
+      "blendFrames": 8
+    },
+    "sheets": [
+      {
+        "file": "asset-050.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-051.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-052.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-053.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-054.png",
+        "frames": 13
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 12,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 5.875
+}

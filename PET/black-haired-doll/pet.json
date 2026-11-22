@@ -1,0 +1,82 @@
+{
+  "id": "black-haired-doll",
+  "name": "Брюнетка в очках",
+  "status": "available",
+  "bundled": false,
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      832,
+      832
+    ],
+    "origin": "First native frame of the currently installed animation"
+  },
+  "theme": "theme.json",
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": false
+  },
+  "package": {
+    "file": "exports/black-haired-doll.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/black-haired-doll.pet",
+    "sha256": "821e17e9b663e521a6c52a806d0b201fcbf2bebac43e06c88dbd7842d790feba",
+    "bytes": 116041817,
+    "schemaVersion": 2,
+    "releaseTag": "pets-2026-11-22"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Танец с поворотом",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Быстрые шаги",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Радостный прыжок",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Дерзкий разворот",
+      "file": "animations/action-04/animation.json"
+    },
+    {
+      "id": "action-05",
+      "name": "Ловит равновесие",
+      "file": "animations/action-05/animation.json"
+    },
+    {
+      "id": "action-06",
+      "name": "Нетерпение",
+      "file": "animations/action-06/animation.json"
+    },
+    {
+      "id": "action-07",
+      "name": "Взмах волос",
+      "file": "animations/action-07/animation.json"
+    },
+    {
+      "id": "action-08",
+      "name": "Прислушивается",
+      "file": "animations/action-08/animation.json"
+    },
+    {
+      "id": "action-09",
+      "name": "Собирается с духом",
+      "file": "animations/action-09/animation.json"
+    },
+    {
+      "id": "action-10",
+      "name": "Наклон головы",
+      "file": "animations/action-10/animation.json"
+    }
+  ],
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
+}

@@ -1,10 +1,7 @@
 {
   "id": "action-03",
   "name": "Порыв ветра",
-  "status": "existing-animation",
-  "movement": "Существующая анимация; исходные кадры сохранены.",
-  "proposedTrigger": null,
-  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "status": "installed-animation",
   "existingClip": {
     "name": "Порыв ветра",
     "frameWidth": 720,
@@ -12,39 +9,29 @@
     "columns": 10,
     "frameCount": 120,
     "fps": 24,
+    "viewport": {
+      "x": 1.797763628550055,
+      "y": -13.022209283773872,
+      "width": 714.8520140112016,
+      "height": 714.8520140112016
+    },
     "sheets": [
       {
-        "file": "assets/sand-watchman-clean/clip-2-0.png",
+        "file": "asset-005.png",
         "frames": 60
       },
       {
-        "file": "assets/sand-watchman-clean/clip-2-1.png",
+        "file": "asset-006.png",
         "frames": 60
       }
-    ],
-    "viewport": {
-      "x": 0.5,
-      "y": -15.0,
-      "width": 720.0,
-      "height": 720.0
-    }
-  },
-  "generation": {
-    "reference": "../../reference.png",
-    "firstFrame": "../../keyframes/start.png",
-    "lastFrame": "../../keyframes/end.png",
-    "requested": false,
-    "sameCharacterScale": true,
-    "fixedCamera": true,
-    "keepFullShadow": true,
-    "keepAccessories": true,
-    "doNotDownscale": true,
-    "identicalEndpointPixels": true
+    ]
   },
   "delivery": {
     "packageAnimationIndex": 2,
     "manifest": "../../package-manifest.json",
-    "source": "pet-package",
-    "preserveNativeResolution": true
-  }
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 5.0
 }

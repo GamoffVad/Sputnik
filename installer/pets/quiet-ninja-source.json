@@ -1,4 +1,17 @@
 {
-  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pet-quiet-ninja-v2/quiet-ninja.pet",
-  "sha256": "a0e97cb70740a430835196a774ed1bbe04e964a9d2611c95b42cbd631cd4d223"
+  "id": "quiet-ninja",
+  "name": "Тихий ниндзя",
+  "file": "quiet-ninja.pet",
+  "sha256": "33878415c3072026c821aef2939b481422cd3b467c6ba53fb327edcbaede10d5",
+  "bytes": 331890290,
+  "animations": 10,
+  "bundled": false,
+  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/quiet-ninja.pet",
+  "theme": {
+    "name": "Солома и графит",
+    "accent": "#C5A47C",
+    "background": "#171A1D",
+    "surface": "#25272A"
+  },
+  "minimumWindowsVersion": "1.3.28.27"
 }

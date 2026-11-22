@@ -1,35 +1,22 @@
 {
   "id": "action-01",
   "name": "Приветствие",
-  "status": "existing-animation",
-  "movement": "Существующая анимация; исходные кадры сохранены.",
-  "proposedTrigger": null,
-  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "status": "installed-animation",
   "existingClip": {
     "name": "Приветствие",
-    "file": "assets/wink.png",
     "frameWidth": 256,
     "frameHeight": 256,
     "columns": 8,
     "frameCount": 72,
-    "fps": 18
-  },
-  "generation": {
-    "reference": "../../reference.png",
-    "firstFrame": "../../keyframes/start.png",
-    "lastFrame": "../../keyframes/end.png",
-    "requested": false,
-    "sameCharacterScale": true,
-    "fixedCamera": true,
-    "keepFullShadow": true,
-    "keepAccessories": true,
-    "doNotDownscale": true,
-    "identicalEndpointPixels": true
+    "fps": 18,
+    "file": "asset-000.png"
   },
   "delivery": {
     "packageAnimationIndex": 0,
     "manifest": "../../package-manifest.json",
-    "source": "pet-package",
-    "preserveNativeResolution": true
-  }
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.0
 }

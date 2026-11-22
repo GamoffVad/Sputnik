@@ -1,0 +1,17 @@
+{
+  "id": "kitty-girl",
+  "name": "Девочка в розовом",
+  "file": "kitty-girl.pet",
+  "sha256": "84088520a1c17ee14bdb9c3a56caecece1e4e7ddd148c95b624028f0d50cd15a",
+  "bytes": 749497774,
+  "animations": 14,
+  "bundled": false,
+  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kitty-girl.pet",
+  "theme": {
+    "name": "Розовый зефир",
+    "accent": "#D98499",
+    "background": "#2D2025",
+    "surface": "#3B2B31"
+  },
+  "minimumWindowsVersion": "1.3.28.27"
+}

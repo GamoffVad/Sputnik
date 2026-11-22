@@ -1,0 +1,399 @@
+{
+  "id": "kitty-girl",
+  "name": "Девочка в розовом",
+  "description": "Персонаж из HUDI: два пучка, розовые брюки и 14 оригинальных анимаций.",
+  "theme": {
+    "name": "Розовый зефир",
+    "accent": "#D98499",
+    "background": "#2D2025",
+    "surface": "#3B2B31"
+  },
+  "displayScale": 1,
+  "neutral": {
+    "file": "asset-000.png",
+    "blendFrames": 3
+  },
+  "animations": [
+    {
+      "name": "Осматривается",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-001.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-002.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-003.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-004.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Сердится",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-005.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-006.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-007.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-008.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Нетерпение",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-009.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-010.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-011.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-012.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Возмущение",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-013.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-014.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-015.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-016.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Хихикает",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-017.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-018.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-019.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-020.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Удивление",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-021.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-022.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-023.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-024.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Укор",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-025.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-026.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-027.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-028.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Пальцем у виска",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-029.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-030.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-031.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-032.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Хлопок по лбу",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-033.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-034.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-035.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-036.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Танец",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-037.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-038.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-039.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-040.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Оглядывается",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-041.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-042.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-043.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-044.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Прогулка",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 121,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-045.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-046.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-047.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-048.png",
+          "frames": 25
+        }
+      ]
+    },
+    {
+      "name": "Опирается на край",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 141,
+      "fps": 24,
+      "neutral": {
+        "file": "asset-049.png",
+        "blendFrames": 8
+      },
+      "sheets": [
+        {
+          "file": "asset-050.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-051.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-052.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-053.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-054.png",
+          "frames": 13
+        }
+      ]
+    },
+    {
+      "name": "Выглядывает за край",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 143,
+      "fps": 24,
+      "neutral": {
+        "file": "asset-055.png",
+        "blendFrames": 8
+      },
+      "sheets": [
+        {
+          "file": "asset-056.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-057.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-058.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-059.png",
+          "frames": 32
+        },
+        {
+          "file": "asset-060.png",
+          "frames": 15
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 3
+}

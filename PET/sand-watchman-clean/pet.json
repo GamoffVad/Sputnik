@@ -2,44 +2,28 @@
   "id": "sand-watchman-clean",
   "name": "Песчаный Дозорный",
   "status": "available",
-  "character": "Невозмутимый, дисциплинированный, ловкий и немного гордый страж с любопытством и сухим юмором.",
+  "bundled": false,
   "reference": {
     "file": "reference.png",
     "size": [
-      941,
-      1671
+      720,
+      720
     ],
-    "rgbaSha256": "3b4dcb637fa17f17ecf195dadd42c55ac1154aa7756d38a9bc55bd2200879d25",
-    "origin": "Исходный референс пользователя 941×1671; точное горизонтальное отражение без изменения разрешения.",
-    "originalFile": "reference-original.png",
-    "mirroredOriginalFile": "reference-original-flipped.png",
-    "originalSize": [
-      941,
-      1671
-    ],
-    "originalPngSha256": "60ec613bffaae9a6c1db26969dce473618c4aaa5d5f17dc064a2c14960f7def6"
+    "origin": "First native frame of the currently installed animation"
   },
+  "theme": "theme.json",
   "keyframes": {
     "start": "keyframes/start.png",
     "end": "keyframes/end.png",
-    "filesIdentical": true,
-    "deliveryStart": "keyframes/delivery-start.png",
-    "deliveryEnd": "keyframes/delivery-end.png",
-    "deliveryRuntimeFirstLastPixelIdentical": true,
-    "deliveryNativeSize": [
-      960,
-      960
-    ]
+    "filesIdentical": true
   },
-  "theme": "theme.json",
   "package": {
     "file": "exports/sand-watchman-clean.pet",
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet",
-    "sha256": "d22ba5598550dfc841d5a6ecf42d68d1d1d94e3a4c340e599982a7fd02c66535",
-    "bytes": 306666900,
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/sand-watchman-clean.pet",
+    "sha256": "581244dedbcaf2de907242f07ad6c32616471d48590bbc78b4515d7976768a5b",
+    "bytes": 302824158,
     "schemaVersion": 3,
-    "compatibleWindows": "1.3.16",
-    "releaseTag": "pet-sand-watchman-v2"
+    "releaseTag": "pets-2026-11-22"
   },
   "animations": [
     {
@@ -68,66 +52,56 @@
       "file": "animations/action-05/animation.json"
     },
     {
-      "id": "scarf-with-character",
+      "id": "action-06",
       "name": "Шарф с характером",
-      "file": "animations/scarf-with-character/animation.json"
+      "file": "animations/action-06/animation.json"
     },
     {
-      "id": "tassel-duel",
+      "id": "action-07",
       "name": "Дуэль с кисточкой",
-      "file": "animations/tassel-duel/animation.json"
+      "file": "animations/action-07/animation.json"
     },
     {
-      "id": "sand-surfing",
+      "id": "action-08",
       "name": "Песчаный серфинг",
-      "file": "animations/sand-surfing/animation.json"
+      "file": "animations/action-08/animation.json"
     },
     {
-      "id": "guardian-jump",
+      "id": "action-09",
       "name": "Прыжок стража",
-      "file": "animations/guardian-jump/animation.json"
+      "file": "animations/action-09/animation.json"
     },
     {
-      "id": "stubborn-hem",
+      "id": "action-10",
       "name": "Непослушный подол",
-      "file": "animations/stubborn-hem/animation.json"
+      "file": "animations/action-10/animation.json"
     },
     {
-      "id": "golden-scarab",
+      "id": "action-11",
       "name": "Золотой скарабей",
-      "file": "animations/golden-scarab/animation.json"
+      "file": "animations/action-11/animation.json"
     },
     {
-      "id": "battle-dance",
+      "id": "action-12",
       "name": "Боевой танец",
-      "file": "animations/battle-dance/animation.json"
+      "file": "animations/action-12/animation.json"
     },
     {
-      "id": "ribbon-pattern",
+      "id": "action-13",
       "name": "Узор лентой",
-      "file": "animations/ribbon-pattern/animation.json"
+      "file": "animations/action-13/animation.json"
     },
     {
-      "id": "invisible-opponent",
+      "id": "action-14",
       "name": "Невидимый соперник",
-      "file": "animations/invisible-opponent/animation.json"
+      "file": "animations/action-14/animation.json"
     },
     {
-      "id": "sand-levitation",
+      "id": "action-15",
       "name": "Песчаная левитация",
-      "file": "animations/sand-levitation/animation.json"
+      "file": "animations/action-15/animation.json"
     }
   ],
-  "bundled": false,
   "workspaceSchemaVersion": 1,
-  "assetsManifest": "package-manifest.json",
-  "proposedAnimations": "new-ten-plan.json",
-  "generationKeyframes": {
-    "start": "keyframes/new-ten/green-start.png",
-    "end": "keyframes/new-ten/green-end.png",
-    "filesIdentical": true,
-    "referencePixelsResampled": false,
-    "characterHeightPercent": 50
-  },
-  "packageFrameReference": "reference-legacy-frame.png"
+  "assetsManifest": "package-manifest.json"
 }

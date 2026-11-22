@@ -1,10 +1,18 @@
 # Тихий ниндзя
 
-[Референс в исходном качестве, 1280×720](reference.png) · [Метаданные](pet.json) · [Тема](theme.json) · [Манифест ресурсов](package-manifest.json)
+[Скачать `.pet`](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/quiet-ninja.pet) · [Манифест](package-manifest.json) · [Тема](theme.json)
 
-![Референс](reference.png)
+Актуальная установленная версия: **10 анимаций, 1085 кадров**. PNG-ресурсы перенесены побайтово, без изменения размера, цвета и прозрачности.
 
-Анимаций: 5. Готовый локальный пакет: `exports/quiet-ninja.pet`. [Скачать .pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-quiet-ninja-v2/quiet-ninja.pet).
+Импорт: **Питомцы → плюс → файл `.pet` → Установить питомца**. Для полного набора рекомендуется Windows-версия Спутника 1.3.28.27 или новее.
 
-Опорные кадры: `keyframes/start.png` и `keyframes/end.png` — точные копии основного референса.
-Описания движений: `animations/<id>/animation.json`. Рабочие материалы, обработанные кадры и готовые пакеты: `source/`, `renders/`, `exports/`.
+1. Наблюдение
+2. Приветствие
+3. Бросок куная
+4. Тихая связка
+5. Отдых
+6. Порыв ветра
+7. Поправляет сандалию
+8. Лёгкий прыжок
+9. Проверяет медальон
+10. Упрямый пояс

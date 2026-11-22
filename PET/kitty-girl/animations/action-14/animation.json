@@ -1,0 +1,47 @@
+{
+  "id": "action-14",
+  "name": "Выглядывает за край",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Выглядывает за край",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 143,
+    "fps": 24,
+    "neutral": {
+      "file": "asset-055.png",
+      "blendFrames": 8
+    },
+    "sheets": [
+      {
+        "file": "asset-056.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-057.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-058.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-059.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-060.png",
+        "frames": 15
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 13,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 5.958333333333333
+}

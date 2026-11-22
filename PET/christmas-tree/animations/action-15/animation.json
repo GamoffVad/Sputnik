@@ -1,0 +1,63 @@
+{
+  "id": "action-15",
+  "name": "Праздничный прыжок",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Праздничный прыжок",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 145,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-091.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-092.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-093.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-094.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-095.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-096.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-097.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-098.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-099.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-100.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 14,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 6.041666666666667
+}

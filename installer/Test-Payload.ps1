@@ -20,7 +20,8 @@ $expected = if ($Target -eq 'legacy-x86') { 0x14c } else { 0x8664 }
 if ($machine -ne $expected) { throw "Wrong executable architecture: $machine, expected $expected" }
 $assembly = if ($Target -eq 'modern-x64') { Require-File 'Sputnik.dll' } else { $exe }
 $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($assembly)
-if ($info.FileVersion -ne "$Version.0" -or $info.ProductVersion -notmatch ('^' + [regex]::Escape($Version) + '(\+|$)')) {
+$expectedFileVersion = if ($Version -match '^\d+\.\d+\.\d+$') { "$Version.0" } else { $Version }
+if ($info.FileVersion -ne $expectedFileVersion -or $info.ProductVersion -notmatch ('^' + [regex]::Escape($Version) + '(\+|$)')) {
     throw "Wrong application version: $($info.FileVersion) / $($info.ProductVersion)"
 }
 if ($Target -eq 'modern-x64') {

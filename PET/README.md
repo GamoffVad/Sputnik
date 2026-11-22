@@ -1,48 +1,26 @@
-# Питомцы и исходные референсы
+# Питомцы «Спутника»
 
-Все восемь питомцев имеют отдельную папку с референсом, темой, опорными кадрами, описаниями анимаций и манифестом готовых ресурсов. [Машиночитаемый каталог](catalog.json) · [Результат проверки структуры](validation.json).
+Каталог соответствует установленной библиотеке на 22 ноября 2026 года: **10 питомцев**, включая встроенную Кляксу.
 
+[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.27) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.4) · [Каталог JSON](catalog.json) · [Проверка](validation.json)
 
-## Скачать на Mac
+Скачайте `.pet`, затем выберите **Питомцы → плюс → файл → Установить питомца**. Все PNG перенесены из установленной библиотеки побайтово. Настройки, заметки и данные подключения в пакеты не входят.
 
-[**Спутник 0.2.4 для macOS — скачать DMG**](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.4/Sputnik-0.2.4-macOS-Universal.dmg) · [Страница выпуска](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.4)
+| Питомец | Анимации | Кадры | Скачать |
+| --- | ---: | ---: | --- |
+| [Брюнетка в очках](black-haired-doll/README.md) | 10 | 970 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/black-haired-doll.pet) |
+| [Праздничная ёлка](christmas-tree/README.md) | 15 | 2175 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/christmas-tree.pet) |
+| [Тканевый ниндзя](cloth-ninja/README.md) | 11 | 1056 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/cloth-ninja.pet) |
+| [HUDI](hudi/README.md) | 1 | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/hudi.pet) |
+| [Девочка в розовом](kitty-girl/README.md) | 14 | 1736 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kitty-girl.pet) |
+| [Клякса](klyaksa/README.md) | 8 | 712 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/klyaksa.pet) |
+| [Кудряшка](kudryashka/README.md) | 4 | 431 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kudryashka.pet) |
+| [Лерка — все анимации](lerka-rebuilt/README.md) | 12 | 1260 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/lerka-rebuilt.pet) |
+| [Тихий ниндзя](quiet-ninja/README.md) | 10 | 1085 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/quiet-ninja.pet) |
+| [Песчаный Дозорный](sand-watchman-clean/README.md) | 15 | 1560 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/sand-watchman-clean.pet) |
 
-Образ подходит для **Apple Silicon и Intel, macOS 13+**. Перенесите Sputnik в «Программы». Ссылки публичные: вход в GitHub не нужен.
+Для больших наборов (в частности, ёлки с 15 движениями) используйте Windows-версию 1.3.28.27 или новее. Совместимость всех новых пакетов с macOS отдельно не проверялась.
 
-**Питомцы:** скачайте нужный файл `.pet` в таблице ниже, затем откройте в приложении «Питомцы» → добавление питомца (+) и выберите файл. Для цветов персонажа включите палитру питомца. Клякса уже встроена в Mac-приложение.
+У брюнетки отключены референтные вставки и смешивания. В каждом её движении сохранены 97 исходных кадров.
 
-| Питомец | Референс PNG | Анимации | Загрузка |
-| --- | --- | ---: | --- |
-| [Тканевый ниндзя](cloth-ninja/pet.json) | [941×1671](cloth-ninja/reference.png) | 11 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-cloth-ninja-v1/cloth-ninja.pet) |
-| [HUDI](hudi/pet.json) | [346×720](hudi/reference.png) | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/hudi.pet) |
-| [Клякса](klyaksa/pet.json) | [384×384](klyaksa/reference.png) | 8 | Встроена в приложение |
-| [Рыцарь-дозорный](knight-watchman/pet.json) | [384×384](knight-watchman/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/knight-watchman.pet) |
-| [Кудряшка](kudryashka/pet.json) | [256×256](kudryashka/reference.png) | 4 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet) |
-| [Тихий ниндзя](quiet-ninja/pet.json) | [1280×720](quiet-ninja/reference.png) | 5 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-quiet-ninja-v2/quiet-ninja.pet) |
-| [Песчаный Дозорный](sand-watchman-clean/pet.json) | [941×1671](sand-watchman-clean/reference.png) | 15 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet) |
-| [Праздничная ёлка](christmas-tree/pet.json) | [960×960](christmas-tree/reference.png) | 10 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.21/Christmas-Tree-10.pet) |
-
-```text
-PET/<id>/
-  README.md
-  pet.json
-  reference.png
-  theme.json
-  package-manifest.json
-  keyframes/start.png
-  keyframes/end.png
-  animations/<id>/animation.json
-  source/
-  renders/
-  exports/<id>.pet
-```
-
-Референсы сохранены как RGBA PNG без изменения исходного разрешения. У шести питомцев референс совпадает с первым нативным кадром ресурсов. У тканевого ниндзя и Песчаного Дозорного `reference.png` — референс пользователя 941×1671 для генерации; `keyframes/delivery-start.png` и `delivery-end.png` — общая поза готовых анимаций 960×960. Кадр прежних ресурсов Дозорного 720×720 сохранён отдельно в `reference-legacy-frame.png`. Исходное изображение не заменяется кадром другого размера.
-
-`start.png` и `end.png` побайтово совпадают с основным референсом каждого питомца. Это опорные кадры для будущих анимаций, а не заявление о совпадении концов всех старых роликов. У тихого ниндзя проверены 10 общих концов; у тканевого — 22. У Песчаного Дозорного формат v3 использует один общий PNG в начале и конце всех 15 анимаций; требуется Спутник Windows 1.3.16 или новее.
-
-У тканевого ниндзя готовы 11 согласованных анимаций, включая дополнительный танец. Все итоговые кадры зеркальные; сохранены детали, реквизит, эффекты и мягкая тень. [Описание движений](cloth-ninja/ANIMATIONS.md).
-
-Клякса встроена в приложение: её исходные PNG остаются в `wwwroot/assets/klyaksa`, локальные рабочие копии создаются в `PET/klyaksa/source/bundled`. Семь отдельных `.pet` лежат локально в `exports/` соответствующих питомцев и опубликованы среди файлов релиза рядом с установщиками. В Git хранятся референсы, JSON и инструкции; тяжёлые видео, AE-мастера, рендеры и пакеты исключены из Git.
-
-Для восстановления локальных пакетов скачайте `.pet` из выпуска 1.3.14 в отдельную папку и выполните `python PET/organize.py --packages <папка>`. Скрипт проверяет SHA256, прозрачность и размеры референсов, совпадение опорных кадров и соответствие всех анимаций. Он не масштабирует изображения и не запускает генерацию.
+Тяжёлые `.pet` публикуются в [едином выпуске библиотеки](https://github.com/GamoffVad/Sputnik/releases/tag/pets-2026-11-22); в Git хранятся манифесты, референсы и описания. Старые выпуски доступны в истории.

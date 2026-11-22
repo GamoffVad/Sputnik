@@ -1,0 +1,51 @@
+{
+  "id": "action-07",
+  "name": "Равновесие",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Равновесие",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-048.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-049.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-050.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-051.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-052.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-053.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-054.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 6,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

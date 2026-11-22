@@ -1,0 +1,102 @@
+{
+  "id": "kitty-girl",
+  "name": "Девочка в розовом",
+  "status": "available",
+  "bundled": false,
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      960,
+      960
+    ],
+    "origin": "First native frame of the currently installed animation"
+  },
+  "theme": "theme.json",
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": true
+  },
+  "package": {
+    "file": "exports/kitty-girl.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kitty-girl.pet",
+    "sha256": "84088520a1c17ee14bdb9c3a56caecece1e4e7ddd148c95b624028f0d50cd15a",
+    "bytes": 749497774,
+    "schemaVersion": 3,
+    "releaseTag": "pets-2026-11-22"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Осматривается",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Сердится",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Нетерпение",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Возмущение",
+      "file": "animations/action-04/animation.json"
+    },
+    {
+      "id": "action-05",
+      "name": "Хихикает",
+      "file": "animations/action-05/animation.json"
+    },
+    {
+      "id": "action-06",
+      "name": "Удивление",
+      "file": "animations/action-06/animation.json"
+    },
+    {
+      "id": "action-07",
+      "name": "Укор",
+      "file": "animations/action-07/animation.json"
+    },
+    {
+      "id": "action-08",
+      "name": "Пальцем у виска",
+      "file": "animations/action-08/animation.json"
+    },
+    {
+      "id": "action-09",
+      "name": "Хлопок по лбу",
+      "file": "animations/action-09/animation.json"
+    },
+    {
+      "id": "action-10",
+      "name": "Танец",
+      "file": "animations/action-10/animation.json"
+    },
+    {
+      "id": "action-11",
+      "name": "Оглядывается",
+      "file": "animations/action-11/animation.json"
+    },
+    {
+      "id": "action-12",
+      "name": "Прогулка",
+      "file": "animations/action-12/animation.json"
+    },
+    {
+      "id": "action-13",
+      "name": "Опирается на край",
+      "file": "animations/action-13/animation.json"
+    },
+    {
+      "id": "action-14",
+      "name": "Выглядывает за край",
+      "file": "animations/action-14/animation.json"
+    }
+  ],
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
+}

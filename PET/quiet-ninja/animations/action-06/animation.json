@@ -1,0 +1,45 @@
+{
+  "id": "action-06",
+  "name": "Порыв ветра",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Порыв ветра",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 5,
+    "frameCount": 97,
+    "fps": 24,
+    "viewport": {
+      "x": 5.559211274165293,
+      "y": 25.00770175806477,
+      "width": 948.8875862880161,
+      "height": 948.8875862880161
+    },
+    "sheets": [
+      {
+        "file": "asset-021.png",
+        "frames": 30
+      },
+      {
+        "file": "asset-022.png",
+        "frames": 30
+      },
+      {
+        "file": "asset-023.png",
+        "frames": 30
+      },
+      {
+        "file": "asset-024.png",
+        "frames": 7
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 5,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 4.041666666666667
+}

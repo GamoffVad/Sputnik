@@ -1,0 +1,39 @@
+{
+  "id": "action-05",
+  "name": "Хихикает",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Хихикает",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 121,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-017.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-018.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-019.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-020.png",
+        "frames": 25
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 4,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 5.041666666666667
+}

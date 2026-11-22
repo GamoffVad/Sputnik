@@ -1,0 +1,315 @@
+{
+  "id": "black-haired-doll",
+  "name": "Брюнетка в очках",
+  "description": "Уверенная, независимая и немного дерзкая спутница. Десять самостоятельных движений: танцы, повороты, прыжок и спокойные паузы.",
+  "theme": {
+    "name": "Чёрный шёлк",
+    "accent": "#C59A7E",
+    "background": "#1C1A1B",
+    "surface": "#302B2C"
+  },
+  "displayScale": 1.35,
+  "animations": [
+    {
+      "name": "Танец с поворотом",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-000.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-001.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-002.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-003.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-004.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Быстрые шаги",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-005.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-006.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-007.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-008.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-009.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Радостный прыжок",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-010.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-011.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-012.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-013.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-014.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Дерзкий разворот",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-015.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-016.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-017.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-018.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-019.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Ловит равновесие",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-020.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-021.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-022.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-023.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-024.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Нетерпение",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-025.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-026.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-027.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-028.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-029.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Взмах волос",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-030.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-031.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-032.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-033.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-034.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Прислушивается",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-035.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-036.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-037.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-038.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-039.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Собирается с духом",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-040.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-041.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-042.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-043.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-044.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Наклон головы",
+      "frameWidth": 832,
+      "frameHeight": 832,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-045.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-046.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-047.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-048.png",
+          "frames": 20
+        },
+        {
+          "file": "asset-049.png",
+          "frames": 17
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 2
+}

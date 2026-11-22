@@ -1,0 +1,41 @@
+{
+  "id": "action-11",
+  "name": "Золотой скарабей",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Золотой скарабей",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 96,
+    "fps": 24,
+    "viewport": {
+      "x": 11.783090475908896,
+      "y": 4.7159829497949515,
+      "width": 948.4503434972794,
+      "height": 948.4503434972794
+    },
+    "sheets": [
+      {
+        "file": "asset-026.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-027.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-028.png",
+        "frames": 32
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 10,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 4.0
+}
