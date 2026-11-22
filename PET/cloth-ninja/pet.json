@@ -1,106 +1,87 @@
 {
   "id": "cloth-ninja",
   "name": "Тканевый ниндзя",
-  "status": "ready",
-  "character": "Маленький ниндзя, который старается выглядеть невозмутимым, но постоянно попадает в забавные ситуации. Молчаливый, любопытный, ловкий и немного озорной. Движения быстрые и точные, с короткой комической развязкой.",
+  "status": "available",
+  "bundled": false,
   "reference": {
     "file": "reference.png",
     "size": [
-      941,
-      1671
+      960,
+      960
     ],
-    "rgbaSha256": "a6a2d840b64a4f432b1a969a23d7d8395ca553cb7f9ea2507d7037ce8dbd9102",
-    "origin": "Изображение пользователя: удалён фон и выступающая слева часть меча"
+    "origin": "First native frame of the currently installed animation"
   },
+  "theme": "theme.json",
   "keyframes": {
     "start": "keyframes/start.png",
     "end": "keyframes/end.png",
     "filesIdentical": true
   },
-  "theme": "theme.json",
   "package": {
     "file": "exports/cloth-ninja.pet",
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pet-cloth-ninja-v1/cloth-ninja.pet",
-    "sha256": "8739bc09e549432bf473ef714237334055278ffd89470694da856b72136be03d",
-    "bytes": 246701021,
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/cloth-ninja.pet",
+    "sha256": "3d3d5dd937689c3541485ef8d6485d4dced77008e4675b2e4eb3c62c58c509d8",
+    "bytes": 246701770,
     "schemaVersion": 2,
-    "compatibleWindows": "1.3.14",
-    "releaseTag": "pet-cloth-ninja-v1"
+    "releaseTag": "pets-2026-11-22"
   },
   "animations": [
     {
-      "id": "stubborn-knot",
+      "id": "action-01",
       "name": "Узел с характером",
-      "file": "animations/stubborn-knot/animation.json"
+      "file": "animations/action-01/animation.json"
     },
     {
-      "id": "secret-sneeze",
+      "id": "action-02",
       "name": "Секретный чих",
-      "file": "animations/secret-sneeze/animation.json"
+      "file": "animations/action-02/animation.json"
     },
     {
-      "id": "unexpected-wind",
+      "id": "action-03",
       "name": "Ветер не по плану",
-      "file": "animations/unexpected-wind/animation.json"
+      "file": "animations/action-03/animation.json"
     },
     {
-      "id": "hero-landing",
+      "id": "action-04",
       "name": "Геройское приземление",
-      "file": "animations/hero-landing/animation.json"
+      "file": "animations/action-04/animation.json"
     },
     {
-      "id": "feint",
+      "id": "action-05",
       "name": "Обманный манёвр",
-      "file": "animations/feint/animation.json"
+      "file": "animations/action-05/animation.json"
     },
     {
-      "id": "invisible-wall",
+      "id": "action-06",
       "name": "Невидимая стена",
-      "file": "animations/invisible-wall/animation.json"
+      "file": "animations/action-06/animation.json"
     },
     {
-      "id": "forbidden-dance",
+      "id": "action-07",
       "name": "Танец запретной школы",
-      "file": "animations/forbidden-dance/animation.json"
+      "file": "animations/action-07/animation.json"
     },
     {
-      "id": "deep-bow",
+      "id": "action-08",
       "name": "Слишком почтительный поклон",
-      "file": "animations/deep-bow/animation.json"
+      "file": "animations/action-08/animation.json"
     },
     {
-      "id": "playful-spark",
+      "id": "action-09",
       "name": "Искра-озорница",
-      "file": "animations/playful-spark/animation.json"
+      "file": "animations/action-09/animation.json"
     },
     {
-      "id": "paper-boomerang",
+      "id": "action-10",
       "name": "Бумажный бумеранг",
-      "file": "animations/paper-boomerang/animation.json"
+      "file": "animations/action-10/animation.json"
     },
     {
-      "id": "dance-explosion",
+      "id": "action-11",
       "name": "Танцевальный взрыв",
-      "file": "animations/dance-explosion/animation.json"
+      "file": "animations/action-11/animation.json"
     }
   ],
-  "delivery": {
-    "horizontalFlip": true,
-    "nativeFrameSize": [
-      960,
-      960
-    ],
-    "animations": 11,
-    "frames": 1056,
-    "fps": 24,
-    "secondsPerAnimation": 4,
-    "packageSha256": "8739bc09e549432bf473ef714237334055278ffd89470694da856b72136be03d",
-    "packageBytes": 246701021,
-    "firstFrame": "keyframes/delivery-start.png",
-    "lastFrame": "keyframes/delivery-end.png",
-    "allEndpointsPixelIdentical": true
-  },
-  "bundled": false,
   "workspaceSchemaVersion": 1,
   "assetsManifest": "package-manifest.json"
 }

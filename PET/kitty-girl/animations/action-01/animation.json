@@ -1,0 +1,39 @@
+{
+  "id": "action-01",
+  "name": "Осматривается",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Осматривается",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 121,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-001.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-002.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-003.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-004.png",
+        "frames": 25
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 0,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 5.041666666666667
+}

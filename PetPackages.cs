@@ -10,13 +10,18 @@ namespace Sputnik;
 internal static class PetPackages
 {
     private const long Limit = 512L * 1024 * 1024;
+    // Full-resolution collections can exceed 512 MiB while each atlas stays
+    // small. Keep the per-file and decoded-image bounds independent.
+    private const long PackageLimit = 2L * 1024 * 1024 * 1024;
 
     public static JsonObject Stage(string path, string pending, string library)
     {
         Directory.CreateDirectory(pending);
         using var archive = ZipFile.OpenRead(path);
-        if (archive.Entries.Count > 64 || archive.Entries.Any(entry => entry.Length > Limit) ||
-            archive.Entries.Sum(entry => entry.Length) > Limit)
+        // A full collection may use many small segmented atlases to keep
+        // playback memory bounded; image and total byte limits still apply.
+        if (archive.Entries.Count > 256 || archive.Entries.Any(entry => entry.Length > Limit) ||
+            archive.Entries.Sum(entry => entry.Length) > PackageLimit)
             throw new InvalidDataException("Пакет слишком велик.");
 
         var entries = archive.Entries.ToDictionary(entry => entry.FullName, StringComparer.Ordinal);
@@ -63,17 +68,20 @@ internal static class PetPackages
         Directory.CreateDirectory(workspace);
         try
         {
+            JsonObject ReadNeutral(JsonNode node, string filename)
+            {
+                var source = node as JsonObject ?? throw new InvalidDataException("Некорректный опорный кадр.");
+                var dimensions = ExtractPng(entries, Required(source, "file", 160), workspace, filename);
+                var result = new JsonObject { ["file"] = filename };
+                if (source["blendFrames"] is not null)
+                    result["blendFrames"] = Number(source, "blendFrames", 0, 8);
+                if (source["viewport"] is { } region)
+                    result["viewport"] = ReadViewport(region, dimensions.Width, dimensions.Height);
+                return result;
+            }
             JsonObject? neutral = null;
             if (manifest["neutral"] is { } neutralNode)
-            {
-                var source = neutralNode as JsonObject ?? throw new InvalidDataException("Некорректный опорный кадр.");
-                var dimensions = ExtractPng(entries, Required(source, "file", 160), workspace, "neutral.png");
-                neutral = new JsonObject { ["file"] = "neutral.png" };
-                if (source["blendFrames"] is not null)
-                    neutral["blendFrames"] = Number(source, "blendFrames", 0, 8);
-                if (source["viewport"] is { } region)
-                    neutral["viewport"] = ReadViewport(region, dimensions.Width, dimensions.Height);
-            }
+                neutral = ReadNeutral(neutralNode, "neutral.png");
             var clips = new JsonArray();
             var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int index = 0; index < animations.Count; index++)
@@ -89,6 +97,8 @@ internal static class PetPackages
                 var installed = new JsonObject { ["name"] = title, ["frameWidth"] = width, ["frameHeight"] = height, ["columns"] = columns, ["frameCount"] = count, ["fps"] = fps };
                 if (clip["viewport"] is { } region)
                     installed["viewport"] = ReadViewport(region, width, height);
+                if (clip["neutral"] is { } clipNeutral)
+                    installed["neutral"] = ReadNeutral(clipNeutral, $"neutral-{index}.png");
                 void ExtractSheet(JsonObject source, string asset, int frames)
                 {
                     var dimensions = ExtractPng(entries, Required(source, "file", 160), workspace, asset);

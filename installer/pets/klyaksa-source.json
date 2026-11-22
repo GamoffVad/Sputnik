@@ -1,0 +1,17 @@
+{
+  "id": "klyaksa",
+  "name": "Клякса",
+  "file": "klyaksa.pet",
+  "sha256": "892ea9c255d6c9ae9c5ed80ed050cad52c6dfa037fce6800b306d438dbb53c9b",
+  "bytes": 58042345,
+  "animations": 8,
+  "bundled": true,
+  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/klyaksa.pet",
+  "theme": {
+    "name": "Сумерки",
+    "accent": "#bac7ff",
+    "background": "#181b2c",
+    "surface": "#262b45"
+  },
+  "minimumWindowsVersion": "1.3.28.27"
+}

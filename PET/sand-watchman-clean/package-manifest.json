@@ -8,6 +8,17 @@
     "background": "#241C19",
     "surface": "#362A24"
   },
+  "displayScale": 1.538462,
+  "neutral": {
+    "file": "asset-000.png",
+    "viewport": {
+      "x": 11.732190000000035,
+      "y": 4.598285000000052,
+      "width": 948.5356199999999,
+      "height": 948.5356199999999
+    },
+    "blendFrames": 8
+  },
   "animations": [
     {
       "name": "На посту",
@@ -16,22 +27,22 @@
       "columns": 10,
       "frameCount": 120,
       "fps": 24,
+      "viewport": {
+        "x": 1.797763628550055,
+        "y": -13.022209283773872,
+        "width": 714.8520140112016,
+        "height": 714.8520140112016
+      },
       "sheets": [
         {
-          "file": "assets/sand-watchman-clean/clip-0-0.png",
+          "file": "asset-001.png",
           "frames": 60
         },
         {
-          "file": "assets/sand-watchman-clean/clip-0-1.png",
+          "file": "asset-002.png",
           "frames": 60
         }
-      ],
-      "viewport": {
-        "x": 0.5,
-        "y": -15.0,
-        "width": 720.0,
-        "height": 720.0
-      }
+      ]
     },
     {
       "name": "Подозрительный шорох",
@@ -40,22 +51,22 @@
       "columns": 10,
       "frameCount": 120,
       "fps": 24,
+      "viewport": {
+        "x": 1.797763628550055,
+        "y": -13.022209283773872,
+        "width": 714.8520140112016,
+        "height": 714.8520140112016
+      },
       "sheets": [
         {
-          "file": "assets/sand-watchman-clean/clip-1-0.png",
+          "file": "asset-003.png",
           "frames": 60
         },
         {
-          "file": "assets/sand-watchman-clean/clip-1-1.png",
+          "file": "asset-004.png",
           "frames": 60
         }
-      ],
-      "viewport": {
-        "x": 0.5,
-        "y": -15.0,
-        "width": 720.0,
-        "height": 720.0
-      }
+      ]
     },
     {
       "name": "Порыв ветра",
@@ -64,22 +75,22 @@
       "columns": 10,
       "frameCount": 120,
       "fps": 24,
+      "viewport": {
+        "x": 1.797763628550055,
+        "y": -13.022209283773872,
+        "width": 714.8520140112016,
+        "height": 714.8520140112016
+      },
       "sheets": [
         {
-          "file": "assets/sand-watchman-clean/clip-2-0.png",
+          "file": "asset-005.png",
           "frames": 60
         },
         {
-          "file": "assets/sand-watchman-clean/clip-2-1.png",
+          "file": "asset-006.png",
           "frames": 60
         }
-      ],
-      "viewport": {
-        "x": 0.5,
-        "y": -15.0,
-        "width": 720.0,
-        "height": 720.0
-      }
+      ]
     },
     {
       "name": "Почтительный поклон",
@@ -88,22 +99,22 @@
       "columns": 10,
       "frameCount": 120,
       "fps": 24,
+      "viewport": {
+        "x": 1.797763628550055,
+        "y": -13.022209283773872,
+        "width": 714.8520140112016,
+        "height": 714.8520140112016
+      },
       "sheets": [
         {
-          "file": "assets/sand-watchman-clean/clip-3-0.png",
+          "file": "asset-007.png",
           "frames": 60
         },
         {
-          "file": "assets/sand-watchman-clean/clip-3-1.png",
+          "file": "asset-008.png",
           "frames": 60
         }
-      ],
-      "viewport": {
-        "x": 0.5,
-        "y": -15.0,
-        "width": 720.0,
-        "height": 720.0
-      }
+      ]
     },
     {
       "name": "Задремал на посту",
@@ -112,22 +123,22 @@
       "columns": 10,
       "frameCount": 120,
       "fps": 24,
+      "viewport": {
+        "x": 1.797763628550055,
+        "y": -13.022209283773872,
+        "width": 714.8520140112016,
+        "height": 714.8520140112016
+      },
       "sheets": [
         {
-          "file": "assets/sand-watchman-clean/clip-4-0.png",
+          "file": "asset-009.png",
           "frames": 60
         },
         {
-          "file": "assets/sand-watchman-clean/clip-4-1.png",
+          "file": "asset-010.png",
           "frames": 60
         }
-      ],
-      "viewport": {
-        "x": 0.5,
-        "y": -15.0,
-        "width": 720.0,
-        "height": 720.0
-      }
+      ]
     },
     {
       "name": "Шарф с характером",
@@ -136,26 +147,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.732190000000035,
+        "y": 4.598285000000052,
+        "width": 948.5356199999999,
+        "height": 948.5356199999999
+      },
       "sheets": [
         {
-          "file": "new-01-0.png",
+          "file": "asset-011.png",
           "frames": 32
         },
         {
-          "file": "new-01-1.png",
+          "file": "asset-012.png",
           "frames": 32
         },
         {
-          "file": "new-01-2.png",
+          "file": "asset-013.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 12.0,
-        "y": 5.0,
-        "width": 948.0,
-        "height": 948.0
-      }
+      ]
     },
     {
       "name": "Дуэль с кисточкой",
@@ -164,26 +175,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.411837084094655,
+        "y": 4.274910869050348,
+        "width": 949.1877232167036,
+        "height": 949.1877232167036
+      },
       "sheets": [
         {
-          "file": "new-02-0.png",
+          "file": "asset-014.png",
           "frames": 32
         },
         {
-          "file": "new-02-1.png",
+          "file": "asset-015.png",
           "frames": 32
         },
         {
-          "file": "new-02-2.png",
+          "file": "asset-016.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 11.0,
-        "y": 3.5,
-        "width": 950.0,
-        "height": 950.0
-      }
+      ]
     },
     {
       "name": "Песчаный серфинг",
@@ -192,26 +203,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.96879647783123,
+        "y": 4.810231278048023,
+        "width": 948.0312085397986,
+        "height": 948.0312085397986
+      },
       "sheets": [
         {
-          "file": "new-03-0.png",
+          "file": "asset-017.png",
           "frames": 32
         },
         {
-          "file": "new-03-1.png",
+          "file": "asset-018.png",
           "frames": 32
         },
         {
-          "file": "new-03-2.png",
+          "file": "asset-019.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 10.0,
-        "y": 3.0,
-        "width": 952.0,
-        "height": 952.0
-      }
+      ]
     },
     {
       "name": "Прыжок стража",
@@ -220,26 +231,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.283763178516601,
+        "y": 4.075796990964154,
+        "width": 949.6494657324878,
+        "height": 949.6494657324878
+      },
       "sheets": [
         {
-          "file": "new-04-0.png",
+          "file": "asset-020.png",
           "frames": 32
         },
         {
-          "file": "new-04-1.png",
+          "file": "asset-021.png",
           "frames": 32
         },
         {
-          "file": "new-04-2.png",
+          "file": "asset-022.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 10.0,
-        "y": 3.0,
-        "width": 952.0,
-        "height": 952.0
-      }
+      ]
     },
     {
       "name": "Непослушный подол",
@@ -248,26 +259,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.688345633887614,
+        "y": 4.575196579621678,
+        "width": 948.5691661264102,
+        "height": 948.5691661264102
+      },
       "sheets": [
         {
-          "file": "new-05-0.png",
+          "file": "asset-023.png",
           "frames": 32
         },
         {
-          "file": "new-05-1.png",
+          "file": "asset-024.png",
           "frames": 32
         },
         {
-          "file": "new-05-2.png",
+          "file": "asset-025.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 10.0,
-        "y": 3.0,
-        "width": 952.0,
-        "height": 952.0
-      }
+      ]
     },
     {
       "name": "Золотой скарабей",
@@ -276,26 +287,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.783090475908896,
+        "y": 4.7159829497949515,
+        "width": 948.4503434972794,
+        "height": 948.4503434972794
+      },
       "sheets": [
         {
-          "file": "new-06-0.png",
+          "file": "asset-026.png",
           "frames": 32
         },
         {
-          "file": "new-06-1.png",
+          "file": "asset-027.png",
           "frames": 32
         },
         {
-          "file": "new-06-2.png",
+          "file": "asset-028.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 6.0,
-        "y": 1.0,
-        "width": 960.0,
-        "height": 960.0
-      }
+      ]
     },
     {
       "name": "Боевой танец",
@@ -304,26 +315,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.74109649127405,
+        "y": 4.755638423150894,
+        "width": 948.3460542311557,
+        "height": 948.3460542311557
+      },
       "sheets": [
         {
-          "file": "new-07-0.png",
+          "file": "asset-029.png",
           "frames": 32
         },
         {
-          "file": "new-07-1.png",
+          "file": "asset-030.png",
           "frames": 32
         },
         {
-          "file": "new-07-2.png",
+          "file": "asset-031.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 10.0,
-        "y": 3.0,
-        "width": 952.0,
-        "height": 952.0
-      }
+      ]
     },
     {
       "name": "Узор лентой",
@@ -332,26 +343,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.592015990433293,
+        "y": 4.480115504309609,
+        "width": 948.7021350354429,
+        "height": 948.7021350354429
+      },
       "sheets": [
         {
-          "file": "new-08-0.png",
+          "file": "asset-032.png",
           "frames": 32
         },
         {
-          "file": "new-08-1.png",
+          "file": "asset-033.png",
           "frames": 32
         },
         {
-          "file": "new-08-2.png",
+          "file": "asset-034.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 12.0,
-        "y": 5.0,
-        "width": 948.0,
-        "height": 948.0
-      }
+      ]
     },
     {
       "name": "Невидимый соперник",
@@ -360,26 +371,26 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.431117100662629,
+        "y": 4.187025576492146,
+        "width": 949.2292014757242,
+        "height": 949.2292014757242
+      },
       "sheets": [
         {
-          "file": "new-09-0.png",
+          "file": "asset-035.png",
           "frames": 32
         },
         {
-          "file": "new-09-1.png",
+          "file": "asset-036.png",
           "frames": 32
         },
         {
-          "file": "new-09-2.png",
+          "file": "asset-037.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 10.0,
-        "y": 3.0,
-        "width": 952.0,
-        "height": 952.0
-      }
+      ]
     },
     {
       "name": "Песчаная левитация",
@@ -388,37 +399,27 @@
       "columns": 4,
       "frameCount": 96,
       "fps": 24,
+      "viewport": {
+        "x": 11.795398510359123,
+        "y": 4.665730737352703,
+        "width": 948.5688759352153,
+        "height": 948.5688759352153
+      },
       "sheets": [
         {
-          "file": "new-10-0.png",
+          "file": "asset-038.png",
           "frames": 32
         },
         {
-          "file": "new-10-1.png",
+          "file": "asset-039.png",
           "frames": 32
         },
         {
-          "file": "new-10-2.png",
+          "file": "asset-040.png",
           "frames": 32
         }
-      ],
-      "viewport": {
-        "x": 10.5,
-        "y": 3.0,
-        "width": 952.0,
-        "height": 952.0
-      }
+      ]
     }
   ],
-  "displayScale": 1.538462,
-  "schemaVersion": 3,
-  "neutral": {
-    "file": "neutral.png",
-    "viewport": {
-      "x": 12.0,
-      "y": 5.0,
-      "width": 948.0,
-      "height": 948.0
-    }
-  }
+  "schemaVersion": 3
 }

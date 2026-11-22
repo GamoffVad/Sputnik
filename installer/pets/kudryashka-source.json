@@ -1,0 +1,17 @@
+{
+  "id": "kudryashka",
+  "name": "Кудряшка",
+  "file": "kudryashka.pet",
+  "sha256": "90b1482354321cbc79b38c4339bb1496c24c3223764acb52ac0f8c56ad2f6add",
+  "bytes": 34381319,
+  "animations": 4,
+  "bundled": false,
+  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kudryashka.pet",
+  "theme": {
+    "name": "Сирень",
+    "accent": "#ead8ff",
+    "background": "#201b27",
+    "surface": "#2b2434"
+  },
+  "minimumWindowsVersion": "1.3.28.27"
+}

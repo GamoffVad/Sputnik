@@ -1,0 +1,51 @@
+{
+  "id": "action-08",
+  "name": "Сообщение",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Сообщение",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-055.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-056.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-057.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-058.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-059.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-060.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-061.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 7,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

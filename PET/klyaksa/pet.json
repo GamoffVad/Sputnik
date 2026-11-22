@@ -2,23 +2,29 @@
   "id": "klyaksa",
   "name": "Клякса",
   "status": "available",
-  "character": "Характер и внешность сохраняются по референсу и существующим анимациям.",
+  "bundled": true,
   "reference": {
     "file": "reference.png",
     "size": [
       384,
       384
     ],
-    "rgbaSha256": "a7b7f2f26955b71dc311494e73463de00193c51727801dd0670079ebe23e24d2",
-    "origin": "Первый кадр исходного PNG без масштабирования"
+    "origin": "First native frame of the currently installed animation"
   },
+  "theme": "theme.json",
   "keyframes": {
     "start": "keyframes/start.png",
     "end": "keyframes/end.png",
-    "filesIdentical": true
+    "filesIdentical": false
   },
-  "theme": "theme.json",
-  "package": null,
+  "package": {
+    "file": "exports/klyaksa.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/klyaksa.pet",
+    "sha256": "892ea9c255d6c9ae9c5ed80ed050cad52c6dfa037fce6800b306d438dbb53c9b",
+    "bytes": 58042345,
+    "schemaVersion": 2,
+    "releaseTag": "pets-2026-11-22"
+  },
   "animations": [
     {
       "id": "action-01",
@@ -61,8 +67,6 @@
       "file": "animations/action-08/animation.json"
     }
   ],
-  "bundled": true,
-  "bundledAssets": "source/bundled",
   "workspaceSchemaVersion": 1,
   "assetsManifest": "package-manifest.json"
 }

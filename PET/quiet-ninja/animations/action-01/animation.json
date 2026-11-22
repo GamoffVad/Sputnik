@@ -1,10 +1,7 @@
 {
   "id": "action-01",
   "name": "Наблюдение",
-  "status": "existing-animation",
-  "movement": "Существующая анимация; исходные кадры сохранены.",
-  "proposedTrigger": null,
-  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "status": "installed-animation",
   "existingClip": {
     "name": "Наблюдение",
     "frameWidth": 1280,
@@ -20,39 +17,29 @@
     },
     "sheets": [
       {
-        "file": "clip-0-0.png",
+        "file": "asset-001.png",
         "frames": 30
       },
       {
-        "file": "clip-0-1.png",
+        "file": "asset-002.png",
         "frames": 30
       },
       {
-        "file": "clip-0-2.png",
+        "file": "asset-003.png",
         "frames": 30
       },
       {
-        "file": "clip-0-3.png",
+        "file": "asset-004.png",
         "frames": 30
       }
     ]
   },
-  "generation": {
-    "reference": "../../reference.png",
-    "firstFrame": "../../keyframes/start.png",
-    "lastFrame": "../../keyframes/end.png",
-    "requested": false,
-    "sameCharacterScale": true,
-    "fixedCamera": true,
-    "keepFullShadow": true,
-    "keepAccessories": true,
-    "doNotDownscale": true,
-    "identicalEndpointPixels": true
-  },
   "delivery": {
     "packageAnimationIndex": 0,
     "manifest": "../../package-manifest.json",
-    "source": "pet-package",
-    "preserveNativeResolution": true
-  }
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 4.0
 }

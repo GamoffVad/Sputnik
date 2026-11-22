@@ -1,0 +1,495 @@
+{
+  "id": "lerka-rebuilt",
+  "name": "Лерка — все анимации",
+  "description": "Анимации Лерки из исходных роликов.",
+  "theme": {
+    "name": "Лиловый",
+    "accent": "#B58CC4",
+    "background": "#241C29",
+    "surface": "#352B3A"
+  },
+  "displayScale": 1,
+  "animations": [
+    {
+      "name": "Шаг в сторону",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-000.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-001.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-002.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-003.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-004.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-005.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-006.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-007.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-008.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-009.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Селфи",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-010.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-011.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-012.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-013.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-014.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-015.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-016.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-017.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-018.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-019.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Приветствие",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-020.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-021.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-022.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-023.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-024.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-025.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-026.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Гимнастическое колесо",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-027.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-028.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-029.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-030.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-031.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-032.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-033.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Танец",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-034.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-035.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-036.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-037.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-038.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-039.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-040.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Любопытство",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-041.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-042.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-043.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-044.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-045.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-046.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-047.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Равновесие",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-048.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-049.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-050.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-051.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-052.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-053.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-054.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Сообщение",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-055.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-056.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-057.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-058.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-059.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-060.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-061.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Смешное видео",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-062.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-063.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-064.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-065.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-066.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-067.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-068.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Музыка с телефоном",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-069.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-070.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-071.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-072.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-073.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-074.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-075.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Видеозвонок",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-076.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-077.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-078.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-079.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-080.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-081.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-082.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Шоколадка",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "asset-083.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-084.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-085.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-086.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-087.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-088.png",
+          "frames": 16
+        },
+        {
+          "file": "asset-089.png",
+          "frames": 1
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 2
+}

@@ -1,0 +1,43 @@
+{
+  "id": "action-01",
+  "name": "Танец",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Танец",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 145,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-001.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-002.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-003.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-004.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-005.png",
+        "frames": 17
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 0,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 6.041666666666667
+}

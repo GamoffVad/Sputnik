@@ -11,40 +11,40 @@
   "animations": [
     {
       "name": "Приветствие",
-      "file": "assets/wink.png",
       "frameWidth": 256,
       "frameHeight": 256,
       "columns": 8,
       "frameCount": 72,
-      "fps": 18
+      "fps": 18,
+      "file": "asset-000.png"
     },
     {
       "name": "Повороты головы",
-      "file": "assets/seedance.png",
       "frameWidth": 256,
       "frameHeight": 256,
       "columns": 8,
       "frameCount": 71,
-      "fps": 18
+      "fps": 18,
+      "file": "asset-001.png"
     },
     {
       "name": "Опора ладонью",
-      "file": "assets/palm.png",
       "frameWidth": 256,
       "frameHeight": 256,
       "columns": 8,
       "frameCount": 144,
-      "fps": 18
+      "fps": 18,
+      "file": "asset-002.png"
     },
     {
       "name": "Анимация Kling",
-      "file": "assets/kling.png",
       "frameWidth": 256,
       "frameHeight": 256,
       "columns": 8,
       "frameCount": 144,
-      "fps": 18
+      "fps": 18,
+      "file": "asset-003.png"
     }
   ],
-  "schemaVersion": 1
+  "schemaVersion": 2
 }

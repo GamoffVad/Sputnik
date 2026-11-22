@@ -1,14 +1,17 @@
 {
-  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pet-sand-watchman-v2/sand-watchman-clean.pet",
-  "sha256": "d22ba5598550dfc841d5a6ecf42d68d1d1d94e3a4c340e599982a7fd02c66535",
-  "bytes": 306666900,
+  "id": "sand-watchman-clean",
+  "name": "Песчаный Дозорный",
+  "file": "sand-watchman-clean.pet",
+  "sha256": "581244dedbcaf2de907242f07ad6c32616471d48590bbc78b4515d7976768a5b",
+  "bytes": 302824158,
   "animations": 15,
-  "schemaVersion": 3,
-  "minimumWindowsVersion": "1.3.16",
+  "bundled": false,
+  "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/sand-watchman-clean.pet",
   "theme": {
     "name": "Песок и бронза",
     "accent": "#CEA87A",
     "background": "#241C19",
     "surface": "#362A24"
-  }
+  },
+  "minimumWindowsVersion": "1.3.28.27"
 }

@@ -1,0 +1,51 @@
+{
+  "id": "action-09",
+  "name": "Смешное видео",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Смешное видео",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-062.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-063.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-064.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-065.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-066.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-067.png",
+        "frames": 16
+      },
+      {
+        "file": "asset-068.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 8,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

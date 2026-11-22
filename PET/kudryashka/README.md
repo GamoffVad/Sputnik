@@ -1,10 +1,12 @@
 # Кудряшка
 
-[Референс в исходном качестве, 256×256](reference.png) · [Метаданные](pet.json) · [Тема](theme.json) · [Манифест ресурсов](package-manifest.json)
+[Скачать `.pet`](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kudryashka.pet) · [Манифест](package-manifest.json) · [Тема](theme.json)
 
-![Референс](reference.png)
+Актуальная установленная версия: **4 анимаций, 431 кадров**. PNG-ресурсы перенесены побайтово, без изменения размера, цвета и прозрачности.
 
-Анимаций: 4. Готовый локальный пакет: `exports/kudryashka.pet`. [Скачать .pet](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.14/kudryashka.pet).
+Импорт: **Питомцы → плюс → файл `.pet` → Установить питомца**. Для полного набора рекомендуется Windows-версия Спутника 1.3.28.27 или новее.
 
-Опорные кадры: `keyframes/start.png` и `keyframes/end.png` — точные копии основного референса.
-Описания движений: `animations/<id>/animation.json`. Рабочие материалы, обработанные кадры и готовые пакеты: `source/`, `renders/`, `exports/`.
+1. Приветствие
+2. Повороты головы
+3. Опора ладонью
+4. Анимация Kling

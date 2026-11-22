@@ -1,10 +1,7 @@
 {
   "id": "action-03",
   "name": "Бросок куная",
-  "status": "existing-animation",
-  "movement": "Существующая анимация; исходные кадры сохранены.",
-  "proposedTrigger": null,
-  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "status": "installed-animation",
   "existingClip": {
     "name": "Бросок куная",
     "frameWidth": 1280,
@@ -20,39 +17,29 @@
     },
     "sheets": [
       {
-        "file": "clip-2-0.png",
+        "file": "asset-009.png",
         "frames": 30
       },
       {
-        "file": "clip-2-1.png",
+        "file": "asset-010.png",
         "frames": 30
       },
       {
-        "file": "clip-2-2.png",
+        "file": "asset-011.png",
         "frames": 30
       },
       {
-        "file": "clip-2-3.png",
+        "file": "asset-012.png",
         "frames": 30
       }
     ]
   },
-  "generation": {
-    "reference": "../../reference.png",
-    "firstFrame": "../../keyframes/start.png",
-    "lastFrame": "../../keyframes/end.png",
-    "requested": false,
-    "sameCharacterScale": true,
-    "fixedCamera": true,
-    "keepFullShadow": true,
-    "keepAccessories": true,
-    "doNotDownscale": true,
-    "identicalEndpointPixels": true
-  },
   "delivery": {
     "packageAnimationIndex": 2,
     "manifest": "../../package-manifest.json",
-    "source": "pet-package",
-    "preserveNativeResolution": true
-  }
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 4.0
 }

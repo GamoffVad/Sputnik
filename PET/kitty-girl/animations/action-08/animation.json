@@ -1,0 +1,39 @@
+{
+  "id": "action-08",
+  "name": "Пальцем у виска",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Пальцем у виска",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 121,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-029.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-030.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-031.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-032.png",
+        "frames": 25
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 7,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 5.041666666666667
+}

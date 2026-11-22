@@ -1,0 +1,92 @@
+{
+  "id": "lerka-rebuilt",
+  "name": "Лерка — все анимации",
+  "status": "available",
+  "bundled": false,
+  "reference": {
+    "file": "reference.png",
+    "size": [
+      960,
+      960
+    ],
+    "origin": "First native frame of the currently installed animation"
+  },
+  "theme": "theme.json",
+  "keyframes": {
+    "start": "keyframes/start.png",
+    "end": "keyframes/end.png",
+    "filesIdentical": false
+  },
+  "package": {
+    "file": "exports/lerka-rebuilt.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/lerka-rebuilt.pet",
+    "sha256": "53b640873905b5b22460ce038358ee5f201d8d0538b623429851cfba2699ecc7",
+    "bytes": 368735705,
+    "schemaVersion": 2,
+    "releaseTag": "pets-2026-11-22"
+  },
+  "animations": [
+    {
+      "id": "action-01",
+      "name": "Шаг в сторону",
+      "file": "animations/action-01/animation.json"
+    },
+    {
+      "id": "action-02",
+      "name": "Селфи",
+      "file": "animations/action-02/animation.json"
+    },
+    {
+      "id": "action-03",
+      "name": "Приветствие",
+      "file": "animations/action-03/animation.json"
+    },
+    {
+      "id": "action-04",
+      "name": "Гимнастическое колесо",
+      "file": "animations/action-04/animation.json"
+    },
+    {
+      "id": "action-05",
+      "name": "Танец",
+      "file": "animations/action-05/animation.json"
+    },
+    {
+      "id": "action-06",
+      "name": "Любопытство",
+      "file": "animations/action-06/animation.json"
+    },
+    {
+      "id": "action-07",
+      "name": "Равновесие",
+      "file": "animations/action-07/animation.json"
+    },
+    {
+      "id": "action-08",
+      "name": "Сообщение",
+      "file": "animations/action-08/animation.json"
+    },
+    {
+      "id": "action-09",
+      "name": "Смешное видео",
+      "file": "animations/action-09/animation.json"
+    },
+    {
+      "id": "action-10",
+      "name": "Музыка с телефоном",
+      "file": "animations/action-10/animation.json"
+    },
+    {
+      "id": "action-11",
+      "name": "Видеозвонок",
+      "file": "animations/action-11/animation.json"
+    },
+    {
+      "id": "action-12",
+      "name": "Шоколадка",
+      "file": "animations/action-12/animation.json"
+    }
+  ],
+  "workspaceSchemaVersion": 1,
+  "assetsManifest": "package-manifest.json"
+}

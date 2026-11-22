@@ -1,0 +1,35 @@
+{
+  "id": "action-01",
+  "name": "Узел с характером",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Узел с характером",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 96,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "asset-000.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-001.png",
+        "frames": 32
+      },
+      {
+        "file": "asset-002.png",
+        "frames": 32
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 0,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.0
+}

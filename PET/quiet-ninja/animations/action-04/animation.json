@@ -1,10 +1,7 @@
 {
   "id": "action-04",
   "name": "Тихая связка",
-  "status": "existing-animation",
-  "movement": "Существующая анимация; исходные кадры сохранены.",
-  "proposedTrigger": null,
-  "rendering": "Персонаж, необходимые реквизит и эффекты, мягкая тень; камера неподвижна.",
+  "status": "installed-animation",
   "existingClip": {
     "name": "Тихая связка",
     "frameWidth": 1280,
@@ -20,39 +17,29 @@
     },
     "sheets": [
       {
-        "file": "clip-3-0.png",
+        "file": "asset-013.png",
         "frames": 30
       },
       {
-        "file": "clip-3-1.png",
+        "file": "asset-014.png",
         "frames": 30
       },
       {
-        "file": "clip-3-2.png",
+        "file": "asset-015.png",
         "frames": 30
       },
       {
-        "file": "clip-3-3.png",
+        "file": "asset-016.png",
         "frames": 30
       }
     ]
   },
-  "generation": {
-    "reference": "../../reference.png",
-    "firstFrame": "../../keyframes/start.png",
-    "lastFrame": "../../keyframes/end.png",
-    "requested": false,
-    "sameCharacterScale": true,
-    "fixedCamera": true,
-    "keepFullShadow": true,
-    "keepAccessories": true,
-    "doNotDownscale": true,
-    "identicalEndpointPixels": true
-  },
   "delivery": {
     "packageAnimationIndex": 3,
     "manifest": "../../package-manifest.json",
-    "source": "pet-package",
-    "preserveNativeResolution": true
-  }
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": true,
+  "durationSeconds": 4.0
 }

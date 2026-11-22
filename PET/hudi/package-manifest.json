@@ -11,13 +11,13 @@
   "animations": [
     {
       "name": "Ожидание",
-      "file": "assets/hudi.png",
-      "frameCount": 1,
-      "fps": 1,
       "frameWidth": 346,
       "frameHeight": 720,
-      "columns": 1
+      "columns": 1,
+      "frameCount": 1,
+      "fps": 1,
+      "file": "asset-000.png"
     }
   ],
-  "schemaVersion": 1
+  "schemaVersion": 2
 }
