@@ -1,0 +1,64 @@
+name: Windows — package verified installed build
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Draft release with the explicitly provided installed payload
+        required: true
+        type: string
+      version:
+        description: Four-part installed version
+        required: true
+        type: string
+      payload_sha256:
+        description: Expected SHA-256 of installed payload ZIP
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify installed build snapshot
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          APP_VERSION: ${{ inputs.version }}
+          EXPECTED_HASH: ${{ inputs.payload_sha256 }}
+        run: |
+          if ($env:APP_VERSION -notmatch '^\d+\.\d+\.\d+\.\d+$') { throw 'Expected four-part version' }
+          if ($env:RELEASE_TAG -ne "v$env:APP_VERSION") { throw 'Tag mismatch' }
+          if ($env:EXPECTED_HASH -notmatch '^[a-f0-9]{64}$') { throw 'Invalid hash' }
+          gh release download $env:RELEASE_TAG --pattern "Sputnik-$env:APP_VERSION-installed-payload.zip" --dir artifacts/input --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE) { throw 'Payload download failed' }
+          $zip = "artifacts/input/Sputnik-$env:APP_VERSION-installed-payload.zip"
+          if ((Get-FileHash -LiteralPath $zip).Hash.ToLowerInvariant() -ne $env:EXPECTED_HASH) { throw 'Payload checksum mismatch' }
+          Expand-Archive -LiteralPath $zip -DestinationPath artifacts/payload
+          $exe = Get-Item -LiteralPath artifacts/payload/Sputnik.exe
+          if ($exe.VersionInfo.FileVersion -ne $env:APP_VERSION) { throw 'Executable version mismatch' }
+      - name: Build installer
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ inputs.version }}
+        run: |
+          $setup = Join-Path $env:RUNNER_TEMP 'innosetup-7.1.1-x64.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_1/innosetup-7.1.1-x64.exe' -OutFile $setup
+          if ((Get-FileHash $setup).Hash -ne '8A5A6711C3766A6E5FB74F280BA0E3551E719CE94538D901FDBD1F8F9920B3F0') { throw 'Compiler checksum mismatch' }
+          $compilerDir = Join-Path $env:RUNNER_TEMP 'inno7'
+          $result = Start-Process $setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="' + $compilerDir + '"')) -WindowStyle Hidden -Wait -PassThru
+          if ($result.ExitCode -ne 0) { throw 'Compiler setup failed' }
+          New-Item -ItemType Directory -Force artifacts/release | Out-Null
+          & (Join-Path $compilerDir 'ISCC.exe') "/DAppVersion=$env:APP_VERSION" /DVersionedOutput "/DPublishDir=$PWD/artifacts/payload" "/DInstallerOutput=$PWD/artifacts/release" installer/Sputnik.iss
+          if ($LASTEXITCODE) { throw 'Installer build failed' }
+          $installer = Get-ChildItem artifacts/release -Filter '*.exe' | Select-Object -First 1
+          if (!$installer -or $installer.Length -lt 1MB) { throw 'Installer missing or incomplete' }
+          (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $installer.Name | Set-Content artifacts/release/SHA256SUMS.txt -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sputnik-Windows-${{ inputs.version }}-installed-build
+          path: artifacts/release/*
+          if-no-files-found: error
+          compression-level: 0
