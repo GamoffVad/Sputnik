@@ -1,0 +1,53 @@
+{
+  "id": "dance",
+  "name": "Танец",
+  "status": "existing-animation",
+  "existingClip": {
+    "name": "Танец",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 145,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "motion-00-00.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-00-01.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-00-02.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-00-03.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-00-04.png",
+        "frames": 17
+      }
+    ]
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 0,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package",
+    "preserveNativeResolution": true
+  }
+}

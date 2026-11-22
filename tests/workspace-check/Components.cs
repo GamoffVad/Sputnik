@@ -175,7 +175,7 @@ partial class Check
         Console.WriteLine("PASS favorites: empty form, add, edit, delete, icon selection, invalid executable and URL.");
 
         // Reminder editor and scheduler: no actual user reminders involved.
-        Open("reminders"); Click("Добавить"); Layout(window);
+        Open("reminders"); Click("Добавить напоминание"); Layout(window);
         Input("Название").Text="QA reminder"; Input("Время (ЧЧ:ММ)").Text="12:34";
         Find<ComboBox>(window).Single().SelectedIndex=11; Input("Интервал в минутах").Text="7";
         Click("Сохранить"); Layout(window);

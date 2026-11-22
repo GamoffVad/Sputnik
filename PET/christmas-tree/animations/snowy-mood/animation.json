@@ -1,0 +1,53 @@
+{
+  "id": "snowy-mood",
+  "name": "Снежное настроение",
+  "status": "existing-animation",
+  "existingClip": {
+    "name": "Снежное настроение",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 145,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "motion-05-00.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-05-01.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-05-02.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-05-03.png",
+        "frames": 32
+      },
+      {
+        "file": "motion-05-04.png",
+        "frames": 17
+      }
+    ]
+  },
+  "generation": {
+    "reference": "../../reference.png",
+    "firstFrame": "../../keyframes/start.png",
+    "lastFrame": "../../keyframes/end.png",
+    "requested": false,
+    "sameCharacterScale": true,
+    "fixedCamera": true,
+    "keepFullShadow": true,
+    "keepAccessories": true,
+    "doNotDownscale": true,
+    "identicalEndpointPixels": true
+  },
+  "delivery": {
+    "packageAnimationIndex": 5,
+    "manifest": "../../package-manifest.json",
+    "source": "pet-package",
+    "preserveNativeResolution": true
+  }
+}

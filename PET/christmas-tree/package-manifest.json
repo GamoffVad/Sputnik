@@ -1,0 +1,319 @@
+{
+  "schemaVersion": 3,
+  "id": "christmas-tree",
+  "name": "Праздничная ёлка",
+  "description": "Десять анимаций праздничной ёлки с подарками.",
+  "theme": {
+    "name": "Праздничная хвоя",
+    "accent": "#91B879",
+    "background": "#182119",
+    "surface": "#273328"
+  },
+  "displayScale": 1,
+  "neutral": {
+    "file": "neutral.png",
+    "blendFrames": 8
+  },
+  "animations": [
+    {
+      "name": "Танец",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-00-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-00-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-00-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-00-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-00-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Встряхивание",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-01-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-01-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-01-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-01-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-01-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Волшебная волна",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-02-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-02-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-02-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-02-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-02-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Живой подарок",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-03-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-03-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-03-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-03-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-03-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Приветственный поклон",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-04-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-04-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-04-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-04-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-04-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Снежное настроение",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-05-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-05-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-05-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-05-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-05-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Шаловливые шары",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-06-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-06-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-06-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-06-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-06-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Золотая спираль",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-07-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-07-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-07-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-07-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-07-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Любопытные подарки",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-08-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-08-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-08-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-08-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-08-04.png",
+          "frames": 17
+        }
+      ]
+    },
+    {
+      "name": "Сонная ёлочка",
+      "frameWidth": 960,
+      "frameHeight": 960,
+      "columns": 4,
+      "frameCount": 145,
+      "fps": 24,
+      "sheets": [
+        {
+          "file": "motion-09-00.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-09-01.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-09-02.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-09-03.png",
+          "frames": 32
+        },
+        {
+          "file": "motion-09-04.png",
+          "frames": 17
+        }
+      ]
+    }
+  ]
+}

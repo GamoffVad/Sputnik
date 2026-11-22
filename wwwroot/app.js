@@ -787,7 +787,7 @@ function choicePage(control, content) {
 }
 function selectPet(p, useTheme=true) {
   state.active=p.id;
-  if(state.appearanceMode!=='custom'){state.appearanceMode=useTheme?'pet':'default';state.themed=useTheme;}
+  state.appearanceMode=useTheme?'pet':'default';state.themed=useTheme;
   motion=0;hidden=false;save();render();
 }
 async function importPet() {
@@ -1105,7 +1105,7 @@ document.addEventListener('input',event=>{
     window.noteQuery=input.value;pageNumbers.delete('notes');render();
     const search=$('#note-search');search.focus();search.setSelectionRange(caret,caret);
   }
-  if(input.id==='theme-toggle'){state.themed=input.checked;save();render();}
+  if(input.id==='theme-toggle'){state.themed=input.checked;state.appearanceMode=input.checked?'pet':'default';save();render();}
   if(input.id==='autostart')call('setAutoStart',input.checked).then(()=>{autoStart=input.checked;}).catch(error=>{input.checked=autoStart;feedback(error.message);});
 });
 document.addEventListener('click',async event=>{
