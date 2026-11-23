@@ -13,6 +13,9 @@ namespace Sputnik;
 
 public partial class MainWindow
 {
+    private string? removedPetToken;
+    private string? removedPetName;
+
     private void ShowPets()
     {
         var builtins = Read(Path.Combine(AppContext.BaseDirectory, "wwwroot", "assets", "pets.json")) as JsonArray ?? new();
@@ -26,7 +29,12 @@ public partial class MainWindow
             catch (Exception error) { ShowError(error); }
             finally { add.IsEnabled = true; }
         };
-        var page = PageFields("Питомцы", add, 20);
+        var remove = WorkspaceUi.IconButton("Удалить питомца", "M3 4H13 M6 4V2H10V4 M4 4L5 14H11L12 4 M7 6V12 M9 6V12");
+        remove.Margin = new Thickness(0, 0, 6, 0);
+        ToolTipService.SetShowOnDisabled(remove, true);
+        var actions = new StackPanel { Orientation = Orientation.Horizontal };
+        actions.Children.Add(remove); actions.Children.Add(add);
+        var page = PageFields("Питомцы", actions, 20);
         var workspace = WorkspaceData();
         var select = new ComboBox { ItemsSource = pets.Select(pet => Value(pet, "name")).ToArray() };
         AutomationProperties.SetName(select, "Активный питомец");
@@ -59,6 +67,26 @@ public partial class MainWindow
         DockPanel.SetDock(palette, Dock.Right); paletteRow.Children.Add(palette); paletteRow.Children.Add(useTheme);
         page.Children.Add(paletteRow);
         var status = Status(11); page.Children.Add(status);
+        if (removedPetToken is { } restoreToken)
+        {
+            var undoRow = new DockPanel { Margin = new Thickness(0, 4, 0, 12), LastChildFill = true };
+            var undo = Button("Вернуть", () =>
+            {
+                try
+                {
+                    var restored = PetPackages.RestoreRemoved(restoreToken, Pets);
+                    UpdateWorkspace(current => current["active"] = Value(restored, "id"), true);
+                    removedPetToken = null; removedPetName = null;
+                    OpenSection("pets");
+                }
+                catch (Exception error) { status.Text = error.Message; }
+            });
+            DockPanel.SetDock(undo, Dock.Right); undoRow.Children.Add(undo);
+            var removed = Text($"«{removedPetName}» удалён", "Muted", 12);
+            removed.VerticalAlignment = VerticalAlignment.Center;
+            removed.Margin = new Thickness(0, 0, 8, 0);
+            undoRow.Children.Add(removed); page.Children.Add(undoRow);
+        }
         var motions = Button("Настроить движения", () => { if (Desktop is { } app) app.ShowWorkspace("motion"); else OpenSection("motion"); });
         motions.HorizontalAlignment = HorizontalAlignment.Stretch; motions.HorizontalContentAlignment = HorizontalAlignment.Center;
         page.Children.Add(motions);
@@ -68,6 +96,9 @@ public partial class MainWindow
             int sequence = ++revision;
             if (select.SelectedIndex < 0) { name.Text = "Нет питомцев"; image.Source = null; return; }
             var pet = pets[select.SelectedIndex];
+            bool bundled = builtins.Any(p => Value(p, "id") == Value(pet, "id"));
+            remove.IsEnabled = !bundled;
+            remove.ToolTip = bundled ? "Встроенная Клякса нужна как резервный питомец" : $"Удалить «{Value(pet, "name") }»";
             name.Text = Value(pet, "name"); image.Source = null;
             int count = (pet["animations"] as JsonArray)?.Count ?? 0;
             details.Text = count == 1 ? "1 движение" : count is >= 2 and <= 4 ? $"{count} движения" : $"{count} движений";
@@ -81,7 +112,7 @@ public partial class MainWindow
             }
             try
             {
-                string root = builtins.Any(p => Value(p, "id") == Value(pet, "id")) ? Path.Combine(AppContext.BaseDirectory, "wwwroot") : Path.Combine(Pets, Value(pet, "id"));
+                string root = bundled ? Path.Combine(AppContext.BaseDirectory, "wwwroot") : Path.Combine(Pets, Value(pet, "id"));
                 var source = await Task.Run(() => PetPortrait(pet, root));
                 await Dispatcher.InvokeAsync(() =>
                 {
@@ -97,6 +128,29 @@ public partial class MainWindow
             if (select.SelectedIndex < 0) return;
             SelectPet(Value(pets[select.SelectedIndex], "id"), useTheme.IsChecked == true);
         }
+        remove.Click += (_, _) =>
+        {
+            if (select.SelectedIndex < 0 || !remove.IsEnabled) return;
+            var pet = pets[select.SelectedIndex];
+            string id = Value(pet, "id");
+            string? token = null;
+            try
+            {
+                token = PetPackages.Remove(id, Pets);
+                if (Value(WorkspaceData(), "active") == id) UpdateWorkspace(current => current["active"] = "klyaksa", true);
+                removedPetToken = token; removedPetName = Value(pet, "name");
+                OpenSection("pets");
+            }
+            catch (Exception error)
+            {
+                if (token is not null)
+                {
+                    try { PetPackages.RestoreRemoved(token, Pets); }
+                    catch (Exception rollback) { App.WriteDiagnostic("pet-removal-rollback", rollback.ToString()); }
+                }
+                status.Text = error.Message;
+            }
+        };
         select.SelectionChanged += async (_, _) => { Apply(); await Preview(); };
         useTheme.Click += (_, _) => Apply();
         page.Loaded += async (_, _) => await Preview();

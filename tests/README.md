@@ -8,6 +8,8 @@
 
 `memory-check` сравнивает пиксели и альфу кадров после отделения от атласа, порядок кадров, ограничение кэша и освобождение предпросмотра. [Описание и методика измерения](../docs/fixes/windows-memory.md).
 
+`pet-removal-check` работает только с синтетической библиотекой в `artifacts`: удаление и возврат питомца, переключение активного на Кляксу, защита встроенного питомца, проверка путей и конфликта восстановления, сохранность байтов PNG и пользовательской палитры. Команда: `dotnet run --project tests/pet-removal-check/Check.csproj -c Release -- artifacts/pet-removal-check/current`.
+
 ```powershell
 dotnet build Sputnik.csproj -c Release
 dotnet run --project tests/workspace-check/Check.csproj -c Release -- --components

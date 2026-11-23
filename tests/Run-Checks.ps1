@@ -12,6 +12,7 @@ try {
     Run-Dotnet build Sputnik.csproj -c Release --nologo
     Run-Dotnet run --project tests/notification-check/Check.csproj -c Release -- artifacts/notification-check/current
     Run-Dotnet run --project tests/memory-check/Check.csproj -c Release -- artifacts/memory-check/current
+    Run-Dotnet run --project tests/pet-removal-check/Check.csproj -c Release -- artifacts/pet-removal-check/current
     Run-Dotnet run --project tests/workspace-check/Check.csproj -c Release -- --components
     foreach ($mode in @('', '--appearance-only', '--notes-only', '--sphere-preview-only', '--glass-icons-only', '--clipping-only')) {
         Run-Dotnet run --no-build --project tests/workspace-check/Check.csproj -c Release -- $mode

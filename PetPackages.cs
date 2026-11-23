@@ -204,6 +204,49 @@ internal static class PetPackages
         return pet;
     }
 
+    public static string Remove(string id, string library)
+    {
+        ValidateLibraryId(id);
+        if (IsBundled(id)) throw new InvalidOperationException("Встроенного питомца удалить нельзя.");
+        string source = Path.Combine(Path.GetFullPath(library), id);
+        if (!Directory.Exists(source)) throw new InvalidOperationException("Питомец уже удалён из библиотеки.");
+        if ((File.GetAttributes(source) & FileAttributes.ReparsePoint) != 0)
+            throw new InvalidOperationException("Нельзя удалить ссылку на внешнюю папку питомца.");
+        var pet = JsonNode.Parse(File.ReadAllText(Path.Combine(source, "pet.json")))?.AsObject();
+        if (pet?["id"]?.ToString() != id) throw new InvalidDataException("Идентификатор питомца не совпадает с папкой.");
+        string backups = RemovedPets(library);
+        Directory.CreateDirectory(backups);
+        string token = Guid.NewGuid().ToString("N");
+        Directory.Move(source, Path.Combine(backups, "deleted-" + token));
+        return token;
+    }
+
+    public static JsonObject RestoreRemoved(string token, string library)
+    {
+        if (!Regex.IsMatch(token, @"\A[0-9a-f]{32}\z"))
+            throw new InvalidDataException("Некорректная запись удалённого питомца.");
+        string source = Path.Combine(RemovedPets(library), "deleted-" + token);
+        var pet = JsonNode.Parse(File.ReadAllText(Path.Combine(source, "pet.json")))?.AsObject()
+            ?? throw new InvalidDataException("Не удалось прочитать удалённого питомца.");
+        string id = Required(pet, "id", 50);
+        ValidateLibraryId(id);
+        if (IsBundled(id)) throw new InvalidOperationException("Нельзя заменить встроенного питомца.");
+        string destination = Path.Combine(Path.GetFullPath(library), id);
+        if (Directory.Exists(destination)) throw new InvalidOperationException("Этот питомец уже установлен. Восстановление не заменяет его файлы.");
+        Directory.CreateDirectory(library);
+        Directory.Move(source, destination);
+        return pet;
+    }
+
+    private static string RemovedPets(string library) =>
+        Path.Combine(Path.GetDirectoryName(Path.GetFullPath(library))!, "pet-backups");
+
+    private static void ValidateLibraryId(string id)
+    {
+        if (!Regex.IsMatch(id, @"\A[a-z0-9][a-z0-9-]{0,48}\z"))
+            throw new InvalidDataException("Недопустимый идентификатор питомца.");
+    }
+
     public static JsonArray Installed(string library)
     {
         var pets = new JsonArray();
