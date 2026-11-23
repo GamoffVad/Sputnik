@@ -193,6 +193,37 @@ private final class DesktopSprite: NSView {
     var moved: (() -> Void)?
     var dragBegan: (() -> Void)?
     var preferredSize: CGFloat = 230
+    var visibleContentBounds: CGRect {
+        guard let image else { return bounds }
+        return Self.visibleBounds(image: image, viewport: viewport, in: bounds)
+    }
+
+    static func visibleBounds(image: CGImage, viewport: PetViewport?, in bounds: CGRect) -> CGRect {
+        let width = image.width, height = image.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let found: CGRect? = pixels.withUnsafeMutableBytes { buffer in
+            guard let context = CGContext(data: buffer.baseAddress, width: width, height: height,
+                bitsPerComponent: 8, bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
+            let data = buffer.bindMemory(to: UInt8.self)
+            var left = width, right = -1, top = height, bottom = -1
+            for y in 0..<height {
+                for x in 0..<width where data[(y * width + x) * 4 + 3] != 0 {
+                    left = min(left, x); right = max(right, x)
+                    top = min(top, y); bottom = max(bottom, y)
+                }
+            }
+            guard right >= left else { return nil }
+            return CGRect(x: CGFloat(left), y: CGFloat(top), width: CGFloat(right-left+1), height: CGFloat(bottom-top+1))
+        }
+        guard let found else { return bounds }
+        let view = viewport ?? PetViewport(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height))
+        let scale = min(bounds.width / view.width, bounds.height / view.height)
+        return CGRect(x: bounds.minX + (bounds.width-view.width*scale)/2 + (found.minX-view.x)*scale,
+                      y: bounds.minY + (bounds.height-view.height*scale)/2 + (view.y+view.height-found.maxY)*scale,
+                      width: found.width*scale, height: found.height*scale)
+    }
     private var dragPoint: CGPoint?
     private var start: CGPoint = .zero
     private var dragged = false
@@ -249,6 +280,11 @@ private final class DesktopSprite: NSView {
 @MainActor
 final class DesktopPet: NSObject {
     let window: SputnikPanel
+    var visibleFrame: CGRect { window.convertToScreen(sprite.convert(sprite.visibleContentBounds, to: nil)) }
+    static func displayScale(id: String?, requested: CGFloat?) -> CGFloat {
+        max(0.75, min(3.6, id == "military-eagle" ? 3.6 : requested ?? 1))
+    }
+    var preferredDisplaySize: CGFloat { sprite.preferredSize }
     var onMenu: (() -> Void)?
     var onQuick: (() -> Void)?
     var onNotes: (() -> Void)?
@@ -355,7 +391,7 @@ final class DesktopPet: NSObject {
         palette = SputnikPalette(theme)
         fontFamily = workspace["font"] as? String
         let scale = (workspace["petScale"] as? NSNumber)?.doubleValue ?? 100
-        let displayScale = max(0.75, min(1.6, selected?.displayScale ?? 1))
+        let displayScale = Self.displayScale(id: selected?.id, requested: selected?.displayScale)
         sprite.preferredSize = 230 * max(0.6, min(1.6, scale / 100)) * displayScale
         resizeToFit()
     }

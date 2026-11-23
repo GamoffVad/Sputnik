@@ -14,7 +14,7 @@
   ],
   "constantViewportPerClip": true,
   "sourcePixelsResampled": false,
-  "displayScale": 2.4,
+  "displayScale": 3.6,
   "requestedEnlargementFactor": 1.5,
   "allAnimationsHaveContactShadow": true,
   "firstAnimationShadowVerifiedFrames": 97,
@@ -22,8 +22,8 @@
   "transitionPairsVerified": 144,
   "maxGeometricSizeDifferenceDips": 1.0020935884287212,
   "maxCenterDifferenceDips": 0.5,
-  "packageSha256": "4a487b48cd035cd3652e9b6820c23da83a327d7bef797c18625a0917eacbd4ea",
-  "packageBytes": 187249246,
+  "packageSha256": "583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7",
+  "packageBytes": 187249245,
   "acceptedSourceLimitation": {
     "flightClips": [
       11,
@@ -32,10 +32,13 @@
     "minorWingTipEdgeContactFramesPerClip": 3,
     "acceptedByUser": true
   },
-  "minimumWindowsVersion": "1.3.28.32",
+  "minimumWindowsVersion": "1.3.28.34",
   "macOS": {
     "enlargedDisplayScaleSupportedBy025": false,
-    "thisPackageTestedOnMac": false
+    "thisPackageTestedOnMac": false,
+    "minimumVersion": "0.2.6",
+    "enlargedDisplayScaleSupportedBy026": true
   },
-  "privacy": "Package contains only manifests and transparent PNG atlases; no user settings or connection data."
+  "privacy": "Package contains only manifests and transparent PNG atlases; no user settings or connection data.",
+  "enlargementFromPreviousPackage": 1.5
 }

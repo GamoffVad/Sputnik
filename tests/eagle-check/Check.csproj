@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework Condition="'$(Win7)'!='true'">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(Win7)'=='true'">net48</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <SputnikDirectory Condition="'$(SputnikDirectory)'==''">../../bin/Release/net10.0-windows</SputnikDirectory>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Win7)'!='true'"><Reference Include="Sputnik"><HintPath>$(SputnikDirectory)/Sputnik.dll</HintPath></Reference></ItemGroup>
+  <ItemGroup Condition="'$(Win7)'=='true'">
+    <Reference Include="Sputnik"><HintPath>$(SputnikDirectory)/Sputnik.exe</HintPath></Reference>
+    <Reference Include="$(SputnikDirectory)/*.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(SputnikDirectory)/wwwroot/assets/pets.json" Link="wwwroot/assets/pets.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
+

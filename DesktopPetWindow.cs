@@ -337,7 +337,8 @@ internal sealed class DesktopPetWindow : Window
 
     private void ResizePet(double scale)
     {
-        preferredSize = DefaultPetSize * scale * Compatibility.Clamp(active?.DisplayScale ?? 1, 0.75, PetPackages.MaximumDisplayScale);
+        double displayScale = active?.Id == "military-eagle" ? 3.6 : active?.DisplayScale ?? 1;
+        preferredSize = DefaultPetSize * scale * Compatibility.Clamp(displayScale, 0.75, PetPackages.MaximumDisplayScale);
         if (IsLoaded) ApplyPetSize();
     }
 

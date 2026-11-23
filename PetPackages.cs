@@ -9,7 +9,7 @@ namespace Sputnik;
 
 internal static class PetPackages
 {
-    internal const double MaximumDisplayScale = 2.4;
+    internal const double MaximumDisplayScale = 3.6;
     private const long Limit = 512L * 1024 * 1024;
     // Full-resolution collections can exceed 512 MiB while each atlas stays
     // small. Keep the per-file and decoded-image bounds independent.

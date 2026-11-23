@@ -2,7 +2,7 @@
 
 <img src="reference.png" alt="Орёл — питомец Спутника" width="480">
 
-[Скачать `.pet`](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle.pet) · [Превью на чёрном и белом фоне](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle-preview.mp4) · [Манифест](package-manifest.json) · [Проверка](validation.json) · [SHA-256](SHA256SUMS.txt)
+[Скачать `.pet`](https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet) · [Превью на чёрном и белом фоне](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle-preview.mp4) · [Манифест](package-manifest.json) · [Проверка](validation.json) · [SHA-256](SHA256SUMS.txt)
 
 **12 прозрачных анимаций, 1164 кадра, 24 кадра/с.** По 97 исходных кадров на действие, около 4 секунд. Пакет: **187.2 МБ**.
 
@@ -14,7 +14,7 @@
 
 Последние два полёта согласованы с небольшим обрезанием крайних кончиков крыльев в трёх кадрах каждого ролика. Эти версии сохранены без дополнительной генерации и дорисовки.
 
-Для согласованного увеличенного размера нужен **Спутник для Windows 1.3.28.32 или новее**: [скачать приложение](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.32). В старых Windows-версиях и macOS 0.2.5 масштаб пакета 2.4 не поддерживается. Этот пакет отдельно на Mac не проверялся.
+Для согласованного увеличенного размера нужен **Спутник для Windows 1.3.28.34 или новее**: [скачать приложение](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.32). В старых Windows-версиях и macOS 0.2.5 масштаб пакета 2.4 не поддерживается. Этот пакет отдельно на Mac не проверялся.
 
 ![12 анимаций орла](preview.jpg)
 
@@ -32,3 +32,8 @@
 10. Дозорный
 11. Боевой взлёт
 12. Воздушный дозор
+
+
+## Обновление размера и меню
+
+Масштаб 3,6 увеличивает орла в 1,5 раза относительно прежнего пакета с масштабом 2,4. Для Windows 1.3.28.34 и macOS 0.2.6 исправлена привязка меню к видимому силуэту. Обновление приложения также исправляет размер ранее импортированного орла.

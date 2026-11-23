@@ -306,7 +306,7 @@ enum PetArchive {
             var installed: [String: Any] = ["id": id, "name": name, "description": description,
                                             "theme": theme, "animations": animations]
             if let neutral { installed["neutral"] = neutral }
-            if let scale = pet["displayScale"] as? Double, (0.75...1.6).contains(scale) { installed["displayScale"] = scale }
+            if let scale = pet["displayScale"] as? Double, (0.75...3.6).contains(scale) { installed["displayScale"] = scale }
             try JSONSerialization.data(withJSONObject: installed).write(to: directory.appendingPathComponent("pet.json"), options: .atomic)
             return installed
         } catch {

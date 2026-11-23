@@ -5,7 +5,7 @@ on:
       version:
         description: macOS version without v
         required: true
-        default: '0.2.5'
+        default: '0.2.6'
         type: string
       publish:
         description: Publish tested preview without Apple notarization
@@ -36,7 +36,11 @@ jobs:
         env:
           APP_VERSION: ${{ inputs.version }}
           SPUTNIK_SMOKE_TEST: '1'
-        run: bash macos/build.sh "$APP_VERSION"
+        run: |
+          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet' --output "$RUNNER_TEMP/eagle.pet"
+          echo '583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7  eagle.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          export SPUTNIK_TEST_EAGLE="$RUNNER_TEMP/eagle.pet"
+          bash macos/build.sh "$APP_VERSION"
       - name: Include isolated import fixtures for native DMG checks
         run: |
           cp "$SPUTNIK_TEST_PET" artifacts/macos/import-smoke.pet
@@ -77,7 +81,9 @@ jobs:
           codesign --verify --strict --verbose=2 "$app"
           architectures=" $(xcrun lipo -archs "$app/Contents/MacOS/Sputnik") "
           [[ "$architectures" == *" arm64 "* && "$architectures" == *" x86_64 "* ]]
-          SPUTNIK_TEST_PET="$PWD/release/import-smoke.pet" SPUTNIK_TEST_PET_UPDATE="$PWD/release/import-smoke-update.pet" "$app/Contents/MacOS/Sputnik" --smoke-test
+          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet' --output "$RUNNER_TEMP/eagle.pet"
+          echo '583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7  eagle.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          SPUTNIK_TEST_EAGLE="$RUNNER_TEMP/eagle.pet" SPUTNIK_TEST_PET="$PWD/release/import-smoke.pet" SPUTNIK_TEST_PET_UPDATE="$PWD/release/import-smoke-update.pet" "$app/Contents/MacOS/Sputnik" --smoke-test
   publish:
     needs: [build, smoke]
     if: inputs.publish

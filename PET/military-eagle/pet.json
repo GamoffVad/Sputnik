@@ -19,12 +19,13 @@
   },
   "package": {
     "file": "exports/military-eagle.pet",
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle.pet",
-    "sha256": "4a487b48cd035cd3652e9b6820c23da83a327d7bef797c18625a0917eacbd4ea",
-    "bytes": 187249246,
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet",
+    "sha256": "583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7",
+    "bytes": 187249245,
     "schemaVersion": 2,
-    "releaseTag": "pets-2026-11-22",
-    "minimumWindowsVersion": "1.3.28.32"
+    "releaseTag": "pet-military-eagle-v2",
+    "minimumWindowsVersion": "1.3.28.34",
+    "minimumMacOSVersion": "0.2.6"
   },
   "preview": {
     "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle-preview.mp4",

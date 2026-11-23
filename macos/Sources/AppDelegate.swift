@@ -338,6 +338,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func prepareSmokeTest(store: MacStore, server: LocalWebServer, pet: DesktopPet) async throws {
+        guard DesktopPet.displayScale(id: "military-eagle", requested: 2.4) == 3.6,
+              DesktopPet.displayScale(id: "military-eagle", requested: nil) == 3.6,
+              DesktopPet.displayScale(id: "klyaksa", requested: 1) == 1 else {
+            throw MacError("Eagle scale compatibility regression")
+        }
+        if let eaglePath = ProcessInfo.processInfo.environment["SPUTNIK_TEST_EAGLE"] {
+            let staged = try await store.stagePet(eaglePath)
+            guard let token = staged["token"] as? String else { throw MacError("Eagle staging failed") }
+            let installed = try store.installPet(token)
+            guard (installed["displayScale"] as? Double) == 3.6,
+                  (installed["animations"] as? [[String: Any]])?.count == 12 else {
+                throw MacError("Eagle scale or twelve animations lost on import")
+            }
+            try store.writeWorkspace(["active": "military-eagle", "themed": true, "petScale": 100])
+            pet.refresh(store.readWorkspace())
+            guard pet.hasFrame, abs(pet.preferredDisplaySize - 828) < 0.01 else { throw MacError("Eagle rendered at old scale") }
+            let visible = pet.visibleFrame
+            guard visible.width > 0, visible.height > 0,
+                  visible.width < pet.window.frame.width, visible.height < pet.window.frame.height else {
+                throw MacError("Eagle transparent padding was not excluded")
+            }
+            buildMenu()
+            guard let menu, let area = pet.window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else { throw MacError("Eagle context menu missing") }
+            if visible.maxY + menu.frame.height + 10 <= area.maxY - 6 {
+                guard abs(menu.frame.minY-visible.maxY-10) < 1 else { throw MacError("Eagle menu gap exceeds ten points") }
+            }
+            hideMenu()
+            FileHandle.standardOutput.write(Data("Sputnik smoke: actual eagle imported, 12 animations, displayScale 3.6, transparent menu padding excluded.\n".utf8))
+            try store.writeWorkspace(["active": "klyaksa", "themed": true])
+            pet.refresh(store.readWorkspace())
+        }
         guard pet.hasFrame, !animationNames.isEmpty else { throw MacError("Первый встроенный спрайт не загрузился.") }
         let bundled = store.bundledPetManifests()
         guard bundled.count == 1, bundled.first?["id"] as? String == "klyaksa",
@@ -614,7 +645,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func position(_ panel: NSWindow, besideMenu: Bool = false) {
         guard let pet else { return }
-        let anchor = pet.window.frame
+        let anchor = besideMenu ? pet.window.frame : pet.visibleFrame
         guard let area = pet.window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame else { return }
         var f = panel.frame
         let gap: CGFloat = 10

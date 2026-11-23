@@ -423,7 +423,8 @@ internal sealed class DesktopControls : IDisposable
         if (TryPositionAtMenu(window, section == "sticky" ? "notes" : section, area)) return;
         if (section == "context")
         {
-            Rect sprite = PetBounds();
+            // Ignore transparent viewport padding; do not follow individual animation ticks.
+            Rect sprite = SpherePetBounds();
             double above = sprite.Top - Gap - window.Height;
             double below = sprite.Bottom + Gap;
             window.Left = Compatibility.Clamp(sprite.Left + (sprite.Width - window.Width) / 2, area.Left, area.Right - window.Width);
