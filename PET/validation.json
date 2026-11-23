@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "count": 11,
+  "count": 12,
   "installedLibraryMatchesCatalog": true,
   "removedPets": [],
   "allPackageAssetsByteVerified": true,
@@ -79,6 +79,14 @@
       "entries": 91
     },
     {
+      "id": "military-eagle",
+      "animations": 12,
+      "frames": 1164,
+      "sha256": "4a487b48cd035cd3652e9b6820c23da83a327d7bef797c18625a0917eacbd4ea",
+      "bytes": 187249246,
+      "entries": 109
+    },
+    {
       "id": "quiet-ninja",
       "animations": 10,
       "frames": 1085,
@@ -94,5 +102,9 @@
       "bytes": 302824158,
       "entries": 42
     }
-  ]
+  ],
+  "snapshotDate": "2026-11-23",
+  "minimumWindowsVersionByPet": {
+    "military-eagle": "1.3.28.32"
+  }
 }

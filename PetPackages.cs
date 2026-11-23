@@ -9,6 +9,7 @@ namespace Sputnik;
 
 internal static class PetPackages
 {
+    internal const double MaximumDisplayScale = 2.4;
     private const long Limit = 512L * 1024 * 1024;
     // Full-resolution collections can exceed 512 MiB while each atlas stays
     // small. Keep the per-file and decoded-image bounds independent.
@@ -133,7 +134,7 @@ internal static class PetPackages
 
             var result = new JsonObject { ["id"] = id, ["name"] = name, ["description"] = description, ["theme"] = cleanTheme, ["animations"] = clips };
             if (neutral is not null) result["neutral"] = neutral;
-            if (manifest["displayScale"] is JsonValue value && value.TryGetValue<double>(out double scale) && scale is >= 0.75 and <= 1.6)
+            if (manifest["displayScale"] is JsonValue value && value.TryGetValue<double>(out double scale) && scale is >= 0.75 and <= MaximumDisplayScale)
                 result["displayScale"] = scale;
             File.WriteAllText(Path.Combine(workspace, "pet.json"), result.ToJsonString());
             var preview = (JsonObject)result.DeepClone();

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "snapshotDate": "2026-11-22",
+  "snapshotDate": "2026-11-23",
   "releaseTag": "pets-2026-11-22",
   "pets": [
     {
@@ -229,6 +229,30 @@
       ],
       "theme": "lerka-rebuilt/theme.json",
       "package": "lerka-rebuilt/exports/lerka-rebuilt.pet"
+    },
+    {
+      "id": "military-eagle",
+      "name": "Орёл",
+      "animations": 12,
+      "frames": 1164,
+      "bundled": false,
+      "file": "military-eagle.pet",
+      "bytes": 187249246,
+      "sha256": "4a487b48cd035cd3652e9b6820c23da83a327d7bef797c18625a0917eacbd4ea",
+      "entries": 109,
+      "sourceAssetsByteIdentical": true,
+      "uncompressedBytes": 187237458,
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle.pet",
+      "folder": "military-eagle",
+      "metadata": "military-eagle/pet.json",
+      "reference": "military-eagle/reference.png",
+      "referenceSize": [
+        862,
+        448
+      ],
+      "theme": "military-eagle/theme.json",
+      "package": "military-eagle/exports/military-eagle.pet",
+      "minimumWindowsVersion": "1.3.28.32"
     },
     {
       "id": "quiet-ninja",
