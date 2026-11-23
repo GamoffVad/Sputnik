@@ -21,7 +21,7 @@
 | [Тихий ниндзя](quiet-ninja/README.md) | 10 | 1085 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/quiet-ninja.pet) |
 | [Песчаный Дозорный](sand-watchman-clean/README.md) | 15 | 1560 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/sand-watchman-clean.pet) |
 
-Для больших наборов используйте Windows-версию 1.3.28.27 или macOS 0.2.5 и новее. В macOS проверены сегментированные RGBA-листы, обновление питомца и пакеты без референса на Intel и Apple Silicon; каждый большой пакет отдельно на Mac не проверялся.
+Для больших наборов используйте Windows-версию 1.3.28.27 или macOS 0.2.5 и новее. В macOS проверены сегментированные RGBA-листы, обновление питомца и пакеты без референса на Intel и Apple Silicon; орёл дополнительно проверен реальным импортом и запуском в macOS 0.2.6 на Intel и Apple Silicon; остальные большие пакеты отдельно на Mac не проверялись.
 
 Ёлка уменьшена на 47,6%, содержит 13 движений без референсных вставок, повторного поклона и праздничного прыжка. [Подробности](christmas-tree/README.md).
 

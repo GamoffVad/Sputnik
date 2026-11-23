@@ -35,9 +35,14 @@
   "minimumWindowsVersion": "1.3.28.34",
   "macOS": {
     "enlargedDisplayScaleSupportedBy025": false,
-    "thisPackageTestedOnMac": false,
+    "thisPackageTestedOnMac": true,
     "minimumVersion": "0.2.6",
-    "enlargedDisplayScaleSupportedBy026": true
+    "enlargedDisplayScaleSupportedBy026": true,
+    "verifiedRun": "https://github.com/GamoffVad/Sputnik/actions/runs/45268060205",
+    "verifiedArchitectures": [
+      "arm64",
+      "x86_64"
+    ]
   },
   "privacy": "Package contains only manifests and transparent PNG atlases; no user settings or connection data.",
   "enlargementFromPreviousPackage": 1.5
