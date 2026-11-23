@@ -83,6 +83,13 @@ static class Check
                 var bounds = button.TransformToAncestor(shortNotice).TransformBounds(new Rect(button.RenderSize));
                 Assert(bounds.Top >= 0 && bounds.Bottom <= shortNotice.ActualHeight, "Action is clipped");
             }
+            var closeButton = Find<Button>(shortNotice).Single(b => AutomationProperties.GetName(b).StartsWith("Закрыть уведомление"));
+            var closeIcon = (FrameworkElement)closeButton.Content;
+            Assert(closeButton.Padding == new Thickness(0) && closeIcon.Width == 12 && closeIcon.Height == 12,
+                "Close glyph size or padding is wrong");
+            var iconBounds = closeIcon.TransformToAncestor(closeButton).TransformBounds(new Rect(closeIcon.RenderSize));
+            Assert(Math.Abs(iconBounds.Left + iconBounds.Width / 2 - closeButton.ActualWidth / 2) < 1
+                && Math.Abs(iconBounds.Top + iconBounds.Height / 2 - closeButton.ActualHeight / 2) < 1, "Close glyph is not centered");
             Render(shortNotice, Path.Combine(data, "reminder-short.png"));
             Click(Button(shortNotice, "На 10 мин"));
             Assert(Saved()["due"]!.GetValue<long>() > DateTimeOffset.Now.AddMinutes(9).ToUnixTimeMilliseconds(), "Snooze did not save");

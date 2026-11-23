@@ -9,17 +9,17 @@
 | Платформа | Версия | Загрузка |
 | --- | --- | --- |
 | macOS 13+, Apple Silicon и Intel | 0.2.5, предварительная | [Скачать DMG](https://github.com/GamoffVad/Sputnik/releases/download/macos-v0.2.5/Sputnik-0.2.5-macOS-Universal.dmg) |
-| Windows 10 / 11, x64 | 1.3.28.28 | [Установщик](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.28/Sputnik-1.3.28.28-Windows-10-11-x64.exe) |
-| Windows 7 SP1, x64 | 1.3.28.28 | [Установщик 64 бит](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.28/Sputnik-1.3.28.28-Windows-7-x64.exe) |
-| Windows 7 SP1, x86 | 1.3.28.28 | [Установщик 32 бита](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.28/Sputnik-1.3.28.28-Windows-7-x86.exe) |
+| Windows 10 / 11, x64 | 1.3.28.29 | [Установщик](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.29/Sputnik-1.3.28.29-Windows-10-11-x64.exe) |
+| Windows 7 SP1, x64 | 1.3.28.29 | [Установщик 64 бит](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.29/Sputnik-1.3.28.29-Windows-7-x64.exe) |
+| Windows 7 SP1, x86 | 1.3.28.29 | [Установщик 32 бита](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.29/Sputnik-1.3.28.29-Windows-7-x86.exe) |
 
-[Изменения Windows](docs/releases/1.3.28.28.md) · [Изменения macOS](docs/releases/macos-0.2.5.md) · [Архив выпусков](https://github.com/GamoffVad/Sputnik/releases)
+[Изменения Windows](docs/releases/1.3.28.29.md) · [Изменения macOS](docs/releases/macos-0.2.5.md) · [Архив выпусков](https://github.com/GamoffVad/Sputnik/releases)
 
 Версии платформ нумеруются отдельно: Windows использует WPF, macOS — AppKit/WebKit. Выпуск macOS подписан ad hoc, без Developer ID и нотарификации Apple. [Установка и сборка macOS](macos/README.md).
 
 ## Установка
 
-1. Скачайте файл `Sputnik-1.3.28.28-Windows-10-11-x64.exe` из [последнего выпуска](https://github.com/GamoffVad/Sputnik/releases/latest).
+1. Скачайте файл `Sputnik-1.3.28.29-Windows-10-11-x64.exe` из [последнего выпуска](https://github.com/GamoffVad/Sputnik/releases/latest).
 2. Запустите мастер, выберите папку и завершите установку. После скачивания интернет для установки не требуется.
 3. Откройте **Спутник** из меню «Пуск». При первом запуске на рабочем столе появится **Клякса**.
 
@@ -43,7 +43,7 @@
 
 ## Управление питомцем
 
-Окна открываются рядом с выбранным пунктом меню. Размер можно менять у заметок — за маркер в правом нижнем углу; остальные окна имеют заданный размер. Чат и список сайтов оформлены компактно, действия представлены значками с подсказками. В **Внешний вид → Цвет новых заметок** можно выбрать **Автоцвет**: новые заметки чередуют пять цветов. [Изменения выпуска 1.3.28.28](docs/releases/1.3.28.28.md).
+Окна открываются рядом с выбранным пунктом меню. Размер можно менять у заметок — за маркер в правом нижнем углу; остальные окна имеют заданный размер. Чат и список сайтов оформлены компактно, действия представлены значками с подсказками. В **Внешний вид → Цвет новых заметок** можно выбрать **Автоцвет**: новые заметки чередуют пять цветов. [Изменения выпуска 1.3.28.29](docs/releases/1.3.28.29.md).
 
 | Действие | Что открывается |
 | --- | --- |
@@ -62,11 +62,11 @@
 
 [Открыть актуальный каталог PET](PET/README.md) · [Скачать библиотеку](https://github.com/GamoffVad/Sputnik/releases/tag/pets-2026-11-22)
 
-В каталоге ровно десять текущих питомцев, включая встроенную Кляксу. Для каждого опубликован отдельный `.pet`, актуальные движения, тема, референсы и SHA-256. Рыцарь-дозорный удалён из текущего состава. Большие наборы, включая ёлку с 15 анимациями, требуют Windows-версии 1.3.28.28 или новее.
+В каталоге ровно десять текущих питомцев, включая встроенную Кляксу. Для каждого опубликован отдельный `.pet`, актуальные движения, тема, референсы и SHA-256. Рыцарь-дозорный удалён из текущего состава. Большие наборы, включая ёлку с 15 анимациями, требуют Windows-версии 1.3.28.29 или новее.
 
 ## Сборка и материалы
 
-Точный снимок текущих исходников Windows находится в [Windows-source.zip](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.28/Sputnik-1.3.28.28-Windows-source.zip). Для его сборки нужен .NET SDK 10. В корне репозитория выполните:
+Точный снимок текущих исходников Windows находится в [Windows-source.zip](https://github.com/GamoffVad/Sputnik/releases/download/v1.3.28.29/Sputnik-1.3.28.29-Windows-source.zip). Для его сборки нужен .NET SDK 10. В корне репозитория выполните:
 
 ```powershell
 dotnet build -c Release

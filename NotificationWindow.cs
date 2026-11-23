@@ -29,8 +29,11 @@ internal sealed class NotificationWindow : Window
         var header = new DockPanel { Margin = new Thickness(0, 0, 0, 12) };
         var close = WorkspaceUi.IconButton("Закрыть уведомление (Esc)", "M4 4 L12 12 M12 4 L4 12");
         close.Width = close.Height = 28;
+        close.Padding = new Thickness(0);
         close.Background = Brushes.Transparent;
-        close.Margin = new Thickness(8, -3, -6, -3);
+        close.Margin = new Thickness(8, 0, 0, 0);
+        close.UseTheme(ForegroundProperty, "Muted");
+        if (close.Content is FrameworkElement closeIcon) closeIcon.Width = closeIcon.Height = 12;
         DockPanel.SetDock(close, Dock.Right);
         header.Children.Add(close);
         var bell = new Path
