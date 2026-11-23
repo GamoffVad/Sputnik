@@ -100,8 +100,8 @@ public partial class MainWindow
         select.SelectionChanged += async (_, _) => { Apply(); await Preview(); };
         useTheme.Click += (_, _) => Apply();
         page.Loaded += async (_, _) => await Preview();
-        page.Unloaded += (_, _) => revision++;
-        page.IsVisibleChanged += async (_, _) => { if (page.IsVisible && page.IsLoaded) await Preview(); else revision++; };
+        page.Unloaded += (_, _) => { revision++; image.Source = null; };
+        page.IsVisibleChanged += async (_, _) => { if (page.IsVisible && page.IsLoaded) await Preview(); else { revision++; image.Source = null; } };
     }
 
     private static ImageSource PetPortrait(JsonObject pet, string root)
@@ -129,11 +129,11 @@ public partial class MainWindow
         for (int x = 0; x < width; x++)
             if (pixels[y * stride + x * 4 + 3] > 8)
             { left = Math.Min(left, x); right = Math.Max(right, x); top = Math.Min(top, y); bottom = Math.Max(bottom, y); }
-        if (right < left) return source;
+        if (right < left) return DesktopPetWindow.DetachBitmap(source);
         left = Math.Max(0, left - 4); top = Math.Max(0, top - 4);
         right = Math.Min(width - 1, right + 4); bottom = Math.Min(height - 1, bottom + 4);
         var result = new CroppedBitmap(bitmap, new Int32Rect(left, top, right - left + 1, bottom - top + 1));
-        result.Freeze(); return result;
+        result.Freeze(); return DesktopPetWindow.DetachBitmap(result);
     }
 
     private void SelectPet(string id, bool themed) => UpdateWorkspace(current =>
@@ -177,7 +177,18 @@ public partial class MainWindow
         int revision = 0;
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000d / 30) };
         var elapsed = new Stopwatch();
-        void Stop() { revision++; timer.Stop(); }
+        Action? render = null;
+        PetPreviewSheets? previewSheets = null;
+        timer.Tick += (_, _) => render?.Invoke();
+        void Stop()
+        {
+            revision++;
+            timer.Stop();
+            render = null;
+            previewSheets?.Dispose();
+            previewSheets = null;
+            image.Source = null;
+        }
         page.Unloaded += (_, _) => Stop();
         page.IsVisibleChanged += (_, _) => { if (!page.IsVisible) Stop(); else LoadMotion(); };
         motion.SelectionChanged += (_, _) => LoadMotion();
@@ -192,54 +203,128 @@ public partial class MainWindow
             var sources = (clip["sheets"] as JsonArray)?.OfType<JsonObject>().ToArray() ?? [clip];
             string[] paths = sources.Select(part => Path.Combine(folder, Value(part, "file"))).ToArray();
             status.Text = "Загрузка кадров…";
+            PetPreviewSheets? sheets = null;
             try
             {
-                var atlases = await Task.Run(() => paths.Select(DesktopPetWindow.ReadSheet).ToArray());
+                sheets = await PetPreviewSheets.Open(paths);
                 var neutral = (clip["neutral"] ?? staged["neutral"]) as JsonObject;
                 var neutralFrame = neutral is null ? null : await Task.Run(() => DesktopPetWindow.ReadSheet(Path.Combine(folder, Value(neutral, "file"))));
+                if (sequence != revision || !page.IsVisible) { sheets.Dispose(); return; }
+                previewSheets = sheets;
                 var json = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 var viewport = clip["viewport"]?.Deserialize<PetViewport>(json);
                 var neutralViewport = neutral?["viewport"]?.Deserialize<PetViewport>(json);
-                if (sequence != revision || !page.IsVisible) return;
                 int columns = clip["columns"]!.GetValue<int>(), width = clip["frameWidth"]!.GetValue<int>(), height = clip["frameHeight"]!.GetValue<int>();
                 int count = clip["frameCount"]!.GetValue<int>(), fps = clip["fps"]!.GetValue<int>();
                 int[] counts = sources.Select(part => part["frames"]?.GetValue<int>() ?? count).ToArray();
                 int last = -1;
                 void Render()
                 {
-                    int index = (int)(elapsed.Elapsed.TotalSeconds * fps) % count;
-                    if (index == last) return;
-                    last = index;
-                    int absoluteIndex = index;
-                    ImageSource presentation;
-                    if (neutralFrame is not null && (index == 0 || index == count - 1))
-                        presentation = PetFrames.Present(neutralFrame, neutralViewport);
-                    else
+                    try
                     {
-                        int part = 0;
-                        while (index >= counts[part]) index -= counts[part++];
-                        var frame = new CroppedBitmap(atlases[part], new Int32Rect(index % columns * width, index / columns * height, width, height));
-                        presentation = PetFrames.Present(frame, viewport);
+                        int requested = (int)(elapsed.Elapsed.TotalSeconds * fps) % count;
+                        int index = last < 0 ? 0 : requested == last ? last : (last + 1) % count;
+                        if (index == last) return;
+                        int absoluteIndex = index;
+                        ImageSource presentation;
+                        if (neutralFrame is not null && (index == 0 || index == count - 1))
+                            presentation = PetFrames.Present(neutralFrame, neutralViewport);
+                        else
+                        {
+                            int part = 0;
+                            while (index >= counts[part]) index -= counts[part++];
+                            if (!sheets.TryGet(part, out var atlas)) { elapsed.Stop(); return; }
+                            var frame = new CroppedBitmap(atlas, new Int32Rect(index % columns * width, index / columns * height, width, height));
+                            presentation = PetFrames.Present(frame, viewport);
+                        }
+                        if (neutralFrame is not null)
+                        {
+                            double side = Math.Min(image.ActualWidth > 0 ? image.ActualWidth : image.Height, image.Height);
+                            double dpi = VisualTreeHelper.GetDpi(image).DpiScaleX;
+                            presentation = PetFrames.Transition(presentation, PetFrames.Present(neutralFrame, neutralViewport),
+                                absoluteIndex, count, neutral?["blendFrames"]?.GetValue<int>() ?? 3,
+                                new Size(side * dpi, side * dpi), RenderOptions.GetBitmapScalingMode(image));
+                        }
+                        image.Source = presentation;
+                        last = absoluteIndex;
+                        elapsed.Start();
                     }
-                    if (neutralFrame is not null)
+                    catch (Exception error)
                     {
-                        double side = Math.Min(image.ActualWidth > 0 ? image.ActualWidth : image.Height, image.Height);
-                        double dpi = VisualTreeHelper.GetDpi(image).DpiScaleX;
-                        presentation = PetFrames.Transition(presentation, PetFrames.Present(neutralFrame, neutralViewport),
-                            absoluteIndex, count, neutral?["blendFrames"]?.GetValue<int>() ?? 3,
-                            new Size(side * dpi, side * dpi), RenderOptions.GetBitmapScalingMode(image));
+                        Stop();
+                        status.Text = error.Message;
                     }
-                    image.Source = presentation;
                 }
-                timer.Stop();
-                timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000d / 30) };
-                timer.Tick += (_, _) => Render();
+                render = Render;
                 elapsed.Restart();
                 Render();
+                if (sequence != revision) return;
                 timer.Start();
                 status.Text = "";
             }
-            catch (Exception error) { if (sequence == revision) status.Text = error.Message; }
+            catch (Exception error)
+            {
+                sheets?.Dispose();
+                if (sequence == revision) { Stop(); status.Text = error.Message; }
+            }
         }
+    }
+}
+
+// The import preview uses the same full-resolution images as playback, but
+// retains only the currently displayed sheet and one look-ahead sheet.
+internal sealed class PetPreviewSheets : IDisposable
+{
+    private readonly string[] paths;
+    private BitmapSource? current;
+    private int currentIndex;
+    private Task<BitmapSource>? next;
+    private int nextIndex = -1;
+    private bool disposed;
+
+    private PetPreviewSheets(string[] paths, BitmapSource first)
+    {
+        this.paths = paths;
+        current = first;
+    }
+
+    internal static async Task<PetPreviewSheets> Open(string[] paths)
+    {
+        if (paths.Length == 0) throw new InvalidDataException("Нет PNG-листов анимации.");
+        return new PetPreviewSheets(paths, await Task.Run(() => DesktopPetWindow.ReadSheet(paths[0])).ConfigureAwait(false));
+    }
+
+    internal bool TryGet(int index, out BitmapSource? bitmap)
+    {
+        bitmap = null;
+        if (disposed) return false;
+        if (index != currentIndex)
+        {
+            if (nextIndex != index) Preload(index);
+            if (next?.IsCompleted != true) return false;
+            current = next.GetAwaiter().GetResult();
+            currentIndex = index;
+            next = null;
+            nextIndex = -1;
+        }
+        bitmap = current;
+        if (paths.Length > 1) Preload((index + 1) % paths.Length);
+        return bitmap is not null;
+    }
+
+    private void Preload(int index)
+    {
+        if (disposed || nextIndex == index || currentIndex == index) return;
+        string path = paths[index];
+        nextIndex = index;
+        next = Task.Run(() => DesktopPetWindow.ReadSheet(path));
+    }
+
+    public void Dispose()
+    {
+        disposed = true;
+        current = null;
+        next = null;
+        nextIndex = -1;
     }
 }

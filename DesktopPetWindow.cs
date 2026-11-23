@@ -84,7 +84,6 @@ internal sealed class DesktopPetWindow : Window
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Queue<AnimationClip> upcoming = new();
     private readonly HashSet<AnimationClip> unavailable = new();
-    private readonly Dictionary<string, BitmapSource> bundledSheets = new();
     private HashSet<string> disabledMotions = new(StringComparer.Ordinal);
     private Pet? active;
     private AnimationClip? current;
@@ -463,7 +462,6 @@ internal sealed class DesktopPetWindow : Window
         loadedManifestUtc = File.GetLastWriteTimeUtc(Path.Combine(root, "pet.json"));
         upcoming.Clear();
         unavailable.Clear();
-        bundledSheets.Clear();
         visibleBounds.Clear();
         current = null;
         sheet = null;
@@ -570,13 +568,17 @@ internal sealed class DesktopPetWindow : Window
             try
             {
                 var first = next.Locate(0);
-                sheet = GetSheet(first.File, next.Sheets is not null);
+                sheet = GetSheet(first.File);
                 sheetFile = first.File;
                 var previousPose = CurrentNeutral;
-                var outgoing = current is null ? null : sprite.Source;
+                var outgoing = current is null ? null : displayedFrame;
+                var outgoingViewport = displayedViewport;
                 current = next;
                 bool changedPose = previousPose?.File != CurrentNeutral?.File || previousPose?.Viewport != CurrentNeutral?.Viewport;
-                entryFrame = changedPose ? outgoing : null;
+                // A CroppedBitmap keeps its entire atlas alive. A transition
+                // only needs this one frame, with the original viewport.
+                entryFrame = changedPose && outgoing is not null
+                    ? PetFrames.Present(DetachBitmap(outgoing), outgoingViewport) : null;
                 if (changedPose) neutralFrame = null;
                 lastFrame = -1;
                 elapsed.Restart();
@@ -595,19 +597,31 @@ internal sealed class DesktopPetWindow : Window
         return false;
     }
 
-    private BitmapSource GetSheet(string file, bool segmented)
+    private BitmapSource GetSheet(string file)
     {
-        if (bundledSheets.TryGetValue(file, out var cached)) return cached;
+        if (sheetFile == file && sheet is not null) return sheet;
         var bitmap = preloadedFile == file && preloaded?.Status == TaskStatus.RanToCompletion
             ? preloaded.Result : null;
         bitmap ??= ReadSheet(Path.Combine(root, file));
-        if (root == Assets || segmented)
+        if (preloadedFile == file)
         {
-            if (segmented && bundledSheets.Count >= 2)
-                bundledSheets.Remove(bundledSheets.Keys.First(key => key != sheetFile));
-            bundledSheets.Add(file, bitmap);
+            preloaded = null;
+            preloadedFile = null;
         }
+        // Both bundled and imported atlases can be large. Reuse the current
+        // sheet for pinned loops, but retain no historical decoded atlases.
         return bitmap;
+    }
+
+    internal static BitmapSource DetachBitmap(BitmapSource source)
+    {
+        int stride = (source.PixelWidth * source.Format.BitsPerPixel + 7) / 8;
+        var pixels = new byte[stride * source.PixelHeight];
+        source.CopyPixels(pixels, stride, 0);
+        var copy = BitmapSource.Create(source.PixelWidth, source.PixelHeight, source.DpiX, source.DpiY,
+            source.Format, source.Palette, pixels, stride);
+        copy.Freeze();
+        return copy;
     }
 
     internal static BitmapSource ReadSheet(string file)
@@ -624,7 +638,13 @@ internal sealed class DesktopPetWindow : Window
 
     private void PreloadSheet(string? file)
     {
-        if (file is null || bundledSheets.ContainsKey(file) || preloadedFile == file) return;
+        if (file is null || file == sheetFile)
+        {
+            preloaded = null;
+            preloadedFile = null;
+            return;
+        }
+        if (preloadedFile == file) return;
         string path = Path.Combine(root, file);
         preloadedFile = file;
         preloaded = Task.Run<BitmapSource?>(() =>
@@ -685,7 +705,7 @@ internal sealed class DesktopPetWindow : Window
             if (preloadedFile == part.File && preloaded?.IsCompleted == false) return;
             try
             {
-                sheet = GetSheet(part.File, current.Sheets is not null);
+                sheet = GetSheet(part.File);
                 sheetFile = part.File;
             }
             catch (Exception error) when (error is IOException or NotSupportedException or ArgumentException or FormatException or InvalidOperationException)
