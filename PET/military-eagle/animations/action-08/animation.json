@@ -1,0 +1,65 @@
+{
+  "id": "action-08",
+  "name": "Проверка снаряжения",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Проверка снаряжения",
+    "frameWidth": 570,
+    "frameHeight": 427,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "viewport": {
+      "x": -578.0178141798302,
+      "y": -480.76205232660607,
+      "width": 1821.693119014456,
+      "height": 1081.8032311569136
+    },
+    "sheets": [
+      {
+        "file": "motion-08-00.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-01.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-02.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-03.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-04.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-05.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-06.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-07.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-08-08.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 7,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

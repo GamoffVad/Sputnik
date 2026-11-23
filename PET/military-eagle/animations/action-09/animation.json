@@ -1,0 +1,65 @@
+{
+  "id": "action-09",
+  "name": "Боевая готовность",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Боевая готовность",
+    "frameWidth": 760,
+    "frameHeight": 437,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "viewport": {
+      "x": -485.2713846153846,
+      "y": -476.0098461538462,
+      "width": 1826.358153846154,
+      "height": 1084.5735384615384
+    },
+    "sheets": [
+      {
+        "file": "motion-09-00.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-01.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-02.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-03.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-04.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-05.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-06.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-07.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-09-08.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 8,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

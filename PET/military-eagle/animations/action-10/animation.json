@@ -1,0 +1,65 @@
+{
+  "id": "action-10",
+  "name": "Дозорный",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Дозорный",
+    "frameWidth": 928,
+    "frameHeight": 479,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "viewport": {
+      "x": -542.2713846153846,
+      "y": -439.0098461538462,
+      "width": 1826.358153846154,
+      "height": 1084.5735384615384
+    },
+    "sheets": [
+      {
+        "file": "motion-10-00.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-01.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-02.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-03.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-04.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-05.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-06.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-07.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-10-08.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 9,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

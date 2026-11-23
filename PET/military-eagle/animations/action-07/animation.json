@@ -1,0 +1,65 @@
+{
+  "id": "action-07",
+  "name": "Приказ выступать",
+  "status": "installed-animation",
+  "existingClip": {
+    "name": "Приказ выступать",
+    "frameWidth": 752,
+    "frameHeight": 434,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "viewport": {
+      "x": -436.14531984939765,
+      "y": -475.8866678452723,
+      "width": 1824.027127811556,
+      "height": 1083.1892704584275
+    },
+    "sheets": [
+      {
+        "file": "motion-07-00.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-01.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-02.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-03.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-04.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-05.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-06.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-07.png",
+        "frames": 12
+      },
+      {
+        "file": "motion-07-08.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 6,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true,
+    "sourceAssetBytesVerified": true
+  },
+  "runtimeReferenceBlending": false,
+  "durationSeconds": 4.041666666666667
+}

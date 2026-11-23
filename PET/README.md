@@ -1,8 +1,8 @@
 # Питомцы «Спутника»
 
-Каталог соответствует установленной библиотеке на 22 ноября 2026 года: **11 питомцев**, включая встроенную Кляксу.
+Каталог соответствует установленной библиотеке на 23 ноября 2026 года: **12 питомцев**, включая встроенную Кляксу.
 
-[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.27) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.5) · [Каталог JSON](catalog.json) · [Проверка](validation.json)
+[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.32) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.5) · [Каталог JSON](catalog.json) · [Проверка](validation.json)
 
 Скачайте `.pet`, затем выберите **Питомцы → плюс → файл → Установить питомца**. Все PNG перенесены из установленной библиотеки побайтово. Настройки, заметки и данные подключения в пакеты не входят.
 
@@ -15,6 +15,7 @@
 | [HUDI](hudi/README.md) | 1 | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/hudi.pet) |
 | [Девочка в розовом](kitty-girl/README.md) | 14 | 1736 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kitty-girl.pet) |
 | [Клякса](klyaksa/README.md) | 8 | 712 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/klyaksa.pet) |
+| [Орёл](military-eagle/README.md) | 12 | 1164 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle.pet) |
 | [Кудряшка](kudryashka/README.md) | 4 | 431 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kudryashka.pet) |
 | [Лерка — все анимации](lerka-rebuilt/README.md) | 12 | 1260 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/lerka-rebuilt.pet) |
 | [Тихий ниндзя](quiet-ninja/README.md) | 10 | 1085 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/quiet-ninja.pet) |
@@ -29,3 +30,5 @@
 У брюнетки выровнен масштаб на стыках и убрана зелёная примесь на кончиках волос. Прозрачность сохранена; референсных вставок и смешивания нет. В каждом движении сохранены 97 исходных кадров. [Сравнение до/после](black-haired-doll/README.md).
 
 Тяжёлые `.pet` публикуются в [едином выпуске библиотеки](https://github.com/GamoffVad/Sputnik/releases/tag/pets-2026-11-22); в Git хранятся манифесты, референсы и описания. Старые выпуски доступны в истории.
+
+У орла — 12 движений, новая «Кругом» с работой лап и два полёта. Для увеличенного размера требуется Windows 1.3.28.32 или новее; см. [проверки и ограничения](military-eagle/README.md).

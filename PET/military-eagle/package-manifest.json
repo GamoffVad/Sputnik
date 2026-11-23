@@ -1,0 +1,639 @@
+{
+  "schemaVersion": 2,
+  "id": "military-eagle",
+  "name": "Орёл",
+  "description": "Военизированный орёл. 12 живых движений, включая два полёта.",
+  "theme": {
+    "name": "Орлиный дозор",
+    "accent": "#E2B04D",
+    "background": "#1D2420",
+    "surface": "#303A31"
+  },
+  "displayScale": 2.4,
+  "animations": [
+    {
+      "name": "Строевое раскрытие крыльев",
+      "frameWidth": 862,
+      "frameHeight": 448,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -455.2713846153846,
+        "y": -461.0098461538462,
+        "width": 1826.358153846154,
+        "height": 1084.5735384615384
+      },
+      "sheets": [
+        {
+          "file": "motion-01-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-01-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Смирно!",
+      "frameWidth": 566,
+      "frameHeight": 469,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -580.1453198493977,
+        "y": -439.8866678452723,
+        "width": 1824.027127811556,
+        "height": 1083.1892704584275
+      },
+      "sheets": [
+        {
+          "file": "motion-02-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-02-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Воинское приветствие",
+      "frameWidth": 566,
+      "frameHeight": 444,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -579.0178141798302,
+        "y": -464.76205232660607,
+        "width": 1821.693119014456,
+        "height": 1081.8032311569136
+      },
+      "sheets": [
+        {
+          "file": "motion-03-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-03-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Строевой шаг",
+      "frameWidth": 582,
+      "frameHeight": 498,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -567.0178141798302,
+        "y": -410.76205232660607,
+        "width": 1821.693119014456,
+        "height": 1081.8032311569136
+      },
+      "sheets": [
+        {
+          "file": "motion-04-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-04-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Кругом!",
+      "frameWidth": 618,
+      "frameHeight": 427,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -566.2713846153846,
+        "y": -483.0098461538462,
+        "width": 1826.358153846154,
+        "height": 1084.5735384615384
+      },
+      "sheets": [
+        {
+          "file": "motion-05-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-05-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Осмотр сектора",
+      "frameWidth": 566,
+      "frameHeight": 428,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -581.2713846153846,
+        "y": -481.0098461538462,
+        "width": 1826.358153846154,
+        "height": 1084.5735384615384
+      },
+      "sheets": [
+        {
+          "file": "motion-06-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-06-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Приказ выступать",
+      "frameWidth": 752,
+      "frameHeight": 434,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -436.14531984939765,
+        "y": -475.8866678452723,
+        "width": 1824.027127811556,
+        "height": 1083.1892704584275
+      },
+      "sheets": [
+        {
+          "file": "motion-07-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-07-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Проверка снаряжения",
+      "frameWidth": 570,
+      "frameHeight": 427,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -578.0178141798302,
+        "y": -480.76205232660607,
+        "width": 1821.693119014456,
+        "height": 1081.8032311569136
+      },
+      "sheets": [
+        {
+          "file": "motion-08-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-08-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Боевая готовность",
+      "frameWidth": 760,
+      "frameHeight": 437,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -485.2713846153846,
+        "y": -476.0098461538462,
+        "width": 1826.358153846154,
+        "height": 1084.5735384615384
+      },
+      "sheets": [
+        {
+          "file": "motion-09-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-09-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Дозорный",
+      "frameWidth": 928,
+      "frameHeight": 479,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -542.2713846153846,
+        "y": -439.0098461538462,
+        "width": 1826.358153846154,
+        "height": 1084.5735384615384
+      },
+      "sheets": [
+        {
+          "file": "motion-10-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-10-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Боевой взлёт",
+      "frameWidth": 594,
+      "frameHeight": 576,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -272.3992840365594,
+        "y": -66.90641188430743,
+        "width": 1205.6037402346742,
+        "height": 715.9416742960103
+      },
+      "sheets": [
+        {
+          "file": "motion-11-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-11-08.png",
+          "frames": 1
+        }
+      ]
+    },
+    {
+      "name": "Воздушный дозор",
+      "frameWidth": 1076,
+      "frameHeight": 580,
+      "columns": 4,
+      "frameCount": 97,
+      "fps": 24,
+      "viewport": {
+        "x": -52.39928403655938,
+        "y": -68.90641188430743,
+        "width": 1205.6037402346742,
+        "height": 715.9416742960103
+      },
+      "sheets": [
+        {
+          "file": "motion-12-00.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-01.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-02.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-03.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-04.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-05.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-06.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-07.png",
+          "frames": 12
+        },
+        {
+          "file": "motion-12-08.png",
+          "frames": 1
+        }
+      ]
+    }
+  ]
+}
