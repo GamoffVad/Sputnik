@@ -110,6 +110,10 @@ public partial class MainWindow : Window
         DataTransfer.SyncFor(path);
     }
 
+    internal static bool IsApplicationTarget(string path) =>
+        Compatibility.IsFullyQualifiedPath(path) && File.Exists(path) &&
+        Path.GetExtension(path).Equals(".exe", StringComparison.OrdinalIgnoreCase);
+
     internal static void OpenTarget(string kind, string target)
     {
         if (kind == "site")
@@ -118,8 +122,7 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("Браузер не может открыть этот адрес.");
             target = website.AbsoluteUri;
         }
-        else if (kind != "app" || !Compatibility.IsFullyQualifiedPath(target) || !File.Exists(target) ||
-                 !Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+        else if (kind != "app" || !IsApplicationTarget(target))
             throw new InvalidOperationException("Выберите существующее приложение Windows (.exe).");
 
         Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });

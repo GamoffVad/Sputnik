@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -41,7 +42,15 @@ internal sealed class DesktopControls : IDisposable
         Entries.Where(entry => entry.Action != "exit").Select(entry => (entry.Title, entry.Action)).Concat(new[] {
             ("Все заметки", "note-list"), ("Памятные даты", "dates"), ("Календарь", "calendar"), ("Не беспокоить", "notifications"),
             ("Быстрые команды", "commands"), ("Фокус", "focus"), ("Профили", "profiles"), ("Синхронизация", "sync"), ("Модули", "modules") });
-    internal sealed record Favorite(string Kind, string Title, string Target, string Icon, string SiteIcon = "", bool Monochrome = false);
+    internal sealed record Favorite(string Kind, string Title, string Target, string Icon, string SiteIcon = "", bool Monochrome = false)
+    {
+        internal string IconSource { get; init; } = "";
+
+        internal static Favorite FromSettings(JsonObject item) =>
+            new(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "", item["target"]?.ToString() ?? "",
+                item["icon"]?.ToString() ?? "", item["siteIcon"]?.ToString() ?? "", item["monochrome"]?.GetValue<bool>() == true)
+            { IconSource = item["iconSource"]?.ToString() ?? "" };
+    }
 
     private readonly Window pet;
     private readonly Action<string> open;
@@ -163,7 +172,7 @@ internal sealed class DesktopControls : IDisposable
             var toggle = new Button
             {
                 Cursor = Cursors.Hand,
-                Content = new Viewbox { Child = ReadSiteIcon(item) ?? icon, Stretch = Stretch.Uniform },
+                Content = new Viewbox { Child = ReadFavoriteIcon(item) ?? icon, Stretch = Stretch.Uniform },
             };
             var popover = HoverCard.Attach(toggle, item.Title,
                 pages == 1 ? null : $"{spherePage + 1}/{pages} · Колесо мыши — следующая страница");
@@ -190,16 +199,26 @@ internal sealed class DesktopControls : IDisposable
         StopWatchingWhenIdle();
     }
 
-    internal static FrameworkElement? ReadSiteIcon(Favorite item)
+    internal static FrameworkElement? ReadFavoriteIcon(Favorite item)
     {
-        if (item.Kind != "site" || !SiteIcons.IsCachedName(item.SiteIcon)) return null;
         try
         {
-            string folder = System.IO.Path.Combine(App.DataDirectory, "site-icons");
-            string? name = item.Monochrome ? SiteIconMask.Ensure(folder, item.SiteIcon) : item.SiteIcon;
-            if (name is null) return null;
-            using var stream = System.IO.File.OpenRead(System.IO.Path.Combine(folder, name));
-            var source = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            BitmapSource? source;
+            if (item.Kind == "app" && item.IconSource == "app")
+            {
+                source = FavoriteIcons.ReadApplicationIcon(item.Target);
+                if (source is not null && item.Monochrome) source = SiteIconMask.Create(source);
+            }
+            else if (item.Kind == "site" && item.IconSource != "library" && SiteIcons.IsCachedName(item.SiteIcon))
+            {
+                string folder = System.IO.Path.Combine(App.DataDirectory, "site-icons");
+                string? name = item.Monochrome ? SiteIconMask.Ensure(folder, item.SiteIcon) : item.SiteIcon;
+                if (name is null) return null;
+                using var stream = System.IO.File.OpenRead(System.IO.Path.Combine(folder, name));
+                source = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            }
+            else return null;
+            if (source is null) return null;
             if (!item.Monochrome)
             {
                 var image = new Image { Width = 26, Height = 26, Source = source, Stretch = Stretch.Uniform,
@@ -213,7 +232,8 @@ internal sealed class DesktopControls : IDisposable
             shape.UseTheme(Shape.FillProperty, "Accent");
             return shape;
         }
-        catch (Exception error) when (error is System.IO.IOException or NotSupportedException or System.IO.FileFormatException) { return null; }
+        catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException or NotSupportedException or
+            ArgumentException or System.IO.FileFormatException or ExternalException) { return null; }
     }
 
     public bool ShowSpheres()

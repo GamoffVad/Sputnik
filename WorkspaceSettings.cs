@@ -469,8 +469,7 @@ public partial class MainWindow
         foreach (var item in favorites.OfType<JsonObject>())
         {
             string title = Value(item, "title"), target = Value(item, "target"), kind = Value(item, "kind");
-            var favorite = new DesktopControls.Favorite(kind, title, target, Value(item, "icon"),
-                Value(item, "siteIcon"), item["monochrome"]?.GetValue<bool>() == true);
+            var favorite = DesktopControls.Favorite.FromSettings(item);
             var outline = new System.Windows.Shapes.Path
             {
                 Data = FavoriteIcons.Get(favorite.Icon) ?? FavoriteIcons.Get(kind == "app" ? "cpu" : "globe"),
@@ -478,7 +477,7 @@ public partial class MainWindow
                 StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round
             };
             outline.UseTheme(System.Windows.Shapes.Shape.StrokeProperty, "Accent");
-            var icon = new Viewbox { Child = DesktopControls.ReadSiteIcon(favorite) ?? outline, Width = 24, Height = 24,
+            var icon = new Viewbox { Child = DesktopControls.ReadFavoriteIcon(favorite) ?? outline, Width = 24, Height = 24,
                 Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center };
             var caption = Text(title, size: 13.5);
             caption.FontWeight = FontWeights.SemiBold;
@@ -670,10 +669,15 @@ public partial class MainWindow
                 Width = 26, Height = 26, Stretch = Stretch.Uniform, StrokeThickness = 1.5,
                 StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round };
             glyph.UseTheme(System.Windows.Shapes.Shape.StrokeProperty, "Accent");
-            var cached = automatic && site && target.Text.Trim() == Value(existing, "target")
-                ? DesktopControls.ReadSiteIcon(new DesktopControls.Favorite("site", "", target.Text, "globe", Value(existing, "siteIcon"), monochrome.IsChecked == true)) : null;
+            var cached = automatic && (!site || target.Text.Trim() == Value(existing, "target"))
+                ? DesktopControls.ReadFavoriteIcon(new DesktopControls.Favorite(site ? "site" : "app", "", target.Text.Trim(),
+                    site ? "globe" : "cpu", Value(existing, "siteIcon"), monochrome.IsChecked == true)
+                    { IconSource = site ? "site" : "app" }) : null;
             preview.Child = cached ?? glyph;
-            iconHint.Text = automatic ? site ? "Загрузится с сайта после сохранения" : "Стандартный значок программы" : "Значок из библиотеки";
+            if (!automatic) iconHint.Text = "Значок из библиотеки";
+            else if (site) iconHint.Text = "Загрузится с сайта после сохранения";
+            else if (cached is not null) iconHint.Text = monochrome.IsChecked == true ? "Монохромный значок программы" : "Значок выбранной программы";
+            else iconHint.Text = IsApplicationTarget(target.Text.Trim()) ? "В программе нет значка — используется стандартный" : "Выберите программу, чтобы загрузить её значок";
         }
         void UpdateKind()
         {
@@ -682,7 +686,7 @@ public partial class MainWindow
             addressLabel.Text = site ? "Адрес сайта" : "Путь к программе";
             targetHint.Text = site ? "example.com" : @"C:\Программы\Приложение.exe";
             automaticItem.Content = site ? "Автоматически" : "Значок программы";
-            AutomationProperties.SetName(automaticItem, site ? "Значок сайта автоматически" : "Стандартный значок программы");
+            AutomationProperties.SetName(automaticItem, site ? "Значок сайта автоматически" : "Значок программы");
             UpdatePreview();
         }
         siteChoice.Checked += (_, _) => UpdateKind();
@@ -720,19 +724,19 @@ public partial class MainWindow
                     return;
                 }
             }
-            else if (!Compatibility.IsFullyQualifiedPath(value) || !File.Exists(value) || !Path.GetExtension(value).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+            else if (!IsApplicationTarget(value))
             {
                 status.Text = "Выберите существующее приложение Windows (.exe).";
                 target.Focus();
                 return;
             }
             string selected = icons.SelectedValue as string ?? automaticLabel;
-            bool automatic = site && selected == automaticLabel;
+            bool automatic = selected == automaticLabel;
             var favorite = new JsonObject
             {
                 ["id"] = id, ["kind"] = site ? "site" : "app", ["title"] = label, ["target"] = value,
                 ["icon"] = selected == automaticLabel ? site ? "globe" : "cpu" : selected,
-                ["iconSource"] = automatic ? "site" : "library", ["monochrome"] = monochrome.IsChecked == true
+                ["iconSource"] = automatic ? site ? "site" : "app" : "library", ["monochrome"] = monochrome.IsChecked == true
             };
             UpdateWorkspace(state =>
             {
@@ -741,7 +745,7 @@ public partial class MainWindow
                 if (previous is null) items.Add(favorite); else items[items.IndexOf(previous)] = favorite;
             }, true);
             OpenSection("favorites");
-            if (automatic) _ = AddFavoriteSiteIcon(id, value);
+            if (automatic && site) _ = AddFavoriteSiteIcon(id, value);
         }, true);
         save.Height = 34;
         save.IsDefault = true;

@@ -1,8 +1,11 @@
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Xml.Linq;
 
 namespace Sputnik;
@@ -13,6 +16,29 @@ internal static class FavoriteIcons
 
     public static Geometry? Get(string id) => Catalog.Value.TryGetValue(id, out var geometry) ? geometry : null;
     public static IEnumerable<string> Names => Catalog.Value.Keys.OrderBy(id => id);
+
+    internal static BitmapSource? ReadApplicationIcon(string path)
+    {
+        path = path.Trim();
+        if (!MainWindow.IsApplicationTarget(path)) return null;
+        uint count = ExtractIconEx(path, 0, out IntPtr icon, IntPtr.Zero, 1);
+        if (icon == IntPtr.Zero) return null;
+        try
+        {
+            if (count != 1) return null;
+            var bitmap = Imaging.CreateBitmapSourceFromHIcon(icon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            bitmap.Freeze();
+            return bitmap;
+        }
+        finally { DestroyIcon(icon); }
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint ExtractIconEx(string file, int index, out IntPtr largeIcon, IntPtr smallIcon, uint count);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(IntPtr icon);
 
     private static Dictionary<string, Geometry> Load()
     {

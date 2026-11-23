@@ -10,6 +10,8 @@
 
 `pet-removal-check` работает только с синтетической библиотекой в `artifacts`: удаление и возврат питомца, переключение активного на Кляксу, защита встроенного питомца, проверка путей и конфликта восстановления, сохранность байтов PNG и пользовательской палитры. Команда: `dotnet run --project tests/pet-removal-check/Check.csproj -c Release -- artifacts/pet-removal-check/current`.
 
+`application-icons-check` извлекает настоящий значок из тестового EXE с кириллицей и пробелами в пути, проверяет цветной/монохромный предпросмотр, сохранение и повторное открытие формы, список избранного и сферу, явный выбор значка библиотеки, отсутствующий файл и EXE без значка. Тестовую программу не запускает. Команда: `dotnet run --project tests/application-icons-check/Check.csproj -c Release -- artifacts/application-icons-check/current`.
+
 ```powershell
 dotnet build Sputnik.csproj -c Release
 dotnet run --project tests/workspace-check/Check.csproj -c Release -- --components

@@ -274,9 +274,7 @@ internal sealed class DesktopPetWindow : Window
         if (desired != active?.Id || (root != Assets && File.GetLastWriteTimeUtc(Path.Combine(root, "pet.json")) != loadedManifestUtc)) SelectFromStore(desired, workspace);
         else ApplyMotionSettings(workspace);
         var favorites = (workspace?["favorites"] as JsonArray)?.OfType<JsonObject>()
-            .Select(item => new DesktopControls.Favorite(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "",
-                item["target"]?.ToString() ?? "", item["icon"]?.ToString() ?? "", item["siteIcon"]?.ToString() ?? "",
-                item["monochrome"]?.GetValue<bool>() == true))
+            .Select(DesktopControls.Favorite.FromSettings)
             .Where(item => item.Kind is "site" or "app" && item.Title.Length > 0 && item.Target.Length > 0)
             .ToArray() ?? [];
         var manual = workspace?["customTheme"] as JsonObject;

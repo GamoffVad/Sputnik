@@ -58,7 +58,7 @@ jobs:
           New-Item -ItemType Directory -Force $out | Out-Null
           & ./installer/Prepare-Payload.ps1 -PublishDir $payload
           & ./installer/Test-Payload.ps1 -PublishDir $payload -Version $env:APP_VERSION -Target modern-x64
-          foreach ($check in @('notification-check','memory-check','pet-removal-check')) {
+          foreach ($check in @('notification-check','memory-check','pet-removal-check','application-icons-check')) {
             dotnet run --project "tests/$check/Check.csproj" -c Release "-p:SputnikDirectory=$payload" -- "artifacts/qa/$check-modern"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
@@ -77,14 +77,14 @@ jobs:
           foreach ($arch in @('x64','x86')) {
             Copy-Item "artifacts/win7/v$env:APP_VERSION/SputnikSetup-$env:APP_VERSION-win7-$arch.exe" "artifacts/release/Sputnik-$env:APP_VERSION-Windows-7-$arch.exe"
             $legacyPayload = Join-Path $PWD "artifacts/win7/payload-$env:APP_VERSION-$arch"
-            foreach ($check in @('notification-check','memory-check','pet-removal-check')) {
+            foreach ($check in @('notification-check','memory-check','pet-removal-check','application-icons-check')) {
               $intermediate = Join-Path $PWD "artifacts/qa/obj-$check-$arch/"
               dotnet run --project "tests/$check/Check.csproj" -c Release -p:Win7=true "-p:PlatformTarget=$arch" "-p:SputnikDirectory=$legacyPayload" "-p:BaseIntermediateOutputPath=$intermediate" -- "artifacts/qa/$check-$arch"
               if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             }
           }
           $source = "artifacts/release/Sputnik-$env:APP_VERSION-Windows-source.zip"
-          git archive --format=zip -o $source HEAD -- ':(top,glob)*.cs' ':(top,glob)*.xaml' Sputnik.csproj Sputnik.ico Components wwwroot/assets/klyaksa wwwroot/assets/pets.json wwwroot/assets/icon-catalog.json wwwroot/assets/LUCIDE-LICENSE.txt installer tests/notification-check tests/memory-check tests/pet-removal-check "docs/releases/$env:APP_VERSION.md" docs/fixes/windows-memory.md README.md .gitignore .gitattributes
+          git archive --format=zip -o $source HEAD -- ':(top,glob)*.cs' ':(top,glob)*.xaml' Sputnik.csproj Sputnik.ico Components wwwroot/assets/klyaksa wwwroot/assets/pets.json wwwroot/assets/icon-catalog.json wwwroot/assets/LUCIDE-LICENSE.txt installer tests/notification-check tests/memory-check tests/pet-removal-check tests/application-icons-check "docs/releases/$env:APP_VERSION.md" docs/fixes/windows-memory.md README.md .gitignore .gitattributes
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if ($env:INCLUDE_PETS -eq 'true') { & ./installer/Build-Pet-Packages.ps1 -OutputDir artifacts/release }
           Get-ChildItem artifacts/release -File | Sort-Object Name | ForEach-Object {
