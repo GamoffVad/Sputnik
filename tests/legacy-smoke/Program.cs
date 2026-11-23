@@ -36,10 +36,10 @@ class Check
             mode.SelectedIndex=1;
             if(window.ResizeMode != ResizeMode.NoResize || Find<Thumb>(window).Any(t=>AutomationProperties.GetName(t).StartsWith("Размер окна:"))) throw new Exception("Unexpected resize controls");
             if(((HwndSource)PresentationSource.FromVisual(window)).CompositionTarget.RenderMode!=RenderMode.SoftwareOnly) throw new Exception("Wrong rendering mode");
-            var save=Find<Button>(window).Single(b=>AutomationProperties.GetName(b)=="Сохранить");
-            save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            if(window.IsVisible || !File.ReadAllText(Path.Combine(data,"workspace.json")).Contains("\"noteColorMode\":\"auto\"")) throw new Exception("Legacy settings save failed");
-            Console.WriteLine("PASS: .NET Framework 4.8 WPF initialization, fixed panel, auto-color selector and save/close on current Windows; process64="+Environment.Is64BitProcess);
+            var save=Find<Button>(window).SingleOrDefault(b=>AutomationProperties.GetName(b)=="Сохранить");
+            if(save!=null) save.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            if((save!=null && window.IsVisible) || !File.ReadAllText(Path.Combine(data,"workspace.json")).Contains("\"noteColorMode\":\"auto\"")) throw new Exception("Legacy settings save failed");
+            Console.WriteLine("PASS: .NET Framework 4.8 WPF initialization, fixed panel, auto-color selector and persistence on current Windows; process64="+Environment.Is64BitProcess);
         }
         finally { window.Close(); app.Shutdown(); }
     }

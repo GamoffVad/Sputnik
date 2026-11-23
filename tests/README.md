@@ -4,6 +4,8 @@
 
 Общий запуск с журналом: `./tests/Run-Checks.ps1`. Добавьте `-Legacy` для проверки .NET Framework x64/x86. Отдельные команды приведены ниже.
 
+`notification-check` проверяет компактное окно рядом с питомцем и открытым меню, длинный текст, видимость кнопок, отложенное и выполненное напоминание, закрытие без выполнения, связанную заметку, ошибку сохранения и номер версии в меню. Команда: `dotnet run --project tests/notification-check/Check.csproj -c Release -- artifacts/notification-check/current`. Для сборки Windows 7 добавьте `-p:Win7=true -p:PlatformTarget=x64 -p:SputnikDirectory=<каталог net48>`; x86 проверяется отдельно. Вторым аргументом после каталога отчёта можно передать пакет ёлки: он будет установлен только в тестовую библиотеку.
+
 ```powershell
 dotnet build Sputnik.csproj -c Release
 dotnet run --project tests/workspace-check/Check.csproj -c Release -- --components

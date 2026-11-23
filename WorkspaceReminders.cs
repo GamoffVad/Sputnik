@@ -222,63 +222,12 @@ internal sealed class ReminderScheduler : IDisposable
     {
         string id = item["id"]?.ToString() ?? "";
         if (id.Length == 0) return;
-        var layout = new DockPanel { Margin = new Thickness(12, 8, 12, 12) };
-        var header = new DockPanel { Margin = new Thickness(0, 0, 0, 5) };
-        DockPanel.SetDock(header, Dock.Top);
-        layout.Children.Add(header);
-        var close = WorkspaceUi.IconButton("Закрыть напоминание", "M4 4 L12 12 M12 4 L4 12");
-        close.Width = close.Height = 28;
-        close.Padding = new Thickness(5);
-        DockPanel.SetDock(close, Dock.Right);
-        header.Children.Add(close);
-        var heading = new TextBlock { Text = "Напоминание", FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-        heading.UseTheme(TextBlock.ForegroundProperty, "Accent");
-        header.Children.Add(heading);
-        var content = new StackPanel();
-        var message = new TextBlock { Text = item["title"]?.ToString(), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
-        message.UseTheme(TextBlock.ForegroundProperty, "Ink");
-        content.Children.Add(message);
-        var row = new WrapPanel();
-        content.Children.Add(row);
-        layout.Children.Add(new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        var frame = new Border { Child = layout, BorderThickness = new Thickness(1) };
-        frame.UseTheme(Border.BackgroundProperty, "Surface");
-        frame.UseTheme(Border.BorderBrushProperty, "Edge");
-        var window = new Window
-        {
-            Content = frame, Title = "Напоминание Спутника", Width = 330, Height = 134, ShowInTaskbar = false, ShowActivated = false,
-            MinWidth = 280, MinHeight = 134,
-            WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, Topmost = true
-        };
-        window.UseTheme(Window.FontFamilyProperty, "Font");
-        RoundedWindow.Apply(window, frame);
-        void Dismiss()
-        {
-            dismissed.Add(id);
-            window.Close();
-        }
-        close.Click += (_, _) => Dismiss();
-        window.PreviewKeyDown += (_, args) =>
-        {
-            if (args.Key != System.Windows.Input.Key.Escape) return;
-            args.Handled = true;
-            Dismiss();
-        };
-        foreach (var choice in new[] { ("Готово", "done"), ("На 10 мин", "snooze") })
-        {
-            var button = new Button { Content = choice.Item1, Padding = new Thickness(7, 3, 7, 3), Margin = new Thickness(0, 0, 5, 0) };
-            button.Click += (_, _) =>
+        var window = new NotificationWindow("Напоминание", item["title"]?.ToString() ?? "",
+            AsLocalTime(Due(item))?.ToString("d MMMM · HH:mm"), action =>
             {
-                try
-                {
-                    Update(store, id, choice.Item2);
-                    window.Close();
-                }
-                catch (Exception error) { MessageBox.Show(window, error.Message, "Напоминание"); }
-            };
-            row.Children.Add(button);
-        }
+                if (action == "dismiss") dismissed.Add(id);
+                else Update(store, id, action);
+            });
         window.Closed += (_, _) => { notice = null; noticeId = null; };
         notice = window;
         noticeId = id;

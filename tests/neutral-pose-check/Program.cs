@@ -74,7 +74,7 @@ class Check
         var noBlend = manifest.DeepClone(); noBlend["neutral"]!["blendFrames"] = 0;
         var noBlendPreview = (JsonObject)Invoke("Stage", Package(noBlend), pending, library);
         Assert(noBlendPreview["neutral"]!["blendFrames"]!.GetValue<int>() == 0, "Explicit transition disable lost");
-        Reject(manifest, 61); // 65 entries, above the new 64-entry limit.
+        Reject(manifest, 253); // 257 entries, above the 256-entry collection limit.
         Console.WriteLine("PASS: 42-entry v3 package, native PNG bytes preserved; missing neutral, traversal, invalid viewports and excess entries rejected.");
 
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };

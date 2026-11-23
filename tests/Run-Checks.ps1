@@ -10,6 +10,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "dotnet failed ($LASTEXITCODE): $args" }
     }
     Run-Dotnet build Sputnik.csproj -c Release --nologo
+    Run-Dotnet run --project tests/notification-check/Check.csproj -c Release -- artifacts/notification-check/current
     Run-Dotnet run --project tests/workspace-check/Check.csproj -c Release -- --components
     foreach ($mode in @('', '--appearance-only', '--notes-only', '--sphere-preview-only', '--glass-icons-only', '--clipping-only')) {
         Run-Dotnet run --no-build --project tests/workspace-check/Check.csproj -c Release -- $mode

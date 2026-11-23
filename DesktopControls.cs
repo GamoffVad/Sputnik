@@ -247,6 +247,7 @@ internal sealed class DesktopControls : IDisposable
     {
         CloseMenu();
         var stack = new StackPanel();
+        stack.Children.Add(AppVersion.MenuLabel());
         var header = new DockPanel { LastChildFill = true };
         var dismiss = new Button
         {
@@ -321,7 +322,7 @@ internal sealed class DesktopControls : IDisposable
         var frame = new Border { Child = content, Padding = new Thickness(8), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12) };
         frame.UseTheme(Border.BackgroundProperty, "Surface");
         frame.UseTheme(Border.BorderBrushProperty, "Edge");
-        menu = FloatingWindow(frame, 270, 456, activate: true);
+        menu = FloatingWindow(frame, 270, 477, activate: true);
         menu.MinWidth = 240;
         menu.MinHeight = 240;
         menu.UseTheme(Window.FontFamilyProperty, "Font");
@@ -360,7 +361,7 @@ internal sealed class DesktopControls : IDisposable
         Rect area = WorkArea();
         var size = section switch
         {
-            "context" => (270d, 456d),
+            "context" => (270d, 477d),
             "sticky" => (340d, 320d),
             "motion" => (426d, Math.Min(480d, 151d + 36d * Math.Max(1, (pet as DesktopPetWindow)?.AnimationCount ?? 0))),
             "manage" => (404d, 370d),
@@ -372,7 +373,7 @@ internal sealed class DesktopControls : IDisposable
             "sharing" => (430d, 354d),
             _ => (450d, 438d),
         };
-        if (section == "sticky")
+        if (section == "sticky" || window is NotificationWindow)
         {
             window.Width = Math.Max(window.MinWidth, Math.Min(window.Width, area.Width));
             window.Height = Math.Max(window.MinHeight, Math.Min(window.Height, area.Height));
