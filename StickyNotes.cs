@@ -2,7 +2,6 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace Sputnik;
@@ -14,26 +13,89 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
     private readonly string path = Path.Combine(directory, "notes.json");
     private readonly List<Note> notes = Load(directory);
     private readonly Dictionary<string, StickyNoteWindow> windows = [];
+    private readonly Dictionary<string, Action> placements = [];
     private readonly NoteSharing sharing = new(directory);
-    private bool autoArrange = ReadAutoArrange(directory);
-    private bool arranging, layoutQueued;
+    internal event Action? Changed;
+    internal event Action<string>? Deleted;
+    internal Action<string>? Remind;
+    internal Note[] All => notes.ToArray();
+    internal static string Text(Note note) => string.Join("\n", Lines(note.Content));
+    private static IEnumerable<string> Lines(IEnumerable<StickyNoteContent.BlockData> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            if (block.Inlines is { } inlines) yield return string.Concat(inlines.Select(item => item.Text ?? (item.Kind == "check" ? item.Checked ? "[x] " : "[ ] " : item.Kind == "image" ? "[Изображение]" : "")));
+            if (block.Items is { } items) foreach (var line in items.SelectMany(Lines)) yield return line;
+        }
+    }
+    internal void OpenById(string id)
+    {
+        var note = notes.FirstOrDefault(item => item.Id == id) ?? throw new InvalidOperationException("Заметка удалена или не найдена.");
+        Open(note);
+    }
+    internal void RequestDelete(string id) { OpenById(id); windows[id].RequestDeletion(); }
+    internal string CreateText(string text)
+    {
+        var note = new Note(Guid.NewGuid().ToString("N"), text.Split('\n').Select(line => new StickyNoteContent.BlockData("text", [new("run", line)])).ToArray());
+        notes.Add(note); Save(); Open(note); return note.Id;
+    }
 
     public bool IsVisible => windows.Values.Any(window => window.IsVisible);
+    internal void Flush()
+    {
+        foreach (var window in windows.Values.ToArray()) window.Flush();
+        foreach (var persist in placements.Values.ToArray()) persist();
+    }
+    internal void CloseWindows() { foreach (var window in windows.Values.ToArray()) window.Close(); }
 
-    public void Toggle(bool reposition = false)
+    internal void Arrange()
+    {
+        if (notes.Count == 0) return;
+        // Explicit arrangement only. Normal reopening still restores the user's
+        // individual coordinates, and arranging never changes note content.
+        foreach (var note in notes.ToArray()) Open(note);
+        Rect area = SystemParameters.WorkArea;
+        const double margin = 16, gap = 12;
+        double x = area.Left + margin, y = area.Top + margin, rowHeight = 0;
+        int overflow = 0;
+        foreach (var note in notes)
+        {
+            var window = windows[note.Id];
+            double width = window.Width, height = window.Height;
+            if (x > area.Left + margin && x + width > area.Right - margin)
+            {
+                x = area.Left + margin; y += rowHeight + gap; rowHeight = 0;
+            }
+            if (y + height > area.Bottom - margin)
+            {
+                // More notes than can fit without resizing: start an offset
+                // layer with reachable headers, rather than leave the screen.
+                overflow++;
+                x = area.Left + margin + overflow * 24 % Math.Max(24, area.Width / 3);
+                y = area.Top + margin + overflow * 24 % Math.Max(24, area.Height / 3);
+                rowHeight = 0;
+            }
+            window.Left = Compatibility.Clamp(x, area.Left, Math.Max(area.Left, area.Right - width));
+            window.Top = Compatibility.Clamp(y, area.Top, Math.Max(area.Top, area.Bottom - height));
+            x = window.Left + width + gap;
+            rowHeight = Math.Max(rowHeight, height);
+        }
+        Flush();
+    }
+
+    public void Toggle()
     {
         if (IsVisible)
         {
             foreach (var window in windows.Values) window.Hide();
         }
-        else Show(reposition);
+        else Show();
     }
 
-    public void Show(bool reposition = false)
+    public void Show()
     {
         if (notes.Count == 0) Create();
-        else foreach (var note in notes.ToArray()) Open(note, reposition && !autoArrange);
-        if (autoArrange) ArrangeVisible();
+        else foreach (var note in notes.ToArray()) Open(note);
     }
 
     private void Create()
@@ -46,14 +108,12 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
         notes.Add(note);
         Save();
         Open(note);
-        if (autoArrange) ArrangeVisible(notify: true);
     }
 
-    private void Open(Note note, bool reposition = false)
+    private void Open(Note note)
     {
         if (windows.TryGetValue(note.Id, out var existing))
         {
-            if (reposition) position(existing);
             if (!existing.IsVisible) existing.Show();
             existing.Activate();
             return;
@@ -64,11 +124,7 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             if (index < 0) return;
             notes[index] = notes[index] with { Content = content };
             Save();
-        }, () =>
-        {
-            notes.RemoveAll(item => item.Id == note.Id);
-            Save();
-        }, note.Color, color =>
+        }, () => Delete(note.Id), note.Color, color =>
         {
             int index = notes.FindIndex(item => item.Id == note.Id);
             if (index < 0) return;
@@ -80,22 +136,15 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             if (index < 0) return;
             notes[index] = notes[index] with { Pinned = pinned };
             Save();
-        }, sharing.Load, settings);
-        window.ConfigureArrangement(() => ArrangeVisible(notify: true), () => autoArrange, SetAutoArrange);
-        window.ConfigureRuling(note.Ruled, enabled =>
+        }, sharing.Load, settings, () => Remind?.Invoke(note.Id), note.Ruled, ruled =>
         {
             int index = notes.FindIndex(item => item.Id == note.Id);
             if (index < 0) return;
-            notes[index] = notes[index] with { Ruled = enabled };
-            Save();
-        });
-        window.PlacementChanged += (_, _) => QueueArrange();
-        window.SourceInitialized += (_, _) => HwndSource.FromHwnd(new WindowInteropHelper(window).Handle)?.AddHook(
-            (IntPtr handle, int message, IntPtr wParam, IntPtr lParam, ref bool handled) =>
-            {
-                if (message == 0x007E || (message == 0x001A && wParam.ToInt64() == 0x002F)) QueueArrange();
-                return IntPtr.Zero;
-            });
+            var previous = notes[index];
+            notes[index] = previous with { Ruled = ruled };
+            try { Save(); }
+            catch { notes[index] = previous; throw; }
+        }, Arrange);
         var area = SystemParameters.WorkArea;
         var desktop = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
             SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
@@ -103,18 +152,21 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             window.Width = Compatibility.Clamp(width, window.MinWidth, Math.Max(window.MinWidth, desktop.Width));
         if (note.Height is { } height)
             window.Height = Compatibility.Clamp(height, window.MinHeight, Math.Max(window.MinHeight, desktop.Height));
-        position(window);
-        if (!reposition && note.Left is double left && note.Top is double top && desktop.Contains(new Point(left + window.Width / 2, top + 20)))
+        if (note.Left is double left && note.Top is double top && desktop.Contains(new Point(left + window.Width / 2, top + 20)))
         {
             window.Left = left;
             window.Top = top;
         }
-        else if (!reposition && area.Contains(new Point(window.Left, window.Top)))
+        else
         {
-            int shift = windows.Count % 7 * 25;
-            window.Top = Math.Max(area.Top, Math.Min(area.Bottom - window.Height, window.Top + shift));
-            if (shift != 0 && window.Top + window.Height >= area.Bottom)
-                window.Top = Math.Max(area.Top, window.Top - shift);
+            position(window);
+            if (area.Contains(new Point(window.Left, window.Top)))
+            {
+                int shift = windows.Count % 7 * 25;
+                window.Top = Math.Max(area.Top, Math.Min(area.Bottom - window.Height, window.Top + shift));
+                if (shift != 0 && window.Top + window.Height >= area.Bottom)
+                    window.Top = Math.Max(area.Top, window.Top - shift);
+            }
         }
         windows.Add(note.Id, window);
         var savePosition = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
@@ -130,20 +182,20 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             Save();
         }
         savePosition.Tick += (_, _) => PersistPosition();
+        placements.Add(note.Id, PersistPosition);
         void ScheduleSave()
         {
-            if (arranging) return;
             savePosition.Stop();
             savePosition.Start();
         }
         window.LocationChanged += (_, _) => ScheduleSave();
         window.SizeChanged += (_, _) => ScheduleSave();
-        window.IsVisibleChanged += (_, _) => { if (!window.IsVisible) PersistPosition(); else QueueArrange(); };
+        window.IsVisibleChanged += (_, _) => { if (!window.IsVisible) PersistPosition(); };
         window.Closed += (_, _) =>
         {
             PersistPosition();
             windows.Remove(note.Id);
-            QueueArrange();
+            placements.Remove(note.Id);
             (Application.Current as App)?.RefreshNotesCheck();
         };
         window.Show();
@@ -151,80 +203,51 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
         window.Activate();
     }
 
-    private void SetAutoArrange(bool enabled)
+    private void Delete(string id)
     {
-        if (enabled && !ArrangeVisible(notify: true)) return;
-        string preferences = Path.Combine(directory, "workspace.json");
-        var state = File.Exists(preferences) ? JsonNode.Parse(File.ReadAllText(preferences))!.AsObject() : new JsonObject();
-        state["noteAutoArrange"] = enabled;
-        string temporary = preferences + ".tmp";
-        File.WriteAllText(temporary, state.ToJsonString());
-        Compatibility.ReplaceFile(temporary, preferences);
-        autoArrange = enabled;
-    }
-
-    private void QueueArrange()
-    {
-        if (!autoArrange || arranging || layoutQueued || windows.Values.Any(window => window.IsChangingPlacement)) return;
-        layoutQueued = true;
-        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
-        {
-            layoutQueued = false;
-            if (autoArrange && !windows.Values.Any(window => window.IsChangingPlacement)) ArrangeVisible();
-        }));
-    }
-
-    private bool ArrangeVisible(bool notify = false)
-    {
-        var visible = notes.Select(note => windows.TryGetValue(note.Id, out var window) ? window : null)
-            .Where(window => window is { IsVisible: true }).Cast<StickyNoteWindow>().ToArray();
-        var plans = new List<(StickyNoteWindow Window, Rect Bounds)>();
-        foreach (var group in visible.GroupBy(StickyNoteLayout.Monitor))
-        {
-            var items = group.ToArray();
-            if (!StickyNoteLayout.TryArrange(StickyNoteLayout.WorkArea(items[0]), items.Select(window => window.Height).ToArray(), out var bounds))
-            {
-                if (notify) MessageBox.Show(items[0],
-                    "На экране не хватает места для всех открытых заметок. Закройте часть заметок или перенесите их на другой монитор и повторите выравнивание.",
-                    "Выравнивание заметок", MessageBoxButton.OK, MessageBoxImage.Information);
-                return false;
-            }
-            plans.AddRange(items.Select((window, index) => (window, bounds[index])));
-        }
-        if (plans.Count == 0) return true;
-        arranging = true;
+        int index = notes.FindIndex(item => item.Id == id);
+        if (index < 0) return;
+        var removed = notes[index];
+        notes.RemoveAt(index);
         try
         {
-            foreach (var plan in plans)
+            var transfer = new DataTransfer(directory);
+            var portable = transfer.Create("notes");
+            portable["data"] = JsonSerializer.SerializeToNode(notes);
+            var changes = new Dictionary<string, string?> { ["notes.json"] = JsonSerializer.Serialize(notes),
+                [DataTransfer.FileName("notes")] = portable.ToJsonString() };
+            var workspace = FeatureFiles.Read(directory, "workspace.json") as JsonObject;
+            if (workspace?["reminders"] is JsonArray reminders)
             {
-                var window = plan.Window;
-                window.Width = plan.Bounds.Width;
-                window.Height = plan.Bounds.Height;
-                window.Left = plan.Bounds.Left;
-                window.Top = plan.Bounds.Top;
-                int index = notes.FindIndex(note => windows.TryGetValue(note.Id, out var item) && ReferenceEquals(item, window));
-                notes[index] = notes[index] with { Left = window.Left, Top = window.Top, Width = window.Width, Height = window.Height };
+                var linked = reminders.Where(item => item?["noteId"]?.ToString() == id).ToArray();
+                foreach (var item in linked) reminders.Remove(item);
+                if (linked.Length > 0)
+                {
+                    changes["workspace.json"] = workspace.ToJsonString();
+                    var package = transfer.Create("reminders"); package["data"] = reminders.DeepClone();
+                    changes[DataTransfer.FileName("reminders")] = package.ToJsonString();
+                }
             }
-            Save();
+            FeatureFiles.Commit(directory, changes);
         }
-        finally { arranging = false; }
-        return true;
+        catch
+        {
+            notes.Insert(index, removed);
+            throw;
+        }
+        Changed?.Invoke();
+        Deleted?.Invoke(id);
     }
 
-    private static bool ReadAutoArrange(string directory)
-    {
-        string preferences = Path.Combine(directory, "workspace.json");
-        return File.Exists(preferences) && JsonNode.Parse(File.ReadAllText(preferences))?["noteAutoArrange"]?.GetValue<bool>() == true;
-    }
-
-    private void Save()
+    private void Save(bool sync = true)
     {
         string temporary = path + ".tmp";
         File.WriteAllText(temporary, JsonSerializer.Serialize(notes));
         Compatibility.ReplaceFile(temporary, path);
+        if (sync) { DataTransfer.SyncFor(path); Changed?.Invoke(); }
     }
 
-    private static List<Note> Load(string directory)
+    internal static List<Note> Load(string directory)
     {
         string current = Path.Combine(directory, "notes.json");
         if (File.Exists(current)) return JsonSerializer.Deserialize<List<Note>>(File.ReadAllText(current)) ?? [];

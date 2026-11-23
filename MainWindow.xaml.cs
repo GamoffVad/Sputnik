@@ -68,30 +68,29 @@ public partial class MainWindow : Window
         chatSendState?.Invoke();
         try
         {
-            JsonArray history = AppendMessage("user", text);
+            var chats = new ChatHistory(data);
+            string chatId = chats.Active()?["id"]?.ToString() ?? chats.Create();
+            JsonArray history = AppendChatMessage(chatId, "user", text)!;
             string reply = await Send(null, new JsonArray(history.Skip(Math.Max(0, history.Count - 40)).Select(message =>
             {
-                var copy = message?.DeepClone();
-                if (copy?["content"]?.ToString() is { Length: > 20000 } longMessage) copy["content"] = longMessage[..20000];
-                return copy;
+                string content = message?["content"]?.ToString() ?? "";
+                return (JsonNode)new JsonObject { ["role"] = message?["role"]?.ToString(), ["content"] = content.Length > 20000 ? content[..20000] : content };
             }).ToArray()), false);
-            AppendMessage("assistant", reply);
+            AppendChatMessage(chatId, "assistant", reply);
             return reply;
         }
         finally { sending = false; chatSendState?.Invoke(); }
     }
 
-    private JsonArray AppendMessage(string role, string text)
+    private JsonArray? AppendChatMessage(string id, string role, string text)
     {
-        var workspace = Read(Store) as JsonObject ?? new JsonObject();
-        if (workspace["messages"] is not JsonArray messages)
+        var chats = new ChatHistory(data);
+        var messages = chats.Append(id, role, text);
+        if (messages is not null && chats.Active()?["id"]?.ToString() == id && displayedChat == id)
         {
-            messages = new JsonArray();
-            workspace["messages"] = messages;
+            if (chatTitle is not null) chatTitle.Text = Value(chats.Active(), "title", "Новый чат");
+            RefreshChatHistory(messages);
         }
-        messages.Add(new JsonObject { ["role"] = role, ["content"] = text });
-        Save(Store, workspace.ToJsonString());
-        RefreshChatHistory(messages);
         return messages;
     }
 
@@ -108,6 +107,7 @@ public partial class MainWindow : Window
         string temporary = path + ".tmp";
         File.WriteAllText(temporary, content, Encoding.UTF8);
         Compatibility.ReplaceFile(temporary, path);
+        DataTransfer.SyncFor(path);
     }
 
     internal static void OpenTarget(string kind, string target)
@@ -118,17 +118,12 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("Браузер не может открыть этот адрес.");
             target = website.AbsoluteUri;
         }
-        else if (kind != "app" || !IsApplicationTarget(target))
+        else if (kind != "app" || !Compatibility.IsFullyQualifiedPath(target) || !File.Exists(target) ||
+                 !Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Выберите существующее приложение Windows (.exe).");
 
-        var start = new ProcessStartInfo(target) { UseShellExecute = true };
-        if (kind == "app") start.WorkingDirectory = Path.GetDirectoryName(target)!;
-        Process.Start(start);
+        Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
     }
-
-    internal static bool IsApplicationTarget(string target) =>
-        Compatibility.IsFullyQualifiedPath(target) && File.Exists(target) &&
-        Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase);
 
     private static string WebsiteAddress(string address)
     {

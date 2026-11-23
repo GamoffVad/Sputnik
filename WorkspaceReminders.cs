@@ -1,12 +1,8 @@
-using System.Globalization;
 using System.IO;
 using System.Text.Json.Nodes;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Automation;
-using System.Windows.Input;
-using System.Windows.Media;
-using Shape = System.Windows.Shapes.Shape;
+using System.Windows.Controls;
 using System.Windows.Threading;
 
 namespace Sputnik;
@@ -23,23 +19,17 @@ public partial class MainWindow
 
     private void ShowReminders()
     {
-        Button Icon(string label, string geometry, Action action, bool primary = false)
-        {
-            var button = WorkspaceUi.IconButton(label, geometry, primary);
-            button.Click += (_, _) => action();
-            return button;
-        }
-        var page = PageFields("Напоминания", Icon("Добавить напоминание", "M8 2V14 M2 8H14", () => EditReminder(null), true));
+        var page = PageFields("Напоминания", Button("Добавить", () => EditReminder(null), true), 18);
         var reminders = WorkspaceData()["reminders"] as JsonArray ?? new JsonArray();
         foreach (var reminder in reminders.OfType<JsonObject>().OrderBy(ReminderScheduler.IsDone).ThenBy(ReminderScheduler.Due))
         {
             long timestamp = ReminderScheduler.Due(reminder);
             string detail = ReminderScheduler.AsLocalTime(timestamp)?.ToString("g") ?? "Укажите дату";
             if (ReminderScheduler.IsDone(reminder))
-                Entry(page, Value(reminder, "title"), detail + " · Выполнено", Icon("Изменить", "M10 2L14 6 M2 10L10 2 14 6 6 14H2Z", () => EditReminder(reminder)));
+                Entry(page, Value(reminder, "title"), detail + " · Выполнено", Button("Изменить", () => EditReminder(reminder)));
             else
                 Entry(page, Value(reminder, "title"), detail,
-                    Icon("Изменить", "M10 2L14 6 M2 10L10 2 14 6 6 14H2Z", () => EditReminder(reminder)), Icon("Готово", "M2 8L6 12 14 3", () =>
+                    Button("Изменить", () => EditReminder(reminder)), Button("Готово", () =>
                     {
                         ReminderScheduler.Update(Store, Value(reminder, "id"), "done");
                         OpenSection("reminders");
@@ -48,80 +38,121 @@ public partial class MainWindow
         if (reminders.Count == 0) page.Children.Add(Text("Добавьте напоминание, чтобы получить его в нужное время.", "Muted"));
     }
 
-    private void EditReminder(JsonObject? existing)
+    internal void EditReminder(JsonObject? existing, string? noteId = null)
     {
-        var page = Editor(existing is null ? "Новое напоминание" : "Изменить напоминание");
+        editing = true;
+        var root = Page(existing is null ? "Новое напоминание" : "Изменить напоминание",
+            Button("Назад", () => OpenSection("reminders")), 18);
+        var footer = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+        DockPanel.SetDock(footer, Dock.Bottom);
+        root.Children.Add(footer);
+        var page = new StackPanel();
+        root.Children.Add(new ScrollViewer { Content = page, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
         var initial = ReminderScheduler.AsLocalTime(ReminderScheduler.Due(existing)) ?? DateTime.Now.AddMinutes(10);
         var title = Input("Название", Value(existing, "title"), 120);
+        title.Height = 32;
         var date = new DatePicker
         {
             SelectedDate = initial.Date, FirstDayOfWeek = DayOfWeek.Monday,
-            Language = System.Windows.Markup.XmlLanguage.GetLanguage("ru-RU")
+            Language = System.Windows.Markup.XmlLanguage.GetLanguage("ru-RU"), Height = 36,
+            SelectedDateFormat = DatePickerFormat.Short
         };
-        var time = Input("Время (ЧЧ:ММ)", initial.ToString("HH:mm", CultureInfo.InvariantCulture), 5);
-        time.Padding = new Thickness(10, 4, 35, 4);
-        time.ToolTip = "Введите время в формате ЧЧ:ММ или четыре цифры";
-        var clock = new System.Windows.Shapes.Path
-        {
-            Data = Geometry.Parse("M8 1A7 7 0 1 0 8 15A7 7 0 1 0 8 1 M8 4V8L11 10"),
-            Width = 16, Height = 16, StrokeThickness = 1.4, Stretch = Stretch.Uniform,
-            StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
-            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 10, 0), IsHitTestVisible = false
-        };
-        clock.UseTheme(Shape.StrokeProperty, "Muted");
-        var timeField = new Grid();
-        timeField.Children.Add(time);
-        timeField.Children.Add(clock);
-        void NormalizeTime()
-        {
-            string value = time.Text.Trim();
-            if (value.Length == 4 && value.All(char.IsDigit))
-                time.Text = value.Insert(2, ":");
-        }
-        time.LostFocus += (_, _) => NormalizeTime();
-        time.PreviewKeyDown += (_, args) =>
-        {
-            if (args.Key is not (Key.Up or Key.Down)) return;
-            NormalizeTime();
-            if (!TimeSpan.TryParseExact(time.Text, @"hh\:mm", CultureInfo.InvariantCulture, out var current) ||
-                current >= TimeSpan.FromDays(1)) return;
-            int delta = (args.Key == Key.Up ? 1 : -1) * (time.CaretIndex <= 2 ? 60 : 1);
-            int total = ((int)current.TotalMinutes + delta + 1440) % 1440;
-            time.Text = $"{total / 60:00}:{total % 60:00}";
-            time.CaretIndex = delta is 60 or -60 ? 2 : 5;
-            args.Handled = true;
-        };
-        var repeat = new ComboBox { MaxDropDownHeight = 325, ItemsSource = RepeatOptions.Select(option => option.Label).ToArray() };
+        AutomationProperties.SetName(date, "Дата");
+        var time = new TimePicker { Value = new TimeSpan(initial.Hour, initial.Minute, 0) };
+        var repeat = new ComboBox { MaxDropDownHeight = 325, Height = 32,
+            ItemsSource = RepeatOptions.Select(option => option.Label).ToArray() };
+        AutomationProperties.SetName(repeat, "Повтор");
         repeat.SelectedIndex = Math.Max(0, Array.FindIndex(RepeatOptions, option => option.Id == Value(existing, "repeat")));
         var minutes = Input("Интервал в минутах", Value(existing, "repeatMinutes", "10"), 9);
-        var custom = new StackPanel();
-        Field(custom, "Интервал в минутах", minutes);
-        void UpdateRepeat() => custom.Visibility = repeat.SelectedIndex == RepeatOptions.Length - 1 ? Visibility.Visible : Visibility.Collapsed;
+        minutes.Height = 32;
+        var custom = Labeled("Минут", minutes);
+        custom.Margin = new Thickness(8, 0, 0, 0);
+        var repeatRow = new Grid();
+        repeatRow.ColumnDefinitions.Add(new ColumnDefinition());
+        var intervalColumn = new ColumnDefinition { Width = new GridLength(0) };
+        repeatRow.ColumnDefinitions.Add(intervalColumn);
+        var repeatField = Labeled("Повтор", repeat);
+        repeatField.Margin = new Thickness(0);
+        repeatRow.Children.Add(repeatField);
+        Grid.SetColumn(custom, 1);
+        repeatRow.Children.Add(custom);
+        void UpdateRepeat()
+        {
+            bool show = repeat.SelectedIndex == RepeatOptions.Length - 1;
+            custom.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            intervalColumn.Width = new GridLength(show ? 100 : 0);
+        }
         repeat.SelectionChanged += (_, _) => UpdateRepeat();
         UpdateRepeat();
         Field(page, "Название", title);
-        Row(page, Labeled("Дата", date), Labeled("Время (ЧЧ:ММ)", timeField));
-        Field(page, "Частота повтора", repeat);
-        page.Children.Add(custom);
+        var schedule = new Grid();
+        schedule.ColumnDefinitions.Add(new ColumnDefinition());
+        schedule.ColumnDefinitions.Add(new ColumnDefinition { MinWidth = 142 });
+        var dateField = Labeled("Дата", date);
+        dateField.Margin = new Thickness(0, 0, 8, 7);
+        schedule.Children.Add(dateField);
+        var timeField = Labeled("Время", time);
+        Grid.SetColumn(timeField, 1);
+        schedule.Children.Add(timeField);
+        page.Children.Add(schedule);
+
+        var shortcuts = new WrapPanel { Margin = new Thickness(0, 0, 0, 7) };
+        var hint = Text("Через", "Muted", 11);
+        hint.VerticalAlignment = VerticalAlignment.Center;
+        hint.Margin = new Thickness(0, 0, 6, 0);
+        shortcuts.Children.Add(hint);
+        foreach (var option in new[] { (10, "10 мин"), (30, "30 мин"), (60, "1 час") })
+        {
+            var quick = Button(option.Item2, () =>
+            {
+                var next = DateTime.Now.AddMinutes(option.Item1);
+                date.SelectedDate = next.Date;
+                time.Value = new TimeSpan(next.Hour, next.Minute, 0);
+            });
+            quick.MinHeight = 24;
+            quick.FontSize = 11;
+            quick.Padding = new Thickness(8, 1, 8, 1);
+            quick.Margin = new Thickness(0, 0, 5, 0);
+            AutomationProperties.SetName(quick, "Напомнить через " + option.Item2);
+            shortcuts.Children.Add(quick);
+        }
+        page.Children.Add(shortcuts);
+        page.Children.Add(repeatRow);
+
+        var status = Status(11);
+        AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Assertive);
+        footer.Children.Add(status);
+        void Invalid(string message, UIElement input)
+        {
+            status.Text = message;
+            input.Focus();
+        }
+        title.TextChanged += (_, _) => status.Text = "";
+        date.SelectedDateChanged += (_, _) => status.Text = "";
+        time.ValueChanged += (_, _) => status.Text = "";
+        minutes.TextChanged += (_, _) => status.Text = "";
+        repeat.SelectionChanged += (_, _) => status.Text = "";
+        date.DateValidationError += (_, e) => { e.ThrowException = false; status.Text = "Укажите существующую дату."; };
 
         string id = Value(existing, "id", Guid.NewGuid().ToString());
         var save = Button("Сохранить", () =>
         {
-            NormalizeTime();
             string label = title.Text.Trim();
-            if (label.Length == 0 || date.SelectedDate is not { } day ||
-                !TimeSpan.TryParseExact(time.Text, @"hh\:mm", CultureInfo.InvariantCulture, out var hhmm) || hhmm >= TimeSpan.FromDays(1))
-                throw new InvalidOperationException("Укажите название, дату и время в формате ЧЧ:ММ.");
+            if (label.Length == 0) { Invalid("Введите название напоминания.", title); return; }
+            if (date.SelectedDate is not { } day) { Invalid("Выберите дату напоминания.", date); return; }
+            if (!time.TryGetValue(out var hhmm)) { Invalid("Укажите часы от 00 до 23 и минуты от 00 до 59.", time.Hours); return; }
             DateTime local = DateTime.SpecifyKind(day.Date + hhmm, DateTimeKind.Unspecified);
-            if (TimeZoneInfo.Local.IsInvalidTime(local)) throw new InvalidOperationException("Это время недоступно в текущем часовом поясе.");
+            if (TimeZoneInfo.Local.IsInvalidTime(local)) { Invalid("Это время недоступно в текущем часовом поясе.", time.Hours); return; }
             var due = new DateTimeOffset(local, TimeZoneInfo.Local.GetUtcOffset(local));
             string interval = RepeatOptions[repeat.SelectedIndex].Id;
             var reminder = new JsonObject { ["id"] = id, ["title"] = label, ["due"] = due.ToUnixTimeMilliseconds(), ["repeat"] = interval, ["done"] = false };
+            string linked = noteId ?? Value(existing, "noteId");
+            if (linked.Length > 0) reminder["noteId"] = linked;
             if (interval == "custom")
             {
                 if (!int.TryParse(minutes.Text, out int count) || count < 1 || count > (DateTimeOffset.MaxValue - due).TotalMinutes)
-                    throw new InvalidOperationException("Укажите допустимый интервал целым числом минут.");
+                { Invalid("Укажите интервал целым числом минут, от 1.", minutes); return; }
                 reminder["repeatMinutes"] = count;
             }
             UpdateWorkspace(state =>
@@ -133,36 +164,24 @@ public partial class MainWindow
             Desktop?.ResetReminder(id);
             OpenSection("reminders");
         }, true);
-        var saveIcon = WorkspaceUi.IconButton("Сохранить", "M3 2H12L15 5V15H1V2H3 M4 2V6H11V2 M4 15V10H12V15", true);
-        var saveGlyph = (System.Windows.Shapes.Path)saveIcon.Content;
-        saveIcon.Content = null;
-        saveGlyph.UseTheme(Shape.StrokeProperty, "AccentInk");
-        save.Content = saveGlyph;
-        save.Width = save.Height = 32;
-        save.Padding = new Thickness(6);
-        save.ToolTip = "Сохранить";
+        save.Height = 34;
+        save.IsDefault = true;
         AutomationProperties.SetName(save, "Сохранить");
-        var buttons = Actions(save);
-        if (existing is not null)
+        var buttons = new Grid();
+        buttons.ColumnDefinitions.Add(new ColumnDefinition());
+        buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        buttons.Children.Add(save);
+        var secondary = existing is null ? Button("Отмена", () => OpenSection("reminders")) : Button("Удалить", () =>
         {
-            var remove = Button("Удалить", () =>
-            {
-                UpdateWorkspace(state => { var items = Items(state, "reminders"); items.Remove(items.FirstOrDefault(item => Value(item, "id") == id)); });
-                Desktop?.ResetReminder(id);
-                OpenSection("reminders");
-            });
-            var removeIcon = WorkspaceUi.IconButton("Удалить", "M3 4H13 M6 4V2H10V4 M4 4L5 14H11L12 4 M7 7V11 M9 7V11");
-            var removeGlyph = (System.Windows.Shapes.Path)removeIcon.Content;
-            removeIcon.Content = null;
-            removeGlyph.UseTheme(Shape.StrokeProperty, "Ink");
-            remove.Content = removeGlyph;
-            remove.Width = remove.Height = 32;
-            remove.Padding = new Thickness(6);
-            remove.ToolTip = "Удалить";
-            AutomationProperties.SetName(remove, "Удалить");
-            buttons.Children.Add(remove);
-        }
-        page.Children.Add(buttons);
+            UpdateWorkspace(state => { var items = Items(state, "reminders"); items.Remove(items.FirstOrDefault(item => Value(item, "id") == id)); });
+            Desktop?.ResetReminder(id);
+            OpenSection("reminders");
+        });
+        secondary.Height = 34;
+        secondary.Margin = new Thickness(8, 0, 0, 0);
+        Grid.SetColumn(secondary, 1);
+        buttons.Children.Add(secondary);
+        footer.Children.Add(buttons);
     }
 }
 
@@ -176,6 +195,14 @@ internal sealed class ReminderScheduler : IDisposable
     private string? noticeId;
     private DateTime lastWrite;
     private JsonArray items = new();
+    internal Func<bool>? Blocked;
+    internal Action<string>? OpenNote;
+    internal bool HasNotice => notice is not null;
+    internal void NoteDeleted(string id)
+    {
+        if (items.FirstOrDefault(item => item?["id"]?.ToString() == noticeId)?["noteId"]?.ToString() == id) notice?.Close();
+        lastWrite = DateTime.MinValue;
+    }
 
     internal ReminderScheduler(string data, Action<Window> position)
     {
@@ -198,6 +225,12 @@ internal sealed class ReminderScheduler : IDisposable
         notice?.Close();
     }
 
+    internal void Reload(IEnumerable<string> changed)
+    {
+        foreach (string id in changed) Forget(id);
+        lastWrite = DateTime.MinValue;
+    }
+
     private void Check()
     {
         try
@@ -208,7 +241,7 @@ internal sealed class ReminderScheduler : IDisposable
                 lastWrite = write;
                 items = (File.Exists(store) ? JsonNode.Parse(File.ReadAllText(store))?["reminders"] as JsonArray : null) ?? new JsonArray();
             }
-            if (notice is not null) return;
+            if (notice is not null || Blocked?.Invoke() == true || NotificationSettings.IsQuiet(Path.GetDirectoryName(store)!, DateTimeOffset.Now)) return;
             long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var due = items.OfType<JsonObject>().Where(item => Due(item) >= 0 && Due(item) <= now && !IsDone(item) &&
                 !dismissed.Contains(item["id"]?.ToString() ?? "")).OrderBy(Due).FirstOrDefault();
@@ -227,7 +260,8 @@ internal sealed class ReminderScheduler : IDisposable
             {
                 if (action == "dismiss") dismissed.Add(id);
                 else Update(store, id, action);
-            });
+            },
+            item["noteId"]?.ToString() is { Length: > 0 } linked ? () => OpenNote?.Invoke(linked) : null);
         window.Closed += (_, _) => { notice = null; noticeId = null; };
         notice = window;
         noticeId = id;
@@ -255,6 +289,7 @@ internal sealed class ReminderScheduler : IDisposable
         string temporary = path + ".tmp";
         File.WriteAllText(temporary, workspace.ToJsonString());
         Compatibility.ReplaceFile(temporary, path);
+        DataTransfer.SyncFor(path);
     }
 
     private static long? Next(JsonObject reminder, long now)

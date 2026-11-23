@@ -9,9 +9,9 @@ internal static class SiteIconMask
     public static string? Ensure(string folder, string file)
     {
         if (!SiteIcons.IsCachedName(file)) return null;
-        string name = file[..^4] + "-mono.png";
+        string name = file[..^4] + "-mono-v3.png";
         string path = Path.Combine(folder, name);
-        if (File.Exists(path)) return name;
+        if (File.Exists(path) && File.GetLastWriteTimeUtc(path) >= File.GetLastWriteTimeUtc(Path.Combine(folder, file))) return name;
         try
         {
             using var source = File.OpenRead(Path.Combine(folder, file));
@@ -47,19 +47,45 @@ internal static class SiteIconMask
         }
         var dominant = samples.GroupBy(i => (pixels[i] / 16, pixels[i + 1] / 16, pixels[i + 2] / 16))
             .OrderByDescending(group => group.Count()).FirstOrDefault();
+        double Gray(int i) => pixels[i + 2] * .2126 + pixels[i + 1] * .7152 + pixels[i] * .0722;
         var alpha = new byte[width * height];
-        if (dominant is not null && samples.Count >= width * height / 6d && dominant.Count() >= samples.Count * .62)
+        int[] background = [];
+        if (dominant is not null)
         {
             double b = dominant.Average(i => pixels[i]), g = dominant.Average(i => pixels[i + 1]), r = dominant.Average(i => pixels[i + 2]);
-            for (int p = 0; p < alpha.Length; p++)
+            // Compression and antialiasing can split one background color across
+            // several histogram buckets. Count nearby shades together.
+            background = samples.Where(i => Math.Pow(pixels[i] - b, 2) + Math.Pow(pixels[i + 1] - g, 2) +
+                Math.Pow(pixels[i + 2] - r, 2) <= 48 * 48).ToArray();
+        }
+        if (background.Length > 0 && samples.Count >= width * height / 6d && background.Length >= samples.Count * .62)
+        {
+            // Turn grayscale contrast into opacity before tinting with the theme.
+            // Keeping the original opacity alone flattens an opaque badge and its
+            // contrasting letter into the same solid shape (e.g. Pinterest).
+            double gray = background.Average(Gray);
+            double contrast = Enumerable.Range(0, alpha.Length).Where(p => pixels[p * 4 + 3] >= 224)
+                .Select(p => Math.Abs(Gray(p * 4) - gray)).DefaultIfEmpty(0).Max();
+            if (contrast >= 24)
             {
-                int i = p * 4;
-                double distance = Math.Sqrt(Math.Pow(pixels[i] - b, 2) + Math.Pow(pixels[i + 1] - g, 2) + Math.Pow(pixels[i + 2] - r, 2));
-                alpha[p] = (byte)Math.Round(pixels[i + 3] * Compatibility.Clamp((distance - 14) / 72, 0, 1));
+                for (int p = 0; p < alpha.Length; p++)
+                {
+                    int i = p * 4;
+                    alpha[p] = (byte)Math.Round(pixels[i + 3] * Compatibility.Clamp((Math.Abs(Gray(i) - gray) - 8) / (contrast - 8), 0, 1));
+                }
             }
         }
         if (!alpha.Any(value => value >= 128))
-            for (int p = 0; p < alpha.Length; p++) alpha[p] = pixels[p * 4 + 3];
+        {
+            // With no uniform backdrop, retain grayscale details and existing
+            // transparent holes. A flat, single-color glyph keeps its silhouette.
+            var visible = Enumerable.Range(0, alpha.Length).Where(p => pixels[p * 4 + 3] >= 224).ToArray();
+            double low = visible.Select(p => Gray(p * 4)).DefaultIfEmpty(0).Min();
+            double high = visible.Select(p => Gray(p * 4)).DefaultIfEmpty(0).Max();
+            for (int p = 0; p < alpha.Length; p++)
+                alpha[p] = (byte)Math.Round(pixels[p * 4 + 3] * (high - low < 24 ? 1 :
+                    .2 + .8 * Compatibility.Clamp((Gray(p * 4) - low) / (high - low), 0, 1)));
+        }
 
         int left = width, right = -1, top = height, bottom = -1;
         for (int y = 0; y < height; y++)

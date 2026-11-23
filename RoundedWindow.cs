@@ -49,7 +49,15 @@ internal static class RoundedWindow
         // leaves a rectangular backdrop behind the rounded WPF border. Let the
         // compositor clip both layers on Windows 11, using its 8-DIP radius.
         int preference = 2; // DWMWCP_ROUND
-        if (DwmSetWindowAttribute(source.Handle, 33, ref preference, sizeof(int)) == 0)
+        bool paper = window is StickyNoteWindow;
+        // Paper notes supply their own fine edge. A native region keeps DWM from
+        // adding the broad rounded-window shadow over the next note in a stack.
+        if (paper)
+        {
+            preference = 1; // DWMWCP_DONOTROUND: the region below owns the corners.
+            DwmSetWindowAttribute(source.Handle, 33, ref preference, sizeof(int));
+        }
+        if (!paper && DwmSetWindowAttribute(source.Handle, 33, ref preference, sizeof(int)) == 0)
         {
             SetWindowRgn(source.Handle, IntPtr.Zero, true);
             frame.CornerRadius = new CornerRadius(8);
@@ -57,11 +65,12 @@ internal static class RoundedWindow
         else
         {
             // Windows 7/10 have no DWM corner preference.
-            frame.CornerRadius = new CornerRadius(Radius);
+            double radius = paper ? 8 : Radius;
+            frame.CornerRadius = new CornerRadius(radius);
             if (!GetWindowRect(source.Handle, out var bounds)) return;
             var scale = source.CompositionTarget.TransformToDevice;
             var region = CreateRoundRectRgn(0, 0, bounds.Right - bounds.Left + 1, bounds.Bottom - bounds.Top + 1,
-                (int)Math.Round(Radius * 2 * scale.M11), (int)Math.Round(Radius * 2 * scale.M22));
+                (int)Math.Round(radius * 2 * scale.M11), (int)Math.Round(radius * 2 * scale.M22));
             // Windows owns the region after a successful SetWindowRgn.
             if (region != IntPtr.Zero && SetWindowRgn(source.Handle, region, true) == 0) DeleteObject(region);
         }

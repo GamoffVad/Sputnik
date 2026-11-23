@@ -1,0 +1,80 @@
+<UserControl x:Class="Sputnik.TimePicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="False" MinWidth="142" Height="36"
+             AutomationProperties.Name="Время"
+             ToolTip="Введите часы и минуты. ↑ / ↓ — изменить, ← / → — перейти между сегментами.">
+  <UserControl.Resources>
+    <Style x:Key="Segment" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
+      <Setter Property="TextAlignment" Value="Center"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Padding" Value="2,0"/>
+      <Setter Property="MaxLength" Value="2"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="Face" CornerRadius="5" Background="{TemplateBinding Background}">
+              <ScrollViewer x:Name="PART_ContentHost" Focusable="False"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="{DynamicResource ThemeRaised}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="Background" Value="{DynamicResource ThemeHover}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Step" TargetType="Button" BasedOn="{StaticResource SputnikIconButton}">
+      <Setter Property="Width" Value="22"/>
+      <Setter Property="MinHeight" Value="0"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="IsTabStop" Value="False"/>
+    </Style>
+  </UserControl.Resources>
+  <Border x:Name="Frame" CornerRadius="8" BorderThickness="1" Padding="8,3,3,3">
+    <Border.Style>
+      <Style TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource ThemeField}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ThemeLine}"/>
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeEdge}"/>
+          </DataTrigger>
+          <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeAccent}"/>
+          </DataTrigger>
+          <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
+            <Setter Property="Opacity" Value=".48"/>
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="24"/><ColumnDefinition/><ColumnDefinition Width="8"/>
+        <ColumnDefinition/><ColumnDefinition Width="26"/>
+      </Grid.ColumnDefinitions>
+      <Path Width="14" Height="14" Stretch="Uniform" Data="M8 1A7 7 0 1 1 7.99 1 M8 4V8L11 10"
+            Stroke="{DynamicResource ThemeAccent}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+      <TextBox x:Name="Hours" Grid.Column="1" Style="{StaticResource Segment}" AutomationProperties.Name="Часы"/>
+      <TextBlock Grid.Column="2" Text=":" FontSize="18" Foreground="{DynamicResource ThemeMuted}"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      <TextBox x:Name="Minutes" Grid.Column="3" Style="{StaticResource Segment}" AutomationProperties.Name="Минуты"/>
+      <Grid Grid.Column="4" Margin="3,0,0,0">
+        <Grid.RowDefinitions><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+        <Button Style="{StaticResource Step}" Click="Increase" AutomationProperties.Name="Увеличить время" ToolTip="Увеличить выбранный сегмент (↑)">
+          <Path Data="M1 5L5 1 9 5" Width="8" Height="4" Stretch="Fill" Stroke="{DynamicResource ThemeMuted}" StrokeThickness="1.3" StrokeLineJoin="Round"/>
+        </Button>
+        <Button Grid.Row="1" Style="{StaticResource Step}" Click="Decrease" AutomationProperties.Name="Уменьшить время" ToolTip="Уменьшить выбранный сегмент (↓)">
+          <Path Data="M1 1L5 5 9 1" Width="8" Height="4" Stretch="Fill" Stroke="{DynamicResource ThemeMuted}" StrokeThickness="1.3" StrokeLineJoin="Round"/>
+        </Button>
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

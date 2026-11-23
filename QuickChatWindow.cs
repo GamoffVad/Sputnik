@@ -20,6 +20,16 @@ internal sealed class QuickChatWindow : Window
     private Button? submitButton;
     private bool waiting;
     private bool dismissed;
+    private Size? answerSize;
+    private Window? waitingSurface;
+    private Point? answerPosition;
+    internal event Action? PresentationChanged;
+    internal bool IsPresented => IsVisible || waitingSurface?.IsVisible == true;
+    internal Window VisibleSurface => waitingSurface?.IsVisible == true ? waitingSurface : this;
+    internal void FollowPosition()
+    {
+        if (IsPresented && !(VisibleSurface == this && frame.Child is Grid && answerPosition is not null)) position(VisibleSurface);
+    }
 
     public QuickChatWindow(Action<Window> position, Action openFull, Func<string, Task<string>> send)
     {
@@ -39,6 +49,8 @@ internal sealed class QuickChatWindow : Window
         frame.UseTheme(Border.BorderBrushProperty, "Edge");
         Content = frame;
         RoundedWindow.Apply(this, frame);
+        IsVisibleChanged += (_, _) => PresentationChanged?.Invoke();
+        Closed += (_, _) => waitingSurface?.Close();
         input = new TextBox
         {
             BorderThickness = new Thickness(0), Background = Brushes.Transparent,
@@ -146,7 +158,19 @@ internal sealed class QuickChatWindow : Window
             };
             dots.Children.Add(dot);
         }
-        Present(dots, 65, 30);
+        waitingSurface ??= new Window
+        {
+            Title = "Ожидание ответа Спутника", Width = 65, Height = 30,
+            WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize,
+            AllowsTransparency = true, Background = Brushes.Transparent,
+            ShowInTaskbar = false, ShowActivated = false, Topmost = Topmost
+        };
+        waitingSurface.Owner = Owner;
+        waitingSurface.Content = dots;
+        position(waitingSurface);
+        if (!waitingSurface.IsVisible) waitingSurface.Show();
+        Hide();
+        PresentationChanged?.Invoke();
     }
 
     private void ShowAnswer(string answer)
@@ -157,6 +181,15 @@ internal sealed class QuickChatWindow : Window
         measure.Measure(new Size(276, double.PositiveInfinity));
         var stack = new DockPanel { Margin = new Thickness(10, 6, 10, 10) };
         var header = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+        header.Background = Brushes.Transparent;
+        header.Cursor = Cursors.SizeAll;
+        header.ToolTip = "Перетащите, чтобы переместить ответ";
+        header.MouseLeftButtonDown += (_, e) =>
+        {
+            if (e.Handled) return;
+            DragMove();
+            answerPosition = new Point(Left, Top);
+        };
         var full = WorkspaceUi.IconButton("Открыть полный чат", WorkspaceUi.ExpandIcon);
         full.Click += (_, _) => { Hide(); openFull(); };
         DockPanel.SetDock(full, Dock.Right);
@@ -168,13 +201,47 @@ internal sealed class QuickChatWindow : Window
         stack.Children.Add(header);
         stack.Children.Add(new ScrollViewer { Content = text, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        Present(stack, 300, Compatibility.Clamp(measure.DesiredSize.Height + 54, 78, 195));
+
+        var grip = new Thumb
+        {
+            Width = 18, Height = 18, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 0, 2, 2), Cursor = Cursors.SizeNWSE, ToolTip = "Изменить размер", Focusable = true
+        };
+        AutomationProperties.SetName(grip, "Изменить размер окна ответа");
+        var gripShape = new FrameworkElementFactory(typeof(Path));
+        gripShape.SetValue(Path.DataProperty, Geometry.Parse("M3 15L15 3 M8 15L15 8"));
+        gripShape.SetValue(Shape.StrokeThicknessProperty, 1.2);
+        gripShape.SetResourceReference(Shape.StrokeProperty, "ThemeMuted");
+        grip.Template = new ControlTemplate(typeof(Thumb)) { VisualTree = gripShape };
+        void Resize(double dx, double dy)
+        {
+            Width = Compatibility.Clamp(Width + dx, MinWidth, Math.Max(MinWidth, SystemParameters.VirtualScreenWidth));
+            Height = Compatibility.Clamp(Height + dy, MinHeight, Math.Max(MinHeight, SystemParameters.VirtualScreenHeight));
+            answerSize = new Size(Width, Height);
+        }
+        grip.DragDelta += (_, e) => Resize(e.HorizontalChange, e.VerticalChange);
+        grip.KeyDown += (_, e) =>
+        {
+            var delta = e.Key switch { Key.Left => (-10, 0), Key.Right => (10, 0), Key.Up => (0, -10), Key.Down => (0, 10), _ => (0, 0) };
+            if (delta == (0, 0)) return;
+            Resize(delta.Item1, delta.Item2);
+            e.Handled = true;
+        };
+
+        var layer = new Grid();
+        layer.Children.Add(stack);
+        layer.Children.Add(grip);
+        double width = answerSize?.Width ?? 300;
+        double height = answerSize?.Height ?? Compatibility.Clamp(measure.DesiredSize.Height + 54, 78, 195);
+        Present(layer, width, height);
     }
 
     internal void Dismiss()
     {
         dismissed = true;
+        waitingSurface?.Hide();
         Hide();
+        PresentationChanged?.Invoke();
     }
 
     private void Present(UIElement child, double width, double height)
@@ -187,7 +254,19 @@ internal sealed class QuickChatWindow : Window
         Width = width;
         Height = height;
         position(this);
+        if (child is Grid && answerPosition is { } saved)
+        {
+            var area = SystemParameters.WorkArea;
+            Left = Compatibility.Clamp(saved.X, area.Left, Math.Max(area.Left, area.Right - Width));
+            Top = Compatibility.Clamp(saved.Y, area.Top, Math.Max(area.Top, area.Bottom - Height));
+        }
         if (!IsVisible) Show();
+        waitingSurface?.Hide();
+        PresentationChanged?.Invoke();
+        // The rounded-window clip was computed before this replacement child
+        // had a layout, leaving a zero-sized clip on reopen at the same size.
+        UpdateLayout();
+        RoundedWindow.UpdateShape(this, frame);
         WorkspaceUi.Reveal(frame);
     }
 

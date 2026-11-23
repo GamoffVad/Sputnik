@@ -59,6 +59,68 @@
     <Setter Property="Width" Value="28"/>
   </Style>
 
+  <Style x:Key="SputnikSettingsToggle" TargetType="{x:Type CheckBox}" BasedOn="{StaticResource SputnikControl}">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="MinHeight" Value="64"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type CheckBox}">
+          <Border x:Name="Face" Background="{DynamicResource ThemeField}" BorderBrush="Transparent"
+                  BorderThickness="1" CornerRadius="8" Padding="10">
+            <DockPanel>
+              <Border x:Name="Track" DockPanel.Dock="Right" Width="36" Height="20" CornerRadius="10"
+                      Background="{DynamicResource ThemeRaised}" Margin="12,0,0,0" VerticalAlignment="Center">
+                <Ellipse x:Name="Knob" Width="14" Height="14" Margin="3" HorizontalAlignment="Left"
+                         Fill="{DynamicResource ThemeMuted}"/>
+              </Border>
+              <ContentPresenter VerticalAlignment="Center"/>
+            </DockPanel>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Track" Property="Background" Value="{DynamicResource ThemeAccent}"/>
+              <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource ThemeAccentInk}"/>
+              <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource ThemeEdge}"/></Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource ThemeAccent}"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Face" Property="Opacity" Value=".48"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="SputnikSegment" TargetType="{x:Type RadioButton}" BasedOn="{StaticResource SputnikControl}">
+    <Setter Property="Foreground" Value="{DynamicResource ThemeMuted}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Padding" Value="10,5"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type RadioButton}">
+          <Border x:Name="Face" Background="Transparent" BorderBrush="Transparent" BorderThickness="1"
+                  CornerRadius="6" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="{DynamicResource ThemeRaised}"/></Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Face" Property="Background" Value="{DynamicResource ThemeHover}"/>
+              <Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource ThemeEdge}"/>
+              <Setter Property="Foreground" Value="{DynamicResource ThemeInk}"/>
+              <Setter Property="FontWeight" Value="SemiBold"/>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Face" Property="BorderBrush" Value="{DynamicResource ThemeAccent}"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Face" Property="Opacity" Value=".48"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <ControlTemplate x:Key="SputnikTextEditor" TargetType="{x:Type Control}">
     <Border x:Name="Frame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
             BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7">

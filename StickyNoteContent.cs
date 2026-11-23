@@ -9,6 +9,15 @@ namespace Sputnik;
 
 internal static class StickyNoteContent
 {
+    private static readonly string ImageCache = Path.Combine(Path.GetTempPath(), "Sputnik-note-images-" + Guid.NewGuid().ToString("N"));
+    internal static void ClearImageCache()
+    {
+        string target = Path.GetFullPath(ImageCache);
+        string parent = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (!string.Equals(Path.GetDirectoryName(target), parent, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Недопустимая папка временных изображений.");
+        if (Directory.Exists(target)) Directory.Delete(target, true);
+    }
     internal sealed record BlockData(string Kind, InlineData[]? Inlines = null, BlockData[][]? Items = null, bool Numbered = false);
     internal sealed record InlineData(string Kind, string? Text = null, bool Bold = false, bool Italic = false,
         bool Underline = false, bool Strike = false, bool Checked = false, byte[]? Png = null);
@@ -43,8 +52,8 @@ internal static class StickyNoteContent
                 case InlineUIContainer { Child: CheckBox check }:
                     yield return new("check", Checked: check.IsChecked == true);
                     break;
-                case InlineUIContainer { Child: Image { Tag: byte[] png } }:
-                    yield return new("image", Png: png);
+                case InlineUIContainer { Child: Image image }:
+                    yield return new("image", Png: ImagePng(image));
                     break;
             }
         }
@@ -73,7 +82,7 @@ internal static class StickyNoteContent
                 switch (inline.Kind)
                 {
                     case "line": paragraph.Inlines.Add(new LineBreak()); break;
-                    case "check": paragraph.Inlines.Add(new InlineUIContainer(makeCheck(inline.Checked)) { BaselineAlignment = BaselineAlignment.Center }); break;
+                    case "check": paragraph.Inlines.Add(new InlineUIContainer(makeCheck(inline.Checked)) { BaselineAlignment = BaselineAlignment.TextBottom }); break;
                     case "image" when inline.Png is not null: paragraph.Inlines.Add(ImageInline(inline.Png)); break;
                     case "run":
                         var run = new Run(inline.Text ?? "")
@@ -113,13 +122,36 @@ internal static class StickyNoteContent
 
     public static InlineUIContainer ImageInline(byte[] png, TextPointer? position = null)
     {
-        using var stream = new MemoryStream(png, writable: false);
-        var bitmap = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+        // WPF's restricted undo reader accepts standard Image/BitmapImage with
+        // a URI, but cannot round-trip private decoders, streams or custom UI.
+        // The PNG remains embedded in the note; this process-local file only
+        // supplies a stable image URI for WPF's internal undo snapshots.
+        Directory.CreateDirectory(ImageCache);
+        using var hash = System.Security.Cryptography.SHA256.Create();
+        string file = Path.Combine(ImageCache, BitConverter.ToString(hash.ComputeHash(png)).Replace("-", "") + ".png");
+        if (!File.Exists(file)) File.WriteAllBytes(file, png);
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(file, UriKind.Absolute); bitmap.EndInit(); bitmap.Freeze();
+        var image = new Image { Source = bitmap, Tag = png, Stretch = Stretch.Uniform };
         double scale = Math.Min(1, Math.Min(220d / bitmap.PixelWidth, 145d / bitmap.PixelHeight));
-        var image = new Image { Source = bitmap, Tag = png, Width = bitmap.PixelWidth * scale, Height = bitmap.PixelHeight * scale, Stretch = Stretch.Uniform };
+        image.Width = bitmap.PixelWidth * scale;
+        image.Height = bitmap.PixelHeight * scale;
         System.Windows.Automation.AutomationProperties.SetName(image, "Изображение в заметке");
         var inline = position is null ? new InlineUIContainer(image) : new InlineUIContainer(image, position);
         inline.BaselineAlignment = BaselineAlignment.Center;
         return inline;
+    }
+
+    private static byte[] ImagePng(Image image)
+    {
+        if (image.Tag is byte[] png) return png;
+        // The restricted undo reader drops arbitrary Tag arrays. Recover the
+        // original payload from our own URI, so autosave/export retain it.
+        byte[] restored = image.Source is BitmapImage { UriSource.IsFile: true } bitmap &&
+            bitmap.UriSource.LocalPath.StartsWith(ImageCache + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            ? File.ReadAllBytes(bitmap.UriSource.LocalPath) : ToPng((BitmapSource)image.Source);
+        image.Tag = restored;
+        return restored;
     }
 }

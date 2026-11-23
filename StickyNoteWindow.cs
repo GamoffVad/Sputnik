@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -17,18 +16,14 @@ namespace Sputnik;
 internal sealed class StickyNoteWindow : Window
 {
     internal const double MinimumWidth = 310, MinimumHeight = 185;
-    private const double RulingPitch = 24;
     private const string PinIcon = "M7 3H15L13 6V10L16 13H6L9 10V6Z M11 13V18";
     private readonly RichTextBox editor = new();
     private readonly TextBlock placeholder;
     private readonly DispatcherTimer autosave = new() { Interval = TimeSpan.FromMilliseconds(280) };
     private readonly Action<StickyNoteContent.BlockData[]> save;
     private bool dirty, deleted;
-    private readonly StackPanel menuPanel = new();
-    private Popup? actionsMenu;
-    private readonly Border ruling;
-    internal bool IsChangingPlacement { get; private set; }
-    internal event EventHandler? PlacementChanged;
+    private Action? requestDeletion;
+    internal void RequestDeletion() => requestDeletion?.Invoke();
 
     private static readonly (string Id, string Name, PetTheme Theme)[] Colors =
     [
@@ -46,7 +41,8 @@ internal sealed class StickyNoteWindow : Window
     }
 
     public StickyNoteWindow(StickyNoteContent.BlockData[] content, Action create, Action<StickyNoteContent.BlockData[]> save, Action delete,
-        string? color, Action<string?> saveColor, bool pinned, Action<bool> savePin, Func<NoteSharing.Channel[]> channels, Action sharingSettings)
+        string? color, Action<string?> saveColor, bool pinned, Action<bool> savePin, Func<NoteSharing.Channel[]> channels, Action sharingSettings, Action? remind = null,
+        bool ruled = false, Action<bool>? saveRuled = null, Action? arrange = null)
     {
         this.save = save;
         Title = "Заметка Спутника";
@@ -55,6 +51,7 @@ internal sealed class StickyNoteWindow : Window
         MinWidth = MinimumWidth;
         MinHeight = MinimumHeight;
         WindowStyle = WindowStyle.None;
+        WindowStartupLocation = WindowStartupLocation.Manual;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
         Topmost = pinned;
@@ -73,39 +70,46 @@ internal sealed class StickyNoteWindow : Window
         }
         ApplyColor();
         RoundedWindow.Apply(this, frame);
-        var header = new DockPanel { Height = 36, LastChildFill = true };
-        header.UseTheme(Panel.BackgroundProperty, "Accent");
-        DockPanel.SetDock(header, Dock.Top);
-        layout.Children.Add(header);
-        header.MouseLeftButtonDown += (_, e) =>
-        {
-            if (e.Handled) return;
-            IsChangingPlacement = true;
-            try { DragMove(); }
-            finally { IsChangingPlacement = false; PlacementChanged?.Invoke(this, EventArgs.Empty); }
-        };
-        var add = Button(Glyph("M4 9H14 M9 4V14", "AccentInk"), "Новая заметка", create, 34, header: true);
-        DockPanel.SetDock(add, Dock.Left);
+        var header = new Grid();
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition());
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var headerFrame = new Border { Child = header, Height = 44, Padding = new Thickness(8, 0, 8, 0),
+            BorderThickness = new Thickness(0, 0, 0, 1) };
+        headerFrame.UseTheme(Border.BackgroundProperty, "Field");
+        headerFrame.UseTheme(Border.BorderBrushProperty, "Edge");
+        DockPanel.SetDock(headerFrame, Dock.Top);
+        layout.Children.Add(headerFrame);
+        header.MouseLeftButtonDown += (_, e) => { if (!e.Handled) DragMove(); };
+        var add = Button(Glyph("M8 3V13 M3 8H13", "Ink"), "Новая заметка", create, 30, header: true);
+        add.Margin = new Thickness(0, 0, 8, 0);
         header.Children.Add(add);
-        var close = Button(Glyph("M5 5L13 13 M13 5L5 13", "AccentInk"), "Закрыть заметку", Close, 34, header: true);
-        DockPanel.SetDock(close, Dock.Right);
-        header.Children.Add(close);
-        var more = Button(Glyph("M4 9H4.1 M9 9H9.1 M14 9H14.1", "AccentInk"), "Действия с заметкой", () => { }, 34, header: true);
-        DockPanel.SetDock(more, Dock.Right);
-        header.Children.Add(more);
-        var share = Button(Glyph("M6 10L13 5 M6 11L13 16 M5 8A2 2 0 1 0 5 12A2 2 0 1 0 5 8 M15 2A2 2 0 1 0 15 6A2 2 0 1 0 15 2 M15 14A2 2 0 1 0 15 18A2 2 0 1 0 15 14", "AccentInk"), "Поделиться заметкой", () => { }, 34, header: true);
-        DockPanel.SetDock(share, Dock.Right);
-        header.Children.Add(share);
-        var pin = Button(Glyph(PinIcon, "AccentInk"), "Закрепить поверх окон", () => { }, 32, header: true);
-        var pinBadge = new Border { Child = pin, CornerRadius = new CornerRadius(7), Margin = new Thickness(1, 3, 1, 3) };
-        pin.Height = 30;
-        DockPanel.SetDock(pinBadge, Dock.Right);
-        header.Children.Add(pinBadge);
+        var headerActions = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(headerActions, 2);
+        header.Children.Add(headerActions);
+        var close = Button(Glyph("M4 4L12 12 M12 4L4 12"), "Скрыть заметку", Close, 30, header: true);
+        Action requestDelete = () => { };
+        var remove = Button(Glyph("M3 5H17 M7 5V3H13V5 M5 5L6 17H14L15 5 M8 8V14 M12 8V14"),
+            "Удалить заметку", () => requestDelete(), 30, header: true);
+        remove.ToolTip = "Удалить заметку навсегда";
+        var more = Button(Glyph("M3 7.5A.5 .5 0 1 0 3 8.5A.5 .5 0 1 0 3 7.5 M8 7.5A.5 .5 0 1 0 8 8.5A.5 .5 0 1 0 8 7.5 M13 7.5A.5 .5 0 1 0 13 8.5A.5 .5 0 1 0 13 7.5"), "Действия с заметкой", () => { }, 30, header: true);
+        var share = Button(Glyph("M6 10L13 5 M6 11L13 16 M5 8A2 2 0 1 0 5 12A2 2 0 1 0 5 8 M15 2A2 2 0 1 0 15 6A2 2 0 1 0 15 2 M15 14A2 2 0 1 0 15 18A2 2 0 1 0 15 14"), "Поделиться заметкой", () => { }, 30, header: true);
+        var pin = Button(Glyph(PinIcon), "Закрепить поверх окон", () => { }, 30, header: true);
+        var pinBadge = new Border { Child = pin, CornerRadius = new CornerRadius(6) };
+        headerActions.Children.Add(pinBadge);
+        headerActions.Children.Add(share);
+        headerActions.Children.Add(more);
+        var separator = new Border { Width = 1, Height = 16, Margin = new Thickness(5, 0, 5, 0) };
+        separator.UseTheme(Border.BackgroundProperty, "Line");
+        headerActions.Children.Add(separator);
+        headerActions.Children.Add(remove);
+        headerActions.Children.Add(close);
         void UpdatePin()
         {
-            if (Topmost) pinBadge.UseTheme(Border.BackgroundProperty, "AccentInk");
+            if (Topmost) pinBadge.UseTheme(Border.BackgroundProperty, "Accent");
             else pinBadge.Background = Brushes.Transparent;
-            pin.Content = Glyph(PinIcon, Topmost ? "Accent" : "AccentInk");
+            pin.Content = Glyph(PinIcon, Topmost ? "AccentInk" : "Ink");
+            ((FrameworkElement)pin.Content).Width = ((FrameworkElement)pin.Content).Height = 14;
             string action = Topmost ? "Снять закрепление" : "Закрепить поверх окон";
             pin.ToolTip = action;
             AutomationProperties.SetName(pin, action);
@@ -118,11 +122,14 @@ internal sealed class StickyNoteWindow : Window
             savePin(Topmost);
         };
         UpdatePin();
-        var heading = new TextBlock { Text = "Заметка", FontSize = 13, FontWeight = FontWeights.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(3, 0, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis };
-        heading.UseTheme(TextBlock.ForegroundProperty, "AccentInk");
+        var heading = new TextBlock { Text = "Заметка", FontSize = 12, FontWeight = FontWeights.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.NoWrap, Margin = new Thickness(0, 0, 8, 0), ToolTip = "Перетащите, чтобы переместить заметку" };
+        heading.UseTheme(TextBlock.ForegroundProperty, "Ink");
+        Grid.SetColumn(heading, 1);
         header.Children.Add(heading);
 
+        var menuPanel = new StackPanel();
         var menuFrame = new Border { Child = menuPanel, CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1), Padding = new Thickness(5) };
         menuFrame.UseTheme(Border.BackgroundProperty, "Surface");
         menuFrame.UseTheme(Border.BorderBrushProperty, "Edge");
@@ -131,7 +138,6 @@ internal sealed class StickyNoteWindow : Window
             PlacementTarget = more, Placement = PlacementMode.Bottom, StaysOpen = false, AllowsTransparency = true,
             Child = menuFrame,
         };
-        actionsMenu = menu;
         DockPanel.SetDock(menu, Dock.Top);
         layout.Children.Add(menu);
         more.Click += (_, _) => { menu.IsOpen = !menu.IsOpen; if (menu.IsOpen) ((Panel)menuPanel.Children[0]).Children[0].Focus(); };
@@ -158,29 +164,87 @@ internal sealed class StickyNoteWindow : Window
                 ((Border)option.Button.Content).Child.Visibility = color == option.Id ? Visibility.Visible : Visibility.Hidden;
         };
         menuPanel.Children.Add(colorRow);
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        actions.Children.Add(Button(Glyph("M3 5H17 M7 5V3H13V5 M5 5L6 17H14L15 5 M8 8V14 M12 8V14"), "Удалить заметку", () =>
-        {
-            delete();
-            deleted = true;
-            Close();
-        }, 34));
+        var ruling = new CheckBox { Content = "Тетрадные линии", IsChecked = ruled,
+            Margin = new Thickness(8, 7, 8, 9), ToolTip = "Показывать линии, как в тетради" };
+        AutomationProperties.SetName(ruling, "Тетрадные линии");
+        menuPanel.Children.Add(ruling);
+        var actions = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right };
+        if (arrange is not null) actions.Children.Add(Button("Упорядочить заметки", "Упорядочить заметки", () => { menu.IsOpen = false; arrange(); }, 192));
+        if (remind is not null) actions.Children.Add(Button("Напомнить", "Напомнить о заметке", () => { menu.IsOpen = false; remind(); }, 192));
+        actions.Children.Add(Button("Удалить заметку", "Удалить заметку", () => requestDelete(), 192));
         menuPanel.Children.Add(actions);
         var sharePanel = new StackPanel();
-        var shareStatus = new TextBlock { TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, FontSize = 11, Margin = new Thickness(8, 3, 8, 4) };
-        shareStatus.UseTheme(TextBlock.ForegroundProperty, "Muted");
-        DockPanel.SetDock(shareStatus, Dock.Bottom);
-        layout.Children.Add(shareStatus);
         var shareFrame = new Border { Child = sharePanel, CornerRadius = new CornerRadius(10), BorderThickness = new Thickness(1), Padding = new Thickness(5) };
         shareFrame.UseTheme(Border.BackgroundProperty, "Surface");
         shareFrame.UseTheme(Border.BorderBrushProperty, "Edge");
         var shareMenu = new Popup { PlacementTarget = share, Placement = PlacementMode.Bottom, StaysOpen = false, AllowsTransparency = true, Child = shareFrame };
         DockPanel.SetDock(shareMenu, Dock.Top);
         layout.Children.Add(shareMenu);
+        var deletePanel = new StackPanel { Width = 242 };
+        var deleteTitle = new TextBlock { Text = "Удалить заметку навсегда?", FontSize = 14,
+            FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
+        deleteTitle.UseTheme(TextBlock.ForegroundProperty, "Ink");
+        deletePanel.Children.Add(deleteTitle);
+        var deleteHint = new TextBlock { Text = "Текст и изображения будут удалены.", FontSize = 12,
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 8) };
+        deleteHint.UseTheme(TextBlock.ForegroundProperty, "Muted");
+        deletePanel.Children.Add(deleteHint);
+        var deleteError = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        deleteError.UseTheme(TextBlock.ForegroundProperty, "Ink");
+        AutomationProperties.SetLiveSetting(deleteError, AutomationLiveSetting.Assertive);
+        deletePanel.Children.Add(deleteError);
+        var deleteFrame = new Border { Child = deletePanel, CornerRadius = new CornerRadius(10),
+            BorderThickness = new Thickness(1), Padding = new Thickness(10) };
+        deleteFrame.UseTheme(Border.BackgroundProperty, "Surface");
+        deleteFrame.UseTheme(Border.BorderBrushProperty, "Edge");
+        var deleteMenu = new Popup { PlacementTarget = remove, Placement = PlacementMode.Bottom,
+            StaysOpen = false, AllowsTransparency = true, Child = deleteFrame };
+        DockPanel.SetDock(deleteMenu, Dock.Top);
+        layout.Children.Add(deleteMenu);
+        var deleteActions = new StackPanel { Orientation = Orientation.Horizontal };
+        var cancelDelete = Button("Отмена", "Отмена", () => { deleteMenu.IsOpen = false; editor.Focus(); }, 86);
+        deleteActions.Children.Add(cancelDelete);
+        var confirmDelete = Button("Удалить навсегда", "Удалить навсегда", () =>
+        {
+            if (deleted) return;
+            try { delete(); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+            {
+                deleteError.Text = "Не удалось удалить заметку. " + error.Message;
+                deleteError.Visibility = Visibility.Visible;
+                return;
+            }
+            deleted = true;
+            dirty = false;
+            autosave.Stop();
+            deleteMenu.IsOpen = false;
+            Close();
+        }, 148);
+        confirmDelete.Margin = new Thickness(8, 0, 0, 0);
+        confirmDelete.FontWeight = FontWeights.SemiBold;
+        deleteActions.Children.Add(confirmDelete);
+        deletePanel.Children.Add(deleteActions);
+        requestDelete = () =>
+        {
+            menu.IsOpen = shareMenu.IsOpen = false;
+            deleteError.Text = "";
+            deleteError.Visibility = Visibility.Collapsed;
+            deleteMenu.IsOpen = true;
+            cancelDelete.Focus();
+        };
+        requestDeletion = requestDelete;
+        deletePanel.PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Escape) return;
+            deleteMenu.IsOpen = false;
+            remove.Focus();
+            e.Handled = true;
+        };
         share.Click += (_, _) =>
         {
             if (shareMenu.IsOpen) { shareMenu.IsOpen = false; return; }
             menu.IsOpen = false;
+            deleteMenu.IsOpen = false;
             var configured = channels();
             int page = 0;
             void DrawChannels()
@@ -193,13 +257,9 @@ internal sealed class StickyNoteWindow : Window
                     sharePanel.Children.Add(Button(label, label, () =>
                     {
                         shareMenu.IsOpen = false;
-                        try
-                        {
-                            shareStatus.Text = NoteSharing.Open(channel, editor.Document) ?? "";
-                            shareStatus.Visibility = shareStatus.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
-                        }
-                        catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception or UriFormatException or IOException or ExternalException or UnauthorizedAccessException)
-                        { shareStatus.Text = error.Message; shareStatus.Visibility = Visibility.Visible; }
+                        try { NoteSharing.Open(channel, editor.Document); }
+                        catch (Exception error) when (error is InvalidOperationException or System.ComponentModel.Win32Exception or UriFormatException)
+                        { MessageBox.Show(this, error.Message, "Поделиться заметкой"); }
                     }, 165));
                 }
                 if (configured.Length > 4)
@@ -210,20 +270,6 @@ internal sealed class StickyNoteWindow : Window
                         DrawChannels();
                     }, 165);
                     sharePanel.Children.Add(next);
-                }
-                if (NoteAttachments.Images(editor.Document).Length > 0)
-                {
-                    sharePanel.Children.Add(Button("Файлы фото", "Файлы фото", () =>
-                    {
-                        try
-                        {
-                            var files = NoteAttachments.Export(NoteAttachments.Images(editor.Document), System.IO.Path.Combine(App.DataDirectory, "shared-notes"));
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", "\"" + System.IO.Path.GetDirectoryName(files[0]) + "\"") { UseShellExecute = true });
-                            shareMenu.IsOpen = false;
-                        }
-                        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
-                        { shareStatus.Text = error.Message; shareStatus.Visibility = Visibility.Visible; }
-                    }, 165));
                 }
                 sharePanel.Children.Add(Button("Настроить каналы", "Настроить каналы", () =>
                 {
@@ -252,15 +298,12 @@ internal sealed class StickyNoteWindow : Window
             Width = Compatibility.Clamp(Width + dx, MinWidth, Math.Max(MinWidth, SystemParameters.VirtualScreenWidth));
             Height = Compatibility.Clamp(Height + dy, MinHeight, Math.Max(MinHeight, SystemParameters.VirtualScreenHeight));
         }
-        grip.DragStarted += (_, _) => IsChangingPlacement = true;
         grip.DragDelta += (_, e) => Resize(e.HorizontalChange, e.VerticalChange);
-        grip.DragCompleted += (_, _) => { IsChangingPlacement = false; PlacementChanged?.Invoke(this, EventArgs.Empty); };
         grip.KeyDown += (_, e) =>
         {
             var delta = e.Key switch { Key.Left => (-10, 0), Key.Right => (10, 0), Key.Up => (0, -10), Key.Down => (0, 10), _ => (0, 0) };
             if (delta == (0, 0)) return;
             Resize(delta.Item1, delta.Item2);
-            PlacementChanged?.Invoke(this, EventArgs.Empty);
             e.Handled = true;
         };
         DockPanel.SetDock(grip, Dock.Right);
@@ -281,37 +324,50 @@ internal sealed class StickyNoteWindow : Window
         editor.UseTheme(TextBoxBase.CaretBrushProperty, "Accent");
         AutomationProperties.SetName(editor, "Текст заметки");
         editor.Document.PagePadding = new Thickness(0);
-        SetParagraphSpacing(false);
+        var paragraphStyle = new Style(typeof(Paragraph));
+        paragraphStyle.Setters.Add(new Setter(Paragraph.MarginProperty, new Thickness(0, 0, 0, 3)));
+        editor.Resources.Add(typeof(Paragraph), paragraphStyle);
         editor.Document.Blocks.Clear();
         StickyNoteContent.Write(editor.Document.Blocks, content, Check);
         if (editor.Document.Blocks.Count == 0) editor.Document.Blocks.Add(new Paragraph());
         var body = new Grid();
-        ruling = new Border
-        {
-            IsHitTestVisible = false, Visibility = Visibility.Collapsed, Opacity = .13,
-            Margin = new Thickness(editor.Padding.Left, editor.Padding.Top, editor.Padding.Right, 0)
-        };
-        var line = new GeometryDrawing { Geometry = Geometry.Parse("M0 22.5 H100") };
-        var pen = new Pen();
-        System.Windows.Data.BindingOperations.SetBinding(pen, Pen.BrushProperty, new System.Windows.Data.Binding { Source = editor, Path = new PropertyPath(Control.ForegroundProperty) });
-        pen.Thickness = .7;
-        line.Pen = pen;
-        var scrollOffset = new TranslateTransform();
-        ruling.Background = new DrawingBrush(line)
-        {
-            Viewport = new Rect(0, 0, 100, RulingPitch), ViewportUnits = BrushMappingMode.Absolute,
-            Viewbox = new Rect(0, 0, 100, RulingPitch), ViewboxUnits = BrushMappingMode.Absolute,
-            TileMode = TileMode.Tile, Stretch = Stretch.Fill, Transform = scrollOffset
-        };
-        editor.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(
-            (_, args) => scrollOffset.Y = -(args.VerticalOffset % RulingPitch)));
-        body.Children.Add(ruling);
+        var paper = new NoteRuling { IsHitTestVisible = false, Visibility = ruled ? Visibility.Visible : Visibility.Collapsed };
+        paper.UseTheme(NoteRuling.InkProperty, "Ink");
+        body.Children.Add(paper);
         body.Children.Add(editor);
         placeholder = new TextBlock { Text = "Напишите заметку…", FontSize = 15,
             Margin = new Thickness(14, 12, 0, 0), IsHitTestVisible = false };
         placeholder.UseTheme(TextBlock.ForegroundProperty, "Muted");
         body.Children.Add(placeholder);
         layout.Children.Add(body);
+        void SetRuling(bool enabled)
+        {
+            paper.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+            // WPF seals styles once used; create a fresh paragraph style.
+            paragraphStyle = new Style(typeof(Paragraph));
+            paragraphStyle.Setters.Add(new Setter(Paragraph.MarginProperty, enabled ? new Thickness(0) : new Thickness(0, 0, 0, 3)));
+            if (enabled)
+            {
+                paragraphStyle.Setters.Add(new Setter(Block.LineHeightProperty, 24d));
+                // Images may be taller than one notebook row; never clip them.
+                paragraphStyle.Setters.Add(new Setter(Block.LineStackingStrategyProperty, LineStackingStrategy.MaxHeight));
+            }
+            editor.Resources[typeof(Paragraph)] = paragraphStyle;
+        }
+        SetRuling(ruled);
+        editor.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler((_, e) =>
+        {
+            paper.ScrollOffset = e.VerticalOffset;
+            paper.InvalidateVisual();
+        }));
+        ruling.Click += (_, _) =>
+        {
+            bool enabled = ruling.IsChecked == true;
+            try { saveRuled?.Invoke(enabled); }
+            catch { ruling.IsChecked = !enabled; throw; }
+            SetRuling(enabled);
+            editor.Focus();
+        };
 
         AddTool("B", "Полужирный (Ctrl+B)", () => EditingCommands.ToggleBold.Execute(null, editor), FontWeights.Bold);
         AddTool("I", "Курсив (Ctrl+I)", () => EditingCommands.ToggleItalic.Execute(null, editor), italic: true);
@@ -334,73 +390,7 @@ internal sealed class StickyNoteWindow : Window
         editor.PreviewKeyDown += EditorKey;
         autosave.Tick += (_, _) => Flush();
         Loaded += (_, _) => editor.Focus();
-        Closing += (_, _) => { menu.IsOpen = false; shareMenu.IsOpen = false; Flush(); };
-    }
-
-    internal void ConfigureArrangement(Action arrange, Func<bool> automatic, Action<bool> setAutomatic)
-    {
-        var separator = new Border { Height = 1, Margin = new Thickness(4, 5, 4, 5) };
-        separator.UseTheme(Border.BackgroundProperty, "Line");
-        var controls = new StackPanel();
-        controls.Children.Add(separator);
-        var align = Button("Выровнять все заметки", "Выровнять все заметки", () =>
-        {
-            actionsMenu!.IsOpen = false;
-            arrange();
-        }, 200);
-        align.HorizontalContentAlignment = HorizontalAlignment.Left;
-        align.FontSize = 12;
-        align.Height = 30;
-        controls.Children.Add(align);
-        var auto = new CheckBox
-        {
-            Content = "Автовыравнивание заметок", IsChecked = automatic(),
-            FontSize = 12, Margin = new Thickness(5, 2, 5, 4),
-            ToolTip = "Одинаковая ширина и ровные отступы. Выравнивать после добавления, закрытия и перемещения заметок."
-        };
-        AutomationProperties.SetName(auto, "Автовыравнивание заметок");
-        controls.Children.Add(auto);
-        auto.Click += (_, _) =>
-        {
-            actionsMenu!.IsOpen = false;
-            setAutomatic(auto.IsChecked == true);
-            auto.IsChecked = automatic();
-        };
-        actionsMenu!.Opened += (_, _) => auto.IsChecked = automatic();
-        menuPanel.Children.Insert(1, controls);
-    }
-
-    internal void ConfigureRuling(bool enabled, Action<bool> saveRuling)
-    {
-        Apply(enabled);
-        var option = new CheckBox
-        {
-            Content = "Линейки в заметке", IsChecked = enabled, FontSize = 12, Margin = new Thickness(5, 2, 5, 4),
-            ToolTip = "Показать тонкие горизонтальные линии под текстом"
-        };
-        AutomationProperties.SetName(option, "Линейки в заметке");
-        option.Click += (_, _) =>
-        {
-            bool visible = option.IsChecked == true;
-            Apply(visible);
-            saveRuling(visible);
-        };
-        menuPanel.Children.Insert(2, option);
-
-        void Apply(bool visible)
-        {
-            ruling.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-            SetParagraphSpacing(visible);
-        }
-    }
-
-    private void SetParagraphSpacing(bool ruled)
-    {
-        editor.Document.LineHeight = ruled ? RulingPitch : double.NaN;
-        editor.Document.LineStackingStrategy = LineStackingStrategy.MaxHeight;
-        var style = new Style(typeof(Paragraph));
-        style.Setters.Add(new Setter(Paragraph.MarginProperty, new Thickness(0, 0, 0, ruled ? 0 : 3)));
-        editor.Resources[typeof(Paragraph)] = style;
+        Closing += (_, _) => { menu.IsOpen = shareMenu.IsOpen = deleteMenu.IsOpen = false; Flush(); };
     }
 
     private void EditorKey(object sender, KeyEventArgs e)
@@ -454,7 +444,7 @@ internal sealed class StickyNoteWindow : Window
 
     private InlineUIContainer InsertCheck(Paragraph paragraph)
     {
-        var marker = new InlineUIContainer(Check(false), paragraph.ContentStart) { BaselineAlignment = BaselineAlignment.Center };
+        var marker = new InlineUIContainer(Check(false), paragraph.ContentStart) { BaselineAlignment = BaselineAlignment.TextBottom };
         return marker;
     }
 
@@ -467,16 +457,18 @@ internal sealed class StickyNoteWindow : Window
         box.SetResourceReference(Border.BorderBrushProperty, "ThemeAccent");
         box.SetValue(Border.BorderThicknessProperty, new Thickness(1));
         box.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+        // A font glyph carries asymmetric ascent/descent whitespace. A vector
+        // tick stays centred in the box regardless of the selected note font.
         var mark = new FrameworkElementFactory(typeof(System.Windows.Shapes.Path), "Mark");
-        mark.SetValue(System.Windows.Shapes.Path.DataProperty, Geometry.Parse("M2 7L5 10 11 3"));
+        mark.SetValue(System.Windows.Shapes.Path.DataProperty, Geometry.Parse("M0 4L3 7L9 0"));
         mark.SetResourceReference(Shape.StrokeProperty, "ThemeAccentInk");
-        mark.SetValue(Shape.StrokeThicknessProperty, 1.5d);
+        mark.SetValue(WidthProperty, 9d);
+        mark.SetValue(HeightProperty, 7d);
+        mark.SetValue(Shape.StretchProperty, Stretch.Fill);
+        mark.SetValue(Shape.StrokeThicknessProperty, 1.45d);
         mark.SetValue(Shape.StrokeStartLineCapProperty, PenLineCap.Round);
         mark.SetValue(Shape.StrokeEndLineCapProperty, PenLineCap.Round);
         mark.SetValue(Shape.StrokeLineJoinProperty, PenLineJoin.Round);
-        mark.SetValue(FrameworkElement.WidthProperty, 10d);
-        mark.SetValue(FrameworkElement.HeightProperty, 10d);
-        mark.SetValue(Shape.StretchProperty, Stretch.Uniform);
         mark.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
         mark.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
         mark.SetValue(VisibilityProperty, Visibility.Hidden);
@@ -535,7 +527,7 @@ internal sealed class StickyNoteWindow : Window
         editor.Document.Blocks.FirstBlock is Paragraph { Inlines.Count: 0 } && editor.Document.Blocks.Count == 1
             ? Visibility.Visible : Visibility.Collapsed;
 
-    private void Flush()
+    internal void Flush()
     {
         autosave.Stop();
         if (!dirty || deleted) return;
@@ -556,13 +548,16 @@ internal sealed class StickyNoteWindow : Window
 
     private static Button Button(object symbol, string title, Action click, double width = 43, bool header = false)
     {
-        var button = new Button { Content = symbol, Width = width, Height = header ? 32 : 37,
+        if (header && symbol is System.Windows.Shapes.Path icon) icon.Width = icon.Height = 14;
+        var button = new Button { Content = symbol, Width = width, Height = header ? 30 : 37, Padding = new Thickness(0),
             FontSize = symbol is string { Length: 1 } ? 20 : 14, Cursor = Cursors.Hand, ToolTip = title };
         AutomationProperties.SetName(button, title);
-        button.UseTheme(Control.ForegroundProperty, header ? "AccentInk" : "Ink");
+        button.UseTheme(Control.ForegroundProperty, "Ink");
         var fill = new FrameworkElementFactory(typeof(Border), "Fill");
         fill.SetValue(Border.BackgroundProperty, Brushes.Transparent);
         fill.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
+        fill.SetValue(Border.BorderBrushProperty, Brushes.Transparent);
+        fill.SetValue(Border.BorderThicknessProperty, new Thickness(1));
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
         presenter.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
         presenter.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
@@ -572,11 +567,38 @@ internal sealed class StickyNoteWindow : Window
         {
             var highlight = new Trigger { Property = property, Value = true };
             highlight.Setters.Add(new Setter(Border.BackgroundProperty,
-                new DynamicResourceExtension(header ? "ThemeAccentHover" : "ThemeHover"), "Fill"));
+                new DynamicResourceExtension("ThemeHover"), "Fill"));
             template.Triggers.Add(highlight);
         }
+        var focused = new Trigger { Property = IsKeyboardFocusedProperty, Value = true };
+        focused.Setters.Add(new Setter(Border.BorderBrushProperty, new DynamicResourceExtension("ThemeAccent"), "Fill"));
+        template.Triggers.Add(focused);
+        var pressed = new Trigger { Property = ButtonBase.IsPressedProperty, Value = true };
+        pressed.Setters.Add(new Setter(OpacityProperty, .65, "Fill"));
+        template.Triggers.Add(pressed);
         button.Template = template;
         button.Click += (_, _) => click();
         return button;
+    }
+}
+
+// A decoration beneath the editor: it never enters note content or exports.
+internal sealed class NoteRuling : FrameworkElement
+{
+    internal static readonly DependencyProperty InkProperty = DependencyProperty.Register(
+        nameof(Ink), typeof(Brush), typeof(NoteRuling), new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
+    public Brush Ink { get => (Brush)GetValue(InkProperty); set => SetValue(InkProperty, value); }
+    internal double ScrollOffset { get; set; }
+
+    protected override void OnRender(DrawingContext drawing)
+    {
+        base.OnRender(drawing);
+        if (ActualWidth <= 28) return;
+        var pen = new Pen(Ink, 1);
+        drawing.PushOpacity(.15);
+        double first = 35 - ScrollOffset % 24;
+        for (double y = first; y < ActualHeight; y += 24)
+            drawing.DrawLine(pen, new Point(14, y), new Point(ActualWidth - 14, y));
+        drawing.Pop();
     }
 }

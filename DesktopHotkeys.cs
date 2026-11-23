@@ -27,6 +27,27 @@ internal sealed class DesktopHotkeys(Action<string> open) : IDisposable
         }
     }
 
+    internal void Replace(JsonObject settings)
+    {
+        var previous = bindings.Values.ToArray();
+        void Clear() { foreach (var binding in bindings.Values.ToArray()) Set(binding.Section, 0, 0); }
+        Clear();
+        try
+        {
+            foreach (var item in settings)
+            {
+                if (item.Value is not JsonObject keys) throw new InvalidOperationException("Недопустимое сочетание клавиш.");
+                Set(item.Key, (uint)keys["modifiers"]!.GetValue<int>(), (uint)keys["key"]!.GetValue<int>());
+            }
+        }
+        catch
+        {
+            Clear();
+            foreach (var binding in previous) Set(binding.Section, binding.Modifiers, binding.Key);
+            throw;
+        }
+    }
+
     public void Set(string section, uint modifiers, uint key)
     {
         if (!DesktopControls.Sections.Any(item => item.Action == section))

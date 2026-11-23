@@ -48,7 +48,11 @@ internal static class WindowMaterial
         var window = surface.Window;
         var color = (window.TryFindResource("ThemeSurface") as SolidColorBrush)?.Color ?? Color.FromRgb(35, 41, 47);
         var source = PresentationSource.FromVisual(window) as HwndSource;
-        bool glass = source is not null && enabled && transparency > 0 && !SystemParameters.HighContrast && SetBackdrop(source, true, color);
+        bool paper = window is StickyNoteWindow;
+        // Notes are overlapping paper surfaces. Native blur/Acrylic paints a
+        // rectangular backdrop outside their custom region; keep paper opaque.
+        // Other panels retain the user's global glass setting.
+        bool glass = !paper && source is not null && enabled && transparency > 0 && !SystemParameters.HighContrast && SetBackdrop(source, true, color);
         if (!glass && source is not null) SetBackdrop(source, false, color);
         var fill = new SolidColorBrush(color) { Opacity = glass ? 1 - transparency / 100 : 1 };
         fill.Freeze();

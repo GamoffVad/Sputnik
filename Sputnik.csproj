@@ -13,7 +13,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="wwwroot/assets/pets.json;wwwroot/assets/klyaksa/**/*.png;wwwroot/assets/icon-catalog.json;wwwroot/assets/LUCIDE-LICENSE.txt" CopyToOutputDirectory="PreserveNewest"/>
+    <Content Include="wwwroot/assets/**/*" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
   <PropertyGroup Condition="'$(Win7)' == 'true'">
     <LangVersion>14.0</LangVersion>

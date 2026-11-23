@@ -35,6 +35,8 @@ internal sealed class DesktopPetWindow : Window
         public int Fps { get; init; }
         public PetViewport? Viewport { get; init; }
 
+        public NeutralPose? Neutral { get; init; }
+
         public (string File, int Index, string? Next) Locate(int index)
         {
             if (Sheets is null) return (File, index, null);
@@ -67,6 +69,17 @@ internal sealed class DesktopPetWindow : Window
     private readonly ScaleTransform idle = new();
     private readonly DesktopControls controls;
     private readonly Stopwatch elapsed = new();
+    private double playbackSpeed = 1;
+    private double animationOffset;
+    internal double AnimationSeconds => animationOffset + elapsed.Elapsed.TotalSeconds * playbackSpeed;
+    internal void ApplyPlaybackSpeed(double speed)
+    {
+        if(double.IsNaN(speed) || double.IsInfinity(speed) || speed is < .25 or > 2) throw new ArgumentOutOfRangeException(nameof(speed));
+        if(speed == playbackSpeed) return;
+        double seconds = AnimationSeconds; bool running = elapsed.IsRunning;
+        elapsed.Reset(); if(running) elapsed.Start();
+        animationOffset = seconds; playbackSpeed = speed;
+    }
     private readonly Random random = new();
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private readonly Queue<AnimationClip> upcoming = new();
@@ -78,19 +91,25 @@ internal sealed class DesktopPetWindow : Window
     private BitmapSource? sheet;
     private BitmapSource? displayedFrame;
     private BitmapSource? neutralFrame;
+    private ImageSource? entryFrame;
+    private NeutralPose? CurrentNeutral => current?.Neutral ?? active?.Neutral;
     private PetViewport? displayedViewport;
     private string? sheetFile;
     private string? preloadedFile;
     private Task<BitmapSource?>? preloaded;
     private string root = Assets;
+    private DateTime loadedManifestUtc;
     private int lastFrame = -1;
     private bool paused;
     private double preferredSize = DefaultPetSize;
     private AnimationClip? pinned;
     private bool dragging;
+    private readonly DesktopLayer layer;
     private Point? restingOrigin;
-    private Point supportAnchor = new(.5, 1);
-    private Point? supportPosition;
+    private Point? standingAnchor;
+    private double groundLevel = 1;
+    private readonly Dictionary<string, double> groundLevels = new(StringComparer.Ordinal);
+    internal Point GroundAnchor => new(Left + Width / 2, Top + Height * groundLevel);
     private Rect placementArea;
     private readonly Dictionary<AnimationClip, Rect?[]> visibleBounds = new();
     private byte[] alphaScan = [];
@@ -106,13 +125,14 @@ internal sealed class DesktopPetWindow : Window
         ShowInTaskbar = false;
         ShowActivated = false;
         Topmost = true;
+        layer = new DesktopLayer(this);
         UseLayoutRounding = true;
         sprite.RenderTransform = idle;
         RenderOptions.SetBitmapScalingMode(sprite, BitmapScalingMode.NearestNeighbor);
         Content = sprite;
         sprite.SizeChanged += (_, _) =>
         {
-            if (active?.Neutral is not { BlendFrames: > 0 } || current is null || lastFrame <= 0 || lastFrame >= current.FrameCount - 1) return;
+            if (CurrentNeutral is not { BlendFrames: > 0 } || current is null || lastFrame < 0) return;
             int frame = lastFrame;
             lastFrame = -1;
             ShowFrame(frame);
@@ -178,8 +198,7 @@ internal sealed class DesktopPetWindow : Window
             if (sprite.IsMouseCaptured) sprite.ReleaseMouseCapture();
             if (!moved) return;
             restingOrigin = new Point(Left, Top);
-            supportPosition = new Point(Left + Width * supportAnchor.X, Top + Height * supportAnchor.Y);
-            SavePetPosition();
+            standingAnchor = GroundAnchor;
             if (resumeAfterDrag) elapsed.Start();
             controls.FollowPet();
         }
@@ -188,18 +207,13 @@ internal sealed class DesktopPetWindow : Window
         {
             Rect area = SystemParameters.WorkArea;
             double size = Math.Min(preferredSize, Math.Min(area.Width, area.Height));
-            var origin = LoadPetPosition() ?? new Point(area.Right - size - 24, area.Bottom - size - 18);
-            var desktop = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
-                SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
-            if (!desktop.Contains(new Point(origin.X + size / 2, origin.Y + size / 2)))
-                origin = new Point(area.Right - size - 24, area.Bottom - size - 18);
-            var frame = new Rect(origin, new Size(size, size));
+            var frame = DesktopControls.ClampPetFrame(new Rect(area.Right - size - 24, area.Bottom - size - 18, size, size), area);
             Width = Height = frame.Width;
             Left = frame.Left;
             Top = frame.Top;
             placementArea = area;
             restingOrigin = frame.TopLeft;
-            supportPosition = new Point(frame.Left + Width * supportAnchor.X, frame.Top + Height * supportAnchor.Y);
+            standingAnchor = GroundAnchor;
         };
         SourceInitialized += (_, _) => HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(HandleScreenChange);
         timer.Tick += (_, _) => RenderFrame();
@@ -213,43 +227,10 @@ internal sealed class DesktopPetWindow : Window
             controls.FollowPet();
             (Application.Current as App)?.FollowQuickChat();
         }
-        Closed += (_, _) => { timer.Stop(); controls.Dispose(); };
+        Closed += (_, _) => { timer.Stop(); controls.Dispose(); layer.Dispose(); };
     }
 
     internal void PositionPanel(Window panel, string section) => controls.PositionPanel(panel, section);
-
-    private static string PositionPath => Path.Combine(App.DataDirectory, "pet-position.json");
-
-    private void SavePetPosition()
-    {
-        try
-        {
-            Directory.CreateDirectory(App.DataDirectory);
-            string temporary = PositionPath + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(new { left = Left, top = Top }));
-            Compatibility.ReplaceFile(temporary, PositionPath);
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-        {
-            App.WriteDiagnostic("pet-position", error.ToString());
-        }
-    }
-
-    private static Point? LoadPetPosition()
-    {
-        try
-        {
-            if (!File.Exists(PositionPath)) return null;
-            var value = JsonNode.Parse(File.ReadAllText(PositionPath));
-            double left = value!["left"]!.GetValue<double>(), top = value["top"]!.GetValue<double>();
-            return double.IsNaN(left) || double.IsInfinity(left) || double.IsNaN(top) || double.IsInfinity(top)
-                ? null : new Point(left, top);
-        }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or NullReferenceException)
-        {
-            return null;
-        }
-    }
     internal bool HasContextMenu => controls.HasContextMenu;
     internal void ShowFavoriteSpheres() => controls.ShowSpheres();
     internal void PositionBubble(Window bubble) => controls.PositionBubble(bubble);
@@ -282,16 +263,21 @@ internal sealed class DesktopPetWindow : Window
         PlayNext();
     }
 
-    internal void ReloadFromStore() { active = null; UpdateFromStore(); }
+    internal void RefreshFavoriteIcons() => controls.RefreshSiteIcons();
 
     public void UpdateFromStore()
     {
         var workspace = ReadWorkspace();
+        double speed = workspace?["animationSpeed"] is JsonValue value && value.TryGetValue<double>(out double rate) && rate is >=.25 and <=2 ? rate : 1;
+        ApplyPlaybackSpeed(speed);
+        ApplyTopmost(IsTopmostOn(workspace));
         string desired = workspace?["active"]?.ToString() ?? "klyaksa";
-        if (desired != active?.Id) SelectFromStore(desired, workspace);
+        if (desired != active?.Id || (root != Assets && File.GetLastWriteTimeUtc(Path.Combine(root, "pet.json")) != loadedManifestUtc)) SelectFromStore(desired, workspace);
         else ApplyMotionSettings(workspace);
         var favorites = (workspace?["favorites"] as JsonArray)?.OfType<JsonObject>()
-            .Select(DesktopControls.Favorite.FromSettings)
+            .Select(item => new DesktopControls.Favorite(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "",
+                item["target"]?.ToString() ?? "", item["icon"]?.ToString() ?? "", item["siteIcon"]?.ToString() ?? "",
+                item["monochrome"]?.GetValue<bool>() == true))
             .Where(item => item.Kind is "site" or "app" && item.Title.Length > 0 && item.Target.Length > 0)
             .ToArray() ?? [];
         var manual = workspace?["customTheme"] as JsonObject;
@@ -310,6 +296,11 @@ internal sealed class DesktopPetWindow : Window
 
     internal static bool IsSmoothingOn(JsonNode? workspace) =>
         workspace?["petSmoothing"] is JsonValue value && value.TryGetValue<bool>(out bool enabled) && enabled;
+
+    internal static bool IsTopmostOn(JsonNode? workspace) =>
+        workspace?["petTopmost"] is not JsonValue value || !value.TryGetValue<bool>(out bool enabled) || enabled;
+
+    internal void ApplyTopmost(bool enabled) => layer.Apply(enabled);
 
     internal static BitmapScalingMode PetScalingMode(bool smoothing) =>
         smoothing ? BitmapScalingMode.HighQuality : BitmapScalingMode.NearestNeighbor;
@@ -359,15 +350,9 @@ internal sealed class DesktopPetWindow : Window
         placementArea = controls.WorkArea();
         double size = Math.Min(preferredSize, Math.Min(placementArea.Width, placementArea.Height));
         Point origin = restingOrigin ?? new Point(Left, Top);
-        Point point = supportPosition ?? new Point(origin.X + Width * supportAnchor.X, origin.Y + Height * supportAnchor.Y);
+        standingAnchor ??= new Point(origin.X + Width / 2, origin.Y + Height * groundLevel);
+        restingOrigin = new Point(standingAnchor.Value.X - size / 2, standingAnchor.Value.Y - size * groundLevel);
         Width = Height = size;
-        AlignSupport(point);
-    }
-
-    private void AlignSupport(Point point)
-    {
-        supportPosition = point;
-        restingOrigin = new Point(point.X - Width * supportAnchor.X, point.Y - Height * supportAnchor.Y);
         PositionAtRest();
     }
 
@@ -383,7 +368,8 @@ internal sealed class DesktopPetWindow : Window
 
     internal Rect VisibleBounds()
     {
-        if (current is null || lastFrame < 0 || displayedFrame is not { } image) return new Rect(0, 0, 1, 1);
+        if (current is null || lastFrame < 0 || displayedFrame is not { } image)
+            return new Rect(0, 0, 1, 1);
         if (!visibleBounds.TryGetValue(current, out var bounds))
             visibleBounds[current] = bounds = new Rect?[current.FrameCount];
         if (bounds[lastFrame] is { } cached) return cached;
@@ -404,16 +390,13 @@ internal sealed class DesktopPetWindow : Window
                 bottom = y;
             }
         }
-        var visible = new Rect(0, 0, 1, 1);
-        if (right >= left)
-        {
-            var viewport = displayedViewport?.Bounds ?? new Rect(0, 0, width, height);
-            double ratio = viewport.Width / viewport.Height;
-            double w = Math.Min(1, ratio), h = Math.Min(1, 1 / ratio);
-            visible = new Rect((1 - w) / 2 + w * (left - viewport.X) / viewport.Width,
-                (1 - h) / 2 + h * (top - viewport.Y) / viewport.Height,
-                w * (right - left + 1) / viewport.Width, h * (bottom - top + 1) / viewport.Height);
-        }
+        var viewport = displayedViewport?.Bounds ?? new Rect(0, 0, width, height);
+        double ratio = viewport.Width / viewport.Height;
+        double w = Math.Min(1, ratio), h = Math.Min(1, 1 / ratio);
+        var visible = right < left ? new Rect(.5, .5, 0, 0) : new Rect(
+            (1 - w) / 2 + w * (left - viewport.X) / viewport.Width,
+            (1 - h) / 2 + h * (top - viewport.Y) / viewport.Height,
+            w * (right - left + 1) / viewport.Width, h * (bottom - top + 1) / viewport.Height);
         bounds[lastFrame] = visible;
         return visible;
     }
@@ -470,14 +453,14 @@ internal sealed class DesktopPetWindow : Window
 
     private void UsePet(Pet selected, string folder, JsonNode? workspace = null)
     {
-        Point origin = restingOrigin ?? new Point(Left, Top);
-        Point? previousSupport = IsLoaded
-            ? supportPosition ?? new Point(origin.X + Width * supportAnchor.X, origin.Y + Height * supportAnchor.Y)
-            : null;
+        // Retain the unrounded placement, rather than accumulating HWND pixel
+        // rounding every time a different canvas/scale is selected.
+        Point? anchor = IsLoaded && active is not null ? standingAnchor ?? GroundAnchor : null;
         active = selected;
         disabledMotions = DisabledMotions(workspace, selected.Id);
         controls.SetPetName(selected.Name);
         root = folder;
+        loadedManifestUtc = File.GetLastWriteTimeUtc(Path.Combine(root, "pet.json"));
         upcoming.Clear();
         unavailable.Clear();
         bundledSheets.Clear();
@@ -486,6 +469,7 @@ internal sealed class DesktopPetWindow : Window
         sheet = null;
         displayedFrame = null;
         neutralFrame = null;
+        entryFrame = null;
         displayedViewport = null;
         sheetFile = null;
         preloaded = null;
@@ -497,14 +481,66 @@ internal sealed class DesktopPetWindow : Window
             UsePet(builtins[0], Assets);
             return;
         }
-
-        // Capture the resting pose once. Following each animated frame would cancel hops and move the window.
-        var neutral = VisibleBounds();
-        supportAnchor = new Point(neutral.Left + neutral.Width / 2, neutral.Bottom);
-        if (previousSupport is { } point && !dragging)
+        groundLevel = ReferenceGround(selected);
+        if (anchor is { } fixedAnchor)
         {
-            AlignSupport(point);
+            standingAnchor = fixedAnchor;
+            restingOrigin = new Point(fixedAnchor.X - Width / 2, fixedAnchor.Y - Height * groundLevel);
+            PositionAtRest();
         }
+    }
+
+    private double ReferenceGround(Pet selected)
+    {
+        var clip = current ?? selected.Animations.FirstOrDefault();
+        string key = Path.GetFullPath(root) + "|" + selected.Id + "|" + clip?.Name + "|" + loadedManifestUtc.Ticks;
+        if (groundLevels.TryGetValue(key, out double cached)) return cached;
+        double result = 1;
+        try
+        {
+            // Pick one resting reference for the whole pet. Never follow the
+            // animated bounds: jumping, bowing and cloth movement remain natural.
+            var neutral = clip?.Neutral ?? selected.Neutral;
+            if (neutral is not null)
+                result = ReferenceGroundLevel(neutralFrame ?? ReadSheet(Path.Combine(root, neutral.File)), neutral.Viewport);
+            else if (clip is not null)
+            {
+                string file = clip.Locate(0).File;
+                var bitmap = sheetFile == file && sheet is not null ? sheet : ReadSheet(Path.Combine(root, file));
+                BitmapSource first = clip.FrameWidth > 0 && clip.FrameHeight > 0
+                    ? new CroppedBitmap(bitmap, new Int32Rect(0, 0, clip.FrameWidth, clip.FrameHeight)) : bitmap;
+                result = ReferenceGroundLevel(first, clip.Viewport);
+            }
+        }
+        catch (Exception error) when (error is IOException or NotSupportedException or ArgumentException or InvalidOperationException)
+        { App.WriteDiagnostic("pet-ground", selected.Id + ": " + error.Message); }
+        groundLevels[key] = result;
+        return result;
+    }
+
+    internal static double ReferenceGroundLevel(BitmapSource source, PetViewport? viewport)
+    {
+        BitmapSource frame = source.Format == PixelFormats.Bgra32 || source.Format == PixelFormats.Pbgra32
+            ? source : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+        int width = frame.PixelWidth, height = frame.PixelHeight, stride = width * 4;
+        var pixels = new byte[stride * height]; frame.CopyPixels(pixels, stride, 0);
+        // Ignore a soft contact shadow and isolated specks below the feet.
+        int minimum = Math.Max(1, (int)Math.Ceiling(width * .01)), bottom = -1;
+        foreach (int opacity in new[] { 192, 64 })
+        {
+            for (int y = height - 1; y >= 0; y--)
+            {
+                int count = 0;
+                for (int x = 0; x < width; x++)
+                    if (pixels[y * stride + x * 4 + 3] >= opacity && ++count >= minimum) break;
+                if (count >= minimum) { bottom = y + 1; break; }
+            }
+            if (bottom >= 0) break;
+        }
+        if (bottom < 0) return 1;
+        var canvas = viewport?.Bounds ?? new Rect(0, 0, width, height);
+        double scale = 1 / Math.Max(canvas.Width, canvas.Height);
+        return Compatibility.Clamp((1 - canvas.Height * scale) / 2 + (bottom - canvas.Y) * scale, 0, 1);
     }
 
     private bool PlayNext(bool showStill = false)
@@ -536,9 +572,15 @@ internal sealed class DesktopPetWindow : Window
                 var first = next.Locate(0);
                 sheet = GetSheet(first.File, next.Sheets is not null);
                 sheetFile = first.File;
+                var previousPose = CurrentNeutral;
+                var outgoing = current is null ? null : sprite.Source;
                 current = next;
+                bool changedPose = previousPose?.File != CurrentNeutral?.File || previousPose?.Viewport != CurrentNeutral?.Viewport;
+                entryFrame = changedPose ? outgoing : null;
+                if (changedPose) neutralFrame = null;
                 lastFrame = -1;
                 elapsed.Restart();
+                animationOffset = 0;
                 if (paused || showStill) elapsed.Stop();
                 ShowFrame(0);
                 if (showStill) upcoming.Clear();
@@ -600,33 +642,40 @@ internal sealed class DesktopPetWindow : Window
         if (current.FrameCount == 1)
         {
             if (active?.Animations.Length == 1)
-                idle.ScaleY = 1 + .012 * Math.Pow(Math.Sin(elapsed.Elapsed.TotalSeconds * Math.PI / 4.4), 2);
-            else if (elapsed.Elapsed.TotalSeconds >= 1d / current.Fps && !PlayNext())
+                idle.ScaleY = 1 + .012 * Math.Pow(Math.Sin(AnimationSeconds * Math.PI / 4.4), 2);
+            else if (AnimationSeconds >= 1d / current.Fps && !PlayNext())
                 UsePet(builtins[0], Assets);
             return;
         }
 
-        int frame = (int)(elapsed.Elapsed.TotalSeconds * current.Fps);
+        int frame = (int)(AnimationSeconds * current.Fps);
         if (frame >= current.FrameCount)
         {
+            // A slow sheet load or a busy UI must not silently skip the rest
+            // of a clip when the wall clock moves past its nominal duration.
+            if (lastFrame < current.FrameCount - 1)
+            {
+                ShowFrame(Math.Max(0, lastFrame + 1));
+                return;
+            }
             if (!PlayNext() && active?.Id != "hudi")
                 UsePet(builtins[0], Assets);
             return;
         }
-        ShowFrame(frame);
+        // Show every source frame in sequence, including after delayed loads.
+        ShowFrame(Math.Min(frame, Math.Max(0, lastFrame + 1)));
     }
 
     private void ShowFrame(int index)
     {
         if (index == lastFrame || current is null || sheet is null) return;
 
-        if (active?.Neutral is { } neutral && (index == 0 || index == current.FrameCount - 1))
+        if (CurrentNeutral is { } neutral && (index == 0 || index == current.FrameCount - 1))
         {
             neutralFrame ??= ReadSheet(Path.Combine(root, neutral.File));
             displayedFrame = neutralFrame;
             displayedViewport = neutral.Viewport;
-            sprite.Source = PetFrames.Present(neutralFrame, neutral.Viewport);
-            lastFrame = index;
+            PresentFrame(index);
             return;
         }
 
@@ -658,13 +707,22 @@ internal sealed class DesktopPetWindow : Window
             displayedFrame = frame;
         }
         displayedViewport = current.Viewport;
+        PresentFrame(index);
+    }
+
+    private void PresentFrame(int index)
+    {
+        if (displayedFrame is null || current is null) return;
         ImageSource presentation = PetFrames.Present(displayedFrame, displayedViewport);
-        if (active?.Neutral is { BlendFrames: > 0 } pose && neutralFrame is not null)
+        if (CurrentNeutral is { BlendFrames: > 0 } pose && neutralFrame is not null)
         {
             var dpi = VisualTreeHelper.GetDpi(sprite);
             var pixels = new Size(Math.Max(1, sprite.ActualWidth > 0 ? sprite.ActualWidth : Width) * dpi.DpiScaleX,
                 Math.Max(1, sprite.ActualHeight > 0 ? sprite.ActualHeight : Height) * dpi.DpiScaleY);
-            presentation = PetFrames.Transition(presentation, PetFrames.Present(neutralFrame, pose.Viewport),
+            int entrySpan = Math.Min(pose.BlendFrames, (current.FrameCount - 1) / 2);
+            ImageSource reference = entryFrame is not null && index < entrySpan
+                ? entryFrame : PetFrames.Present(neutralFrame, pose.Viewport);
+            presentation = PetFrames.Transition(presentation, reference,
                 index, current.FrameCount, pose.BlendFrames, pixels, RenderOptions.GetBitmapScalingMode(sprite));
             if (presentation is BitmapSource combined && !ReferenceEquals(combined, displayedFrame))
             {
@@ -674,5 +732,55 @@ internal sealed class DesktopPetWindow : Window
         }
         sprite.Source = presentation;
         lastFrame = index;
+    }
+}
+
+internal sealed record PetViewport(double X, double Y, double Width, double Height)
+{
+    public Rect Bounds => new(X, Y, Width, Height);
+}
+
+internal static class PetFrames
+{
+    public static ImageSource Present(BitmapSource frame, PetViewport? viewport)
+    {
+        if (viewport is null) return frame;
+        var bounds = viewport.Bounds;
+        var drawing = new DrawingGroup { ClipGeometry = new RectangleGeometry(bounds) };
+        drawing.Children.Add(new GeometryDrawing(Brushes.Transparent, null, new RectangleGeometry(bounds)));
+        drawing.Children.Add(new ImageDrawing(frame, new Rect(0, 0, frame.PixelWidth, frame.PixelHeight)));
+        drawing.Freeze();
+        var image = new DrawingImage(drawing); image.Freeze(); return image;
+    }
+
+    public static ImageSource Transition(ImageSource frame, ImageSource neutral, int index, int count, int frames, Size pixels, BitmapScalingMode scaling)
+    {
+        int span = Math.Min(frames, (count - 1) / 2);
+        if (span <= 0) return frame;
+        double amount = Math.Min(1, Math.Min(index, count - 1 - index) / (double)span);
+        // Ease into and out of the shared pose. A linear mix changes the entire
+        // silhouette and shadow immediately on the frame next to a clip boundary.
+        if (span >= 6) amount = amount * amount * (3 - 2 * amount);
+        int width = Math.Max(1, (int)Math.Ceiling(pixels.Width)), height = Math.Max(1, (int)Math.Ceiling(pixels.Height));
+        byte[] Render(ImageSource source)
+        {
+            var visual = new DrawingVisual(); RenderOptions.SetBitmapScalingMode(visual, scaling);
+            double scale = Math.Min(width / source.Width, height / source.Height);
+            double w = source.Width * scale, h = source.Height * scale;
+            using (var dc = visual.RenderOpen()) dc.DrawImage(source, new Rect((width - w) / 2, (height - h) / 2, w, h));
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32); bitmap.Render(visual);
+            var data = new byte[width * height * 4]; bitmap.CopyPixels(data, width * 4, 0); return data;
+        }
+        // Use the same rasterization for endpoints, blends and the main action.
+        // Switching between a native DrawingImage and a screen-sized bitmap
+        // changes edge filtering at non-native sizes, especially on white.
+        byte[] after = Render(amount <= 0 ? neutral : frame);
+        if (amount is > 0 and < 1)
+        {
+            byte[] before = Render(neutral); int mix = (int)Math.Round(amount * 256);
+            for (int i = 0; i < after.Length; i++) after[i] = (byte)((before[i] * (256 - mix) + after[i] * mix + 128) >> 8);
+        }
+        var result = BitmapSource.Create(width, height, 96, 96, PixelFormats.Pbgra32, null, after, width * 4);
+        result.Freeze(); return result;
     }
 }

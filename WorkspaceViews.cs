@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Automation;
@@ -13,6 +13,8 @@ public partial class MainWindow
     private StackPanel? chatHistory;
     private ScrollViewer? chatScroll;
     private Action? chatSendState;
+    private TextBlock? chatTitle;
+    private string? displayedChat;
     private readonly List<(string Role, string Content)> renderedMessages = [];
     private static App? Desktop => Application.Current as App;
 
@@ -100,9 +102,9 @@ public partial class MainWindow
         return button;
     }
 
-    private Button AsyncButton(string label, Func<Task> action, bool primary = false, string? icon = null)
+    private Button AsyncButton(string label, Func<Task> action, bool primary = false)
     {
-        var button = icon is null ? Button(label, () => { }, primary) : WorkspaceUi.IconButton(label, icon, primary);
+        var button = Button(label, () => { }, primary);
         button.Click += async (_, _) =>
         {
             button.IsEnabled = false;
@@ -206,6 +208,8 @@ public partial class MainWindow
         chatHistory = null;
         chatScroll = null;
         chatSendState = null;
+        chatTitle = null;
+        displayedChat = null;
         renderedMessages.Clear();
         switch (value)
         {
@@ -218,6 +222,16 @@ public partial class MainWindow
             case "manage": ShowManage(); break;
             case "sharing": ShowSharing(); break;
             case "reminders": ShowReminders(); break;
+            case "tools": ShowTools(); break;
+            case "note-list": ShowNotesList(); break;
+            case "dates": ShowPersonalDates(); break;
+            case "calendar": ShowPersonalCalendar(); break;
+            case "notifications": ShowNotificationSettings(); break;
+            case "commands": ShowCommands(); break;
+            case "focus": ShowFocus(); break;
+            case "profiles": ShowProfiles(); break;
+            case "sync": ShowSync(); break;
+            case "modules": ShowModules(); break;
             default: ShowChat(); break;
         }
     }
@@ -323,132 +337,6 @@ public partial class MainWindow
         if (preferences.Count == 0) workspace.Remove("disabledMotions");
         else if (workspace["disabledMotions"] is not JsonObject) workspace["disabledMotions"] = preferences;
     }, true);
-
-    private void ShowChat()
-    {
-        var settings = WorkspaceUi.IconButton("Модель и API", "M2 4H14 M2 12H14 M5 1V7 M11 9V15");
-        settings.Click += (_, _) => Desktop?.ShowWorkspace("model");
-        var page = Page("Чат", settings, 18);
-        var input = Input("Сообщение модели", max: 10000);
-        input.AcceptsReturn = true;
-        input.TextWrapping = TextWrapping.Wrap;
-        input.MinHeight = 32;
-        input.MaxHeight = 96;
-        input.FontSize = 14;
-        input.Padding = new Thickness(8, 6, 8, 6);
-        input.BorderThickness = new Thickness(0);
-        input.Background = System.Windows.Media.Brushes.Transparent;
-        input.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-        input.ToolTip = "Enter — отправить · Shift+Enter — новая строка";
-        var status = Status();
-        status.Margin = new Thickness(2, 0, 0, 5);
-        AutomationProperties.SetLiveSetting(status, AutomationLiveSetting.Polite);
-        status.Unloaded += (_, _) => WorkspaceUi.SetWaiting(status, false);
-        var submit = WorkspaceUi.IconButton("Отправить сообщение (Enter)", WorkspaceUi.SendIcon, true);
-        bool pending = false;
-        void UpdateComposer() => submit.IsEnabled = !pending && !sending && !string.IsNullOrWhiteSpace(input.Text);
-        chatSendState = UpdateComposer;
-        input.TextChanged += (_, _) => UpdateComposer();
-        UpdateComposer();
-        async Task Submit()
-        {
-            string text = input.Text.Trim();
-            if (text.Length == 0 || sending || pending) return;
-            pending = true;
-            input.Clear();
-            UpdateComposer();
-            status.Text = "Модель отвечает…";
-            WorkspaceUi.SetWaiting(status, true);
-            try { await SendChat(text); status.Text = ""; }
-            catch (Exception error)
-            {
-                status.Text = error.Message;
-                if (input.Text.Length == 0) input.Text = text;
-            }
-            finally
-            {
-                pending = false;
-                WorkspaceUi.SetWaiting(status, false);
-                UpdateComposer();
-                if (input.IsVisible) input.Focus();
-            }
-        }
-        submit.Click += async (_, _) => await Submit();
-        input.PreviewKeyDown += async (_, e) =>
-        {
-            if (e.Key != Key.Enter || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
-            e.Handled = true;
-            await Submit();
-        };
-        var hint = Text("Написать сообщение…", "Muted", 14);
-        hint.Margin = new Thickness(8, 6, 8, 6);
-        hint.IsHitTestVisible = false;
-        input.TextChanged += (_, _) => hint.Visibility = input.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        var field = new Grid();
-        field.Children.Add(input);
-        field.Children.Add(hint);
-        var composer = new DockPanel { Margin = new Thickness(4) };
-        submit.Margin = new Thickness(4, 0, 0, 0);
-        submit.VerticalAlignment = VerticalAlignment.Bottom;
-        DockPanel.SetDock(submit, Dock.Right);
-        composer.Children.Add(submit);
-        composer.Children.Add(field);
-        var composerFrame = new Border { Child = composer, CornerRadius = new CornerRadius(11), BorderThickness = new Thickness(1) };
-        composerFrame.UseTheme(Border.BackgroundProperty, "Field");
-        composerFrame.UseTheme(Border.BorderBrushProperty, "Line");
-        input.GotKeyboardFocus += (_, _) => composerFrame.UseTheme(Border.BorderBrushProperty, "Accent");
-        input.LostKeyboardFocus += (_, _) => composerFrame.UseTheme(Border.BorderBrushProperty, "Line");
-        var footer = new StackPanel();
-        footer.Children.Add(status);
-        footer.Children.Add(composerFrame);
-        DockPanel.SetDock(footer, Dock.Bottom);
-        page.Children.Add(footer);
-        chatHistory = new StackPanel();
-        renderedMessages.Clear();
-        chatScroll = new ScrollViewer { Content = chatHistory, Margin = new Thickness(0, 0, 0, 8),
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
-        page.Children.Add(chatScroll);
-        RefreshChatHistory((WorkspaceData()["messages"] as JsonArray) ?? new JsonArray(), false);
-    }
-
-    private void RefreshChatHistory(JsonArray history, bool animate = true)
-    {
-        if (chatHistory is null) return;
-        var messages = history.Skip(Math.Max(0, history.Count - 200))
-            .Select(item => (Role: Value(item, "role"), Content: Value(item, "content"))).ToArray();
-        bool follow = !animate || chatScroll is null || chatScroll.ScrollableHeight - chatScroll.VerticalOffset < 32
-            || (messages.Length > 0 && messages[messages.Length - 1].Role == "user");
-        int common = 0;
-        while (common < Math.Min(messages.Length, renderedMessages.Count) && messages[common] == renderedMessages[common]) common++;
-        if (renderedMessages.Count == 0) chatHistory.Children.Clear();
-        while (chatHistory.Children.Count > common) chatHistory.Children.RemoveAt(chatHistory.Children.Count - 1);
-        for (int index = common; index < messages.Length; index++)
-        {
-            var message = messages[index];
-            bool user = message.Role == "user";
-            var content = WorkspaceUi.MessageText(message.Content);
-            AutomationProperties.SetName(content, user ? "Ваше сообщение" : "Ответ модели");
-            var bubble = new Border
-            {
-                Child = content, Padding = new Thickness(user ? 10 : 2, 7, user ? 10 : 2, 7),
-                Margin = new Thickness(user ? 32 : 0, 0, user ? 4 : 16, 6),
-                CornerRadius = new CornerRadius(10), HorizontalAlignment = user ? HorizontalAlignment.Right : HorizontalAlignment.Stretch
-            };
-            if (user) bubble.UseTheme(Border.BackgroundProperty, "Hover");
-            chatHistory.Children.Add(bubble);
-            if (animate && index == messages.Length - 1) WorkspaceUi.Reveal(bubble);
-        }
-        renderedMessages.Clear();
-        renderedMessages.AddRange(messages);
-        if (messages.Length == 0)
-        {
-            var empty = Text("С чего начнём?", "Muted");
-            empty.Margin = new Thickness(2, 12, 0, 0);
-            chatHistory.Children.Add(empty);
-        }
-        if (follow && chatScroll is { } scroll)
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(scroll.ScrollToEnd));
-    }
 
     private static readonly (string Name, string Url)[] Providers =
     [

@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -29,6 +28,7 @@ internal sealed class DesktopControls : IDisposable
         ("Заметки", "notes", "note", "Ctrl + 2 клика"),
         ("Сайты и программы", "favorites", "link", ""),
         ("Напоминания", "reminders", "bell", ""),
+        ("Инструменты", "tools", "settings", ""),
         ("Движения", "motion", "play", "›"),
         ("Питомцы", "pets", "pet", ""),
         ("Внешний вид", "theme", "palette", "›"),
@@ -38,17 +38,10 @@ internal sealed class DesktopControls : IDisposable
         ("Закрыть питомца", "exit", "close", ""),
     ];
     internal static IEnumerable<(string Title, string Action)> Sections =>
-        Entries.Where(entry => entry.Action != "exit").Select(entry => (entry.Title, entry.Action));
-    internal sealed record Favorite(string Kind, string Title, string Target, string Icon, string SiteIcon = "", bool Monochrome = false)
-    {
-        internal string IconSource { get; init; } = "";
-
-        internal static Favorite FromSettings(JsonObject item) =>
-            new(item["kind"]?.ToString() ?? "", item["title"]?.ToString() ?? "",
-                item["target"]?.ToString() ?? "", item["icon"]?.ToString() ?? "",
-                item["siteIcon"]?.ToString() ?? "", item["monochrome"]?.GetValue<bool>() == true)
-            { IconSource = item["iconSource"]?.ToString() ?? "" };
-    }
+        Entries.Where(entry => entry.Action != "exit").Select(entry => (entry.Title, entry.Action)).Concat(new[] {
+            ("Все заметки", "note-list"), ("Памятные даты", "dates"), ("Календарь", "calendar"), ("Не беспокоить", "notifications"),
+            ("Быстрые команды", "commands"), ("Фокус", "focus"), ("Профили", "profiles"), ("Синхронизация", "sync"), ("Модули", "modules") });
+    internal sealed record Favorite(string Kind, string Title, string Target, string Icon, string SiteIcon = "", bool Monochrome = false);
 
     private readonly Window pet;
     private readonly Action<string> open;
@@ -87,6 +80,13 @@ internal sealed class DesktopControls : IDisposable
         if (items.SequenceEqual(favorites)) return;
         favorites = items;
         spherePage = 0;
+        bool wasVisible = spheresVisible;
+        RebuildSpheres();
+        if (wasVisible) ShowSpheres();
+    }
+
+    internal void RefreshSiteIcons()
+    {
         bool wasVisible = spheresVisible;
         RebuildSpheres();
         if (wasVisible) ShowSpheres();
@@ -163,7 +163,7 @@ internal sealed class DesktopControls : IDisposable
             var toggle = new Button
             {
                 Cursor = Cursors.Hand,
-                Content = new Viewbox { Child = ReadFavoriteIcon(item) ?? icon, Stretch = Stretch.Uniform },
+                Content = new Viewbox { Child = ReadSiteIcon(item) ?? icon, Stretch = Stretch.Uniform },
             };
             var popover = HoverCard.Attach(toggle, item.Title,
                 pages == 1 ? null : $"{spherePage + 1}/{pages} · Колесо мыши — следующая страница");
@@ -183,44 +183,42 @@ internal sealed class DesktopControls : IDisposable
                 ShowSpheres();
             };
             var sphere = FloatingWindow(toggle, orbSize, orbSize, activate: false);
+            sphere.Topmost = pet.Topmost;
             ResizeSphere(sphere);
             return sphere;
         }).ToArray();
         StopWatchingWhenIdle();
     }
 
-    internal static FrameworkElement? ReadFavoriteIcon(Favorite item)
+    internal static FrameworkElement? ReadSiteIcon(Favorite item)
     {
+        if (item.Kind != "site" || !SiteIcons.IsCachedName(item.SiteIcon)) return null;
         try
         {
-            BitmapSource? source;
-            if (item.Kind == "app" && item.IconSource == "app")
+            string folder = System.IO.Path.Combine(App.DataDirectory, "site-icons");
+            string? name = item.Monochrome ? SiteIconMask.Ensure(folder, item.SiteIcon) : item.SiteIcon;
+            if (name is null) return null;
+            using var stream = System.IO.File.OpenRead(System.IO.Path.Combine(folder, name));
+            var source = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            if (!item.Monochrome)
             {
-                source = FavoriteIcons.ReadApplicationIcon(item.Target);
-                if (source is not null && item.Monochrome) source = SiteIconMask.Create(source);
+                var image = new Image { Width = 26, Height = 26, Source = source, Stretch = Stretch.Uniform,
+                    UseLayoutRounding = true, SnapsToDevicePixels = true };
+                RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.HighQuality);
+                return image;
             }
-            else if (item.Kind == "site" && item.IconSource != "library" && SiteIcons.IsCachedName(item.SiteIcon))
-            {
-                string folder = System.IO.Path.Combine(App.DataDirectory, "site-icons");
-                string? name = item.Monochrome ? SiteIconMask.Ensure(folder, item.SiteIcon) : item.SiteIcon;
-                if (name is null) return null;
-                using var stream = System.IO.File.OpenRead(System.IO.Path.Combine(folder, name));
-                source = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            }
-            else return null;
-
-            if (source is null) return null;
-            if (!item.Monochrome) return new Image { Width = 26, Height = 26, Source = source, Stretch = Stretch.Uniform };
             var shape = new Rectangle { Width = 24, Height = 24, OpacityMask = new ImageBrush(source) { Stretch = Stretch.Uniform } };
+            RenderOptions.SetBitmapScalingMode(shape, BitmapScalingMode.HighQuality);
+            shape.UseLayoutRounding = shape.SnapsToDevicePixels = true;
             shape.UseTheme(Shape.FillProperty, "Accent");
             return shape;
         }
-        catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException or
-            NotSupportedException or ArgumentException or System.IO.FileFormatException or ExternalException) { return null; }
+        catch (Exception error) when (error is System.IO.IOException or NotSupportedException or System.IO.FileFormatException) { return null; }
     }
 
     public bool ShowSpheres()
     {
+        if (quickChat is { IsPresented: true }) return false;
         if (spheres.Length == 0) return false;
         if (spheresVisible) return true;
         spheresVisible = true;
@@ -230,6 +228,7 @@ internal sealed class DesktopControls : IDisposable
         for (int index = 0; index < spheres.Length; index++)
         {
             Window sphere = spheres[index];
+            sphere.Topmost = pet.Topmost;
             if (!sphere.IsVisible)
             {
                 sphere.Opacity = 0;
@@ -322,7 +321,7 @@ internal sealed class DesktopControls : IDisposable
         var frame = new Border { Child = content, Padding = new Thickness(8), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(12) };
         frame.UseTheme(Border.BackgroundProperty, "Surface");
         frame.UseTheme(Border.BorderBrushProperty, "Edge");
-        menu = FloatingWindow(frame, 270, 477, activate: true);
+        menu = FloatingWindow(frame, 270, 84 + Entries.Length * 31, activate: true);
         menu.MinWidth = 240;
         menu.MinHeight = 240;
         menu.UseTheme(Window.FontFamilyProperty, "Font");
@@ -348,10 +347,26 @@ internal sealed class DesktopControls : IDisposable
 
     public void WatchQuickChat(QuickChatWindow window)
     {
-        window.IsVisibleChanged += (_, _) =>
+        window.Owner = pet;
+        window.PresentationChanged += () =>
         {
-            quickChat = window.IsVisible ? window : null;
-            if (quickChat is not null) WatchOutside();
+            quickChat = window.IsPresented ? window : null;
+            if (quickChat is not null)
+            {
+                // A triple-click can leave the first click's favorites visible.
+                // Remove them immediately, including any in-flight fade, before
+                // they can cover the active text field or intercept its clicks.
+                spheresVisible = false;
+                visibilityRevision++;
+                foreach (var sphere in spheres)
+                {
+                    SetInteractive(sphere, false);
+                    sphere.BeginAnimation(UIElement.OpacityProperty, null);
+                    sphere.Hide();
+                }
+                CloseMenu();
+                WatchOutside();
+            }
             else StopWatchingWhenIdle();
         };
     }
@@ -361,12 +376,14 @@ internal sealed class DesktopControls : IDisposable
         Rect area = WorkArea();
         var size = section switch
         {
-            "context" => (270d, 477d),
+            "context" => (270d, 105d + Entries.Length * 31),
+            "calendar" => (560d, 570d),
+            "tools" or "note-list" or "dates" or "notifications" or "commands" or "focus" or "profiles" or "sync" or "modules" => (480d, 500d),
             "sticky" => (340d, 320d),
             "motion" => (426d, Math.Min(480d, 151d + 36d * Math.Max(1, (pet as DesktopPetWindow)?.AnimationCount ?? 0))),
             "manage" => (404d, 370d),
             "theme" => (404d, 480d),
-            "pets" => (410d, 375d),
+            "pets" => (438d, 438d),
             "favorites" => (454d, 410d),
             "model" => (438d, 400d),
             "reminders" => (438d, 348d),
@@ -650,7 +667,7 @@ internal sealed class DesktopControls : IDisposable
             {
                 if (disposed) return;
                 IntPtr hit = GetAncestor(WindowFromPoint(point), 2);
-                if (chat is { IsVisible: true } && !IsHit(chat, hit)) chat.Dismiss();
+                if (chat is { IsPresented: true } && !IsHit(chat.VisibleSurface, hit)) chat.Dismiss();
                 GetWindowThreadProcessId(hit, out uint owner);
                 if (owner == Compatibility.ProcessId)
                 {
