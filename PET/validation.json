@@ -1,5 +1,11 @@
 {
   "schemaVersion": 1,
+  "eagleAndBeatMacOSVerification": {
+    "version": "0.2.7",
+    "architectures": ["x86_64", "arm64"],
+    "run": "https://github.com/GamoffVad/Sputnik/actions/runs/45904288062",
+    "actualPackagesImportedAndPlayed": true
+  },
   "count": 12,
   "installedLibraryMatchesCatalog": true,
   "removedPets": [],
