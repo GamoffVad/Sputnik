@@ -245,6 +245,12 @@ internal sealed class DesktopPetWindow : Window
 
     internal void SetPlayback(string command, int index)
     {
+        if (command == "toggle-pause") command = paused ? "resume" : "pause";
+        if (command == "shuffle")
+        {
+            SetShufflePreference(!shuffleMotions);
+            return;
+        }
         if (command is "pause" or "resume")
         {
             paused = command == "pause";
@@ -260,13 +266,38 @@ internal sealed class DesktopPetWindow : Window
         upcoming.Clear();
         pinned = choice;
         PlayNext();
+        pinned = null;
     }
 
     internal void RefreshFavoriteIcons() => controls.RefreshSiteIcons();
+    private bool shuffleMotions = true;
+    internal (bool Paused, bool Shuffle) PlaybackState => (paused, shuffleMotions);
+    internal void SetShufflePreference(bool enabled)
+    {
+        if (shuffleMotions == enabled) return;
+        shuffleMotions = enabled; upcoming.Clear(); pinned = null;
+    }
+    private bool resumeFromTray;
+    internal void PrepareForTray()
+    {
+        controls.HideSpheres();
+        controls.CloseMenu();
+        resumeFromTray = elapsed.IsRunning;
+        elapsed.Stop();
+        timer.Stop();
+    }
+    internal void ReturnFromTray()
+    {
+        timer.Start();
+        if (resumeFromTray && !paused && HasEnabledMotion) elapsed.Start();
+        resumeFromTray = false;
+    }
 
     public void UpdateFromStore()
     {
         var workspace = ReadWorkspace();
+        bool nextShuffle = workspace?["shuffleMotions"]?.GetValue<bool>() != false;
+        SetShufflePreference(nextShuffle);
         double speed = workspace?["animationSpeed"] is JsonValue value && value.TryGetValue<double>(out double rate) && rate is >=.25 and <=2 ? rate : 1;
         ApplyPlaybackSpeed(speed);
         ApplyTopmost(IsTopmostOn(workspace));
@@ -337,7 +368,7 @@ internal sealed class DesktopPetWindow : Window
 
     private void ResizePet(double scale)
     {
-        double displayScale = active?.Id == "military-eagle" ? 3.6 : active?.DisplayScale ?? 1;
+        double displayScale = active?.DisplayScale ?? 1;
         preferredSize = DefaultPetSize * scale * Compatibility.Clamp(displayScale, 0.75, PetPackages.MaximumDisplayScale);
         if (IsLoaded) ApplyPetSize();
     }
@@ -547,12 +578,17 @@ internal sealed class DesktopPetWindow : Window
         {
             var order = active.Animations.Where(clip => !unavailable.Contains(clip) &&
                 (showStill || (MotionEnabled(clip) && (pinned is null || clip == pinned)))).ToArray();
-            for (int index = order.Length - 1; index > 0; index--)
+            for (int index = shuffleMotions ? order.Length - 1 : 0; index > 0; index--)
             {
                 int swap = random.Next(index + 1);
                 (order[index], order[swap]) = (order[swap], order[index]);
             }
-            if (order.Length > 1 && order[0] == current)
+            if (!shuffleMotions && pinned is null && current is not null)
+            {
+                int index = Array.IndexOf(order, current);
+                if (index >= 0) order = order.Skip(index + 1).Concat(order.Take(index + 1)).ToArray();
+            }
+            if (shuffleMotions && order.Length > 1 && order[0] == current)
             {
                 int swap = random.Next(1, order.Length);
                 (order[0], order[swap]) = (order[swap], order[0]);

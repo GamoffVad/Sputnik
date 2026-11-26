@@ -1,7 +1,7 @@
 {
   "id": "action-03",
   "name": "Поппинг",
-  "status": "installed-animation",
+  "status": "available",
   "existingClip": {
     "name": "Поппинг",
     "frameWidth": 960,
@@ -11,31 +11,31 @@
     "fps": 24,
     "sheets": [
       {
-        "file": "motion-03-00.png",
+        "file": "clip-2-0.png",
         "frames": 16
       },
       {
-        "file": "motion-03-01.png",
+        "file": "clip-2-1.png",
         "frames": 16
       },
       {
-        "file": "motion-03-02.png",
+        "file": "clip-2-2.png",
         "frames": 16
       },
       {
-        "file": "motion-03-03.png",
+        "file": "clip-2-3.png",
         "frames": 16
       },
       {
-        "file": "motion-03-04.png",
+        "file": "clip-2-4.png",
         "frames": 16
       },
       {
-        "file": "motion-03-05.png",
+        "file": "clip-2-5.png",
         "frames": 16
       },
       {
-        "file": "motion-03-06.png",
+        "file": "clip-2-6.png",
         "frames": 1
       }
     ]
@@ -43,9 +43,6 @@
   "delivery": {
     "packageAnimationIndex": 2,
     "manifest": "../../package-manifest.json",
-    "preserveNativeResolution": true,
-    "sourceAssetBytesVerified": true
-  },
-  "runtimeReferenceBlending": false,
-  "durationSeconds": 4.041666666666667
+    "preserveNativeResolution": true
+  }
 }

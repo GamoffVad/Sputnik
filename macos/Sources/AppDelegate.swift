@@ -250,7 +250,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.pet = pet
             pet.refresh(store.readWorkspace())
             if smokeTest {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 40) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 120) { [weak self] in
                     self?.finishSmokeTest(false, "Timed out waiting for the pet import and shared WKWebView panel")
                 }
                 Task { @MainActor [weak self] in
@@ -338,8 +338,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func prepareSmokeTest(store: MacStore, server: LocalWebServer, pet: DesktopPet) async throws {
-        guard DesktopPet.displayScale(id: "military-eagle", requested: 2.4) == 3.6,
-              DesktopPet.displayScale(id: "military-eagle", requested: nil) == 3.6,
+        guard DesktopPet.displayScale(id: "military-eagle", requested: 2) == 2,
+              DesktopPet.displayScale(id: "military-eagle", requested: 2.4) == 2.4,
+              DesktopPet.displayScale(id: "military-eagle", requested: nil) == 1,
               DesktopPet.displayScale(id: "klyaksa", requested: 1) == 1 else {
             throw MacError("Eagle scale compatibility regression")
         }
@@ -347,13 +348,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let staged = try await store.stagePet(eaglePath)
             guard let token = staged["token"] as? String else { throw MacError("Eagle staging failed") }
             let installed = try store.installPet(token)
-            guard (installed["displayScale"] as? Double) == 3.6,
-                  (installed["animations"] as? [[String: Any]])?.count == 12 else {
-                throw MacError("Eagle scale or twelve animations lost on import")
+            guard (installed["displayScale"] as? Double) == 2,
+                  (installed["animations"] as? [[String: Any]])?.count == 10,
+                  (installed["theme"] as? [String: Any])?["accent"] as? String == "#C18D6B" else {
+                throw MacError("Eagle scale, palette or ten animations lost on import")
             }
             try store.writeWorkspace(["active": "military-eagle", "themed": true, "petScale": 100])
             pet.refresh(store.readWorkspace())
-            guard pet.hasFrame, abs(pet.preferredDisplaySize - 828) < 0.01 else { throw MacError("Eagle rendered at old scale") }
+            guard pet.hasFrame, abs(pet.preferredDisplaySize - 460) < 0.01 else { throw MacError("Eagle rendered at old scale") }
             let visible = pet.visibleFrame
             guard visible.width > 0, visible.height > 0,
                   visible.width < pet.window.frame.width, visible.height < pet.window.frame.height else {
@@ -365,7 +367,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard abs(menu.frame.minY-visible.maxY-10) < 1 else { throw MacError("Eagle menu gap exceeds ten points") }
             }
             hideMenu()
-            FileHandle.standardOutput.write(Data("Sputnik smoke: actual eagle imported, 12 animations, displayScale 3.6, transparent menu padding excluded.\n".utf8))
+            FileHandle.standardOutput.write(Data("Sputnik smoke: actual eagle imported, 10 animations, displayScale 2.0, own copper/brown palette, transparent menu padding excluded.\n".utf8))
+            try store.writeWorkspace(["active": "klyaksa", "themed": true])
+            pet.refresh(store.readWorkspace())
+        }
+        if let beatPath = ProcessInfo.processInfo.environment["SPUTNIK_TEST_BEAT"] {
+            let staged = try await store.stagePet(beatPath)
+            guard let token = staged["token"] as? String else { throw MacError("Beat staging failed") }
+            let installed = try store.installPet(token)
+            guard (installed["animations"] as? [[String: Any]])?.count == 18 else { throw MacError("Beat lost animations on import") }
+            try store.writeWorkspace(["active": "helmet-beat", "themed": true, "petScale": 100])
+            pet.refresh(store.readWorkspace())
+            for index in 0..<18 {
+                pet.setPlayback("pause", index: 0)
+                pet.setPlayback("clip", index: index)
+                guard pet.hasFrame, pet.currentAnimationIndex == index else { throw MacError("Beat animation \(index) cannot be played") }
+            }
+            FileHandle.standardOutput.write(Data("Sputnik smoke: actual Beat imported, all 18 animations started successfully, native segmented PNGs retained.\n".utf8))
             try store.writeWorkspace(["active": "klyaksa", "themed": true])
             pet.refresh(store.readWorkspace())
         }
@@ -554,6 +572,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         openSection("motion")
                         guard self.browser === browser else { throw MacError("WebKit пересоздан при смене раздела.") }
                         try await verifyHeading("Движения", in: browser)
+                        try await verifyMotionControls(in: browser)
                         openSection("theme")
                         try await verifyHeading("Внешний вид", in: browser)
                         let controls = try await browser.web.evaluateJavaScript("Boolean(document.querySelector('#window-glass') && document.querySelector('#note-color-mode') && document.querySelector('#appearance-form button[type=submit] svg'))")
@@ -584,9 +603,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return animationNames
         case "desktopPlayback":
             if let dict = payload as? [String: Any], let command = dict["command"] as? String {
-                setPlayback(command, index: (dict["index"] as? NSNumber)?.intValue ?? 0)
+                if command == "shuffle", let store {
+                    var state = store.readWorkspace()
+                    state["shuffleMotions"] = !(pet?.playbackState["shuffle"] as? Bool ?? true)
+                    try store.writeWorkspace(state)
+                    pet?.refresh(state)
+                } else { setPlayback(command, index: (dict["index"] as? NSNumber)?.intValue ?? 0) }
             }
-            return nil
+            return pet?.playbackState ?? ["paused": false, "shuffle": true]
+        case "desktopPlaybackState":
+            return pet?.playbackState ?? ["paused": false, "shuffle": true]
         case "previewFavoriteSpheres":
             showFavorites()
             return nil
@@ -632,6 +658,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard selected as? Bool == true else { throw MacError("Model picker selection/placement failed") }
         openSection("theme")
         try await verifyHeading("Внешний вид", in: browser)
+    }
+
+    private func verifyMotionControls(in browser: BrowserPanel) async throws {
+        @MainActor func wait(_ expression: String) async throws {
+            for _ in 0..<40 {
+                if try await browser.web.evaluateJavaScript(expression) as? Bool == true { return }
+                try await Task.sleep(nanoseconds: 50_000_000)
+            }
+            throw MacError("Motion toolbar state did not update: \(expression)")
+        }
+        try await wait("document.querySelectorAll('.motion-toolbar button').length === 2")
+        _ = try await browser.web.evaluateJavaScript("document.querySelector('[data-playback=\"toggle-pause\"]').click(); true")
+        try await wait("document.querySelector('[data-playback=\"toggle-pause\"]').getAttribute('aria-label') === 'Продолжить'")
+        let previous = pet?.playbackState["shuffle"] as? Bool ?? true
+        _ = try await browser.web.evaluateJavaScript("document.querySelector('[data-playback=shuffle]').click(); true")
+        try await wait("document.querySelector('[data-playback=shuffle]').getAttribute('aria-checked') === '\(!previous)'")
+        guard pet?.playbackState["paused"] as? Bool == true,
+              store?.readWorkspace()["shuffleMotions"] as? Bool == !previous else { throw MacError("Shuffle failed to persist or resumed paused playback") }
+        openSection("theme")
+        try await verifyHeading("Внешний вид", in: browser)
+        openSection("motion")
+        try await verifyHeading("Движения", in: browser)
+        try await wait("document.querySelector('[data-playback=shuffle]').getAttribute('aria-checked') === '\(!previous)'")
+        _ = try await browser.web.evaluateJavaScript("document.querySelector('[data-playback=\"toggle-pause\"]').click(); true")
+        try await wait("document.querySelector('[data-playback=\"toggle-pause\"]').getAttribute('aria-label') === 'Пауза'")
+        FileHandle.standardOutput.write(Data("Sputnik smoke: one native play/pause button, shuffle switch changes real state, persists and survives panel navigation.\n".utf8))
     }
 
     private func verifyHeading(_ heading: String, in browser: BrowserPanel) async throws {

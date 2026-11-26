@@ -54,18 +54,19 @@
     "id": "helmet-beat",
     "name": "Бит",
     "file": "helmet-beat.pet",
-    "sha256": "ec2eed5efa2deb6766c5cc451a6cc3bd4ff168fb16a727fd7989b97cb2383bf7",
-    "bytes": 249202608,
-    "animations": 10,
+    "sha256": "6b11b3bf2b7de6f4182f9321d7a01adce1db4fa0e873a553458481e65567c4f9",
+    "bytes": 423028334,
+    "animations": 18,
     "bundled": false,
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/helmet-beat.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet",
     "theme": {
       "name": "Ночной бит",
       "accent": "#B6A0E2",
       "background": "#17141F",
       "surface": "#282232"
     },
-    "minimumWindowsVersion": "1.3.28.27"
+    "minimumWindowsVersion": "1.3.28.36",
+    "minimumMacOSVersion": "0.2.7"
   },
   {
     "id": "hudi",
@@ -156,18 +157,19 @@
     "id": "military-eagle",
     "name": "Орёл",
     "file": "military-eagle.pet",
-    "sha256": "4a487b48cd035cd3652e9b6820c23da83a327d7bef797c18625a0917eacbd4ea",
-    "bytes": 187249246,
-    "animations": 12,
+    "sha256": "1b011ad46b7565c495530d82bb1cae85e69efff2a443fffe321c32276e767730",
+    "bytes": 153861680,
+    "animations": 10,
     "bundled": false,
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/military-eagle.pet",
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/military-eagle.pet",
     "theme": {
-      "name": "Орлиный дозор",
-      "accent": "#E2B04D",
-      "background": "#1D2420",
-      "surface": "#303A31"
+      "name": "Орлиное оперение",
+      "accent": "#C18D6B",
+      "surface": "#352923",
+      "background": "#221B17"
     },
-    "minimumWindowsVersion": "1.3.28.32"
+    "minimumWindowsVersion": "1.3.28.36",
+    "minimumMacOSVersion": "0.2.7"
   },
   {
     "id": "quiet-ninja",

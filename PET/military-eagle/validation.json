@@ -1,49 +1,13 @@
 {
-  "animations": 12,
-  "frames": 1164,
-  "fps": 24,
-  "rgba": true,
-  "allOriginalFramesRetained": true,
-  "referenceFramesInserted": 0,
-  "runtimeReferenceBlending": false,
-  "installedPngFilesByteVerified": 108,
-  "nativeWindowsPlayerVerifiedFrames": 1164,
-  "nativeWindowsPlayerDpiChecks": [
-    100,
-    150
-  ],
-  "constantViewportPerClip": true,
-  "sourcePixelsResampled": false,
-  "displayScale": 3.6,
-  "requestedEnlargementFactor": 1.5,
-  "allAnimationsHaveContactShadow": true,
-  "firstAnimationShadowVerifiedFrames": 97,
-  "aboutTurnUsesRealFootsteps": true,
-  "transitionPairsVerified": 144,
-  "maxGeometricSizeDifferenceDips": 1.0020935884287212,
-  "maxCenterDifferenceDips": 0.5,
-  "packageSha256": "583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7",
-  "packageBytes": 187249245,
-  "acceptedSourceLimitation": {
-    "flightClips": [
-      11,
-      12
-    ],
-    "minorWingTipEdgeContactFramesPerClip": 3,
-    "acceptedByUser": true
-  },
-  "minimumWindowsVersion": "1.3.28.34",
-  "macOS": {
-    "enlargedDisplayScaleSupportedBy025": false,
-    "thisPackageTestedOnMac": true,
-    "minimumVersion": "0.2.6",
-    "enlargedDisplayScaleSupportedBy026": true,
-    "verifiedRun": "https://github.com/GamoffVad/Sputnik/actions/runs/45268060205",
-    "verifiedArchitectures": [
-      "arm64",
-      "x86_64"
-    ]
-  },
-  "privacy": "Package contains only manifests and transparent PNG atlases; no user settings or connection data.",
-  "enlargementFromPreviousPackage": 1.5
+  "id": "military-eagle",
+  "animations": 10,
+  "frames": 970,
+  "displayScale": 2.0,
+  "packageSha256": "1b011ad46b7565c495530d82bb1cae85e69efff2a443fffe321c32276e767730",
+  "packageBytes": 153861680,
+  "allInstalledAtlasBytesVerified": true,
+  "nativeResolutionPreserved": true,
+  "minimumWindowsVersion": "1.3.28.36",
+  "minimumMacOSVersion": "0.2.7",
+  "macOSTestPending": true
 }

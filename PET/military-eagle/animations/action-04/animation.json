@@ -1,55 +1,55 @@
 {
   "id": "action-04",
   "name": "Строевой шаг",
-  "status": "installed-animation",
+  "status": "available",
   "existingClip": {
     "name": "Строевой шаг",
-    "frameWidth": 582,
-    "frameHeight": 498,
+    "frameWidth": 686,
+    "frameHeight": 504,
     "columns": 4,
     "frameCount": 97,
     "fps": 24,
     "viewport": {
-      "x": -567.0178141798302,
-      "y": -410.76205232660607,
-      "width": 1821.693119014456,
-      "height": 1081.8032311569136
+      "x": -82,
+      "y": -3,
+      "width": 990,
+      "height": 507
     },
     "sheets": [
       {
-        "file": "motion-04-00.png",
+        "file": "clip-3-0.png",
         "frames": 12
       },
       {
-        "file": "motion-04-01.png",
+        "file": "clip-3-1.png",
         "frames": 12
       },
       {
-        "file": "motion-04-02.png",
+        "file": "clip-3-2.png",
         "frames": 12
       },
       {
-        "file": "motion-04-03.png",
+        "file": "clip-3-3.png",
         "frames": 12
       },
       {
-        "file": "motion-04-04.png",
+        "file": "clip-3-4.png",
         "frames": 12
       },
       {
-        "file": "motion-04-05.png",
+        "file": "clip-3-5.png",
         "frames": 12
       },
       {
-        "file": "motion-04-06.png",
+        "file": "clip-3-6.png",
         "frames": 12
       },
       {
-        "file": "motion-04-07.png",
+        "file": "clip-3-7.png",
         "frames": 12
       },
       {
-        "file": "motion-04-08.png",
+        "file": "clip-3-8.png",
         "frames": 1
       }
     ]
@@ -57,9 +57,6 @@
   "delivery": {
     "packageAnimationIndex": 3,
     "manifest": "../../package-manifest.json",
-    "preserveNativeResolution": true,
-    "sourceAssetBytesVerified": true
-  },
-  "runtimeReferenceBlending": false,
-  "durationSeconds": 4.041666666666667
+    "preserveNativeResolution": true
+  }
 }

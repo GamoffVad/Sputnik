@@ -1,55 +1,55 @@
 {
   "id": "action-07",
   "name": "Приказ выступать",
-  "status": "installed-animation",
+  "status": "available",
   "existingClip": {
     "name": "Приказ выступать",
-    "frameWidth": 752,
-    "frameHeight": 434,
+    "frameWidth": 699,
+    "frameHeight": 446,
     "columns": 4,
     "frameCount": 97,
     "fps": 24,
     "viewport": {
-      "x": -436.14531984939765,
-      "y": -475.8866678452723,
-      "width": 1824.027127811556,
-      "height": 1083.1892704584275
+      "x": -41,
+      "y": -61,
+      "width": 990,
+      "height": 507
     },
     "sheets": [
       {
-        "file": "motion-07-00.png",
+        "file": "clip-6-0.png",
         "frames": 12
       },
       {
-        "file": "motion-07-01.png",
+        "file": "clip-6-1.png",
         "frames": 12
       },
       {
-        "file": "motion-07-02.png",
+        "file": "clip-6-2.png",
         "frames": 12
       },
       {
-        "file": "motion-07-03.png",
+        "file": "clip-6-3.png",
         "frames": 12
       },
       {
-        "file": "motion-07-04.png",
+        "file": "clip-6-4.png",
         "frames": 12
       },
       {
-        "file": "motion-07-05.png",
+        "file": "clip-6-5.png",
         "frames": 12
       },
       {
-        "file": "motion-07-06.png",
+        "file": "clip-6-6.png",
         "frames": 12
       },
       {
-        "file": "motion-07-07.png",
+        "file": "clip-6-7.png",
         "frames": 12
       },
       {
-        "file": "motion-07-08.png",
+        "file": "clip-6-8.png",
         "frames": 1
       }
     ]
@@ -57,9 +57,6 @@
   "delivery": {
     "packageAnimationIndex": 6,
     "manifest": "../../package-manifest.json",
-    "preserveNativeResolution": true,
-    "sourceAssetBytesVerified": true
-  },
-  "runtimeReferenceBlending": false,
-  "durationSeconds": 4.041666666666667
+    "preserveNativeResolution": true
+  }
 }

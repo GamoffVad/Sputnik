@@ -1,0 +1,48 @@
+{
+  "id": "action-14",
+  "name": "Гитарное соло",
+  "status": "available",
+  "existingClip": {
+    "name": "Гитарное соло",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "clip-13-0.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-13-1.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-13-2.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-13-3.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-13-4.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-13-5.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-13-6.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 13,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true
+  }
+}

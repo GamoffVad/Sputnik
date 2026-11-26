@@ -9,7 +9,8 @@
       960,
       960
     ],
-    "origin": "First processed native animation frame; never inserted into playback"
+    "rgbaSha256": "9d502271304fe7461bdb572a135022a5d29c4305c9d38afbb2642435e90b02a9",
+    "origin": "Первый нативный кадр актуального пакета, без изменения разрешения."
   },
   "theme": "theme.json",
   "keyframes": {
@@ -19,19 +20,13 @@
   },
   "package": {
     "file": "exports/helmet-beat.pet",
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/helmet-beat.pet",
-    "sha256": "ec2eed5efa2deb6766c5cc451a6cc3bd4ff168fb16a727fd7989b97cb2383bf7",
-    "bytes": 249202608,
+    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet",
+    "sha256": "6b11b3bf2b7de6f4182f9321d7a01adce1db4fa0e873a553458481e65567c4f9",
+    "bytes": 423028334,
     "schemaVersion": 2,
-    "releaseTag": "pets-2026-11-22"
-  },
-  "preview": {
-    "url": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/helmet-beat-preview.mp4",
-    "sha256": "fc2b4d4eff9c9a84e61cd18d386acc6f7cb918bd72633aaeffd75d77c4105048",
-    "backgrounds": [
-      "black",
-      "white"
-    ]
+    "releaseTag": "pets-2026-11-27",
+    "minimumWindowsVersion": "1.3.28.36",
+    "minimumMacOSVersion": "0.2.7"
   },
   "animations": [
     {
@@ -83,6 +78,46 @@
       "id": "action-10",
       "name": "Встряхнулся",
       "file": "animations/action-10/animation.json"
+    },
+    {
+      "id": "action-11",
+      "name": "Лунная дорожка",
+      "file": "animations/action-11/animation.json"
+    },
+    {
+      "id": "action-12",
+      "name": "Настройка наушников",
+      "file": "animations/action-12/animation.json"
+    },
+    {
+      "id": "action-13",
+      "name": "Непослушный провод",
+      "file": "animations/action-13/animation.json"
+    },
+    {
+      "id": "action-14",
+      "name": "Гитарное соло",
+      "file": "animations/action-14/animation.json"
+    },
+    {
+      "id": "action-15",
+      "name": "Дирижёр",
+      "file": "animations/action-15/animation.json"
+    },
+    {
+      "id": "action-16",
+      "name": "Роботизированный марш",
+      "file": "animations/action-16/animation.json"
+    },
+    {
+      "id": "action-17",
+      "name": "Бой с тенью",
+      "file": "animations/action-17/animation.json"
+    },
+    {
+      "id": "action-18",
+      "name": "Сонный режим",
+      "file": "animations/action-18/animation.json"
     }
   ],
   "workspaceSchemaVersion": 1,

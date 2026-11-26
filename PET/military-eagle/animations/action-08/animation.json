@@ -1,55 +1,55 @@
 {
   "id": "action-08",
   "name": "Проверка снаряжения",
-  "status": "installed-animation",
+  "status": "available",
   "existingClip": {
     "name": "Проверка снаряжения",
-    "frameWidth": 570,
-    "frameHeight": 427,
+    "frameWidth": 645,
+    "frameHeight": 435,
     "columns": 4,
     "frameCount": 97,
     "fps": 24,
     "viewport": {
-      "x": -578.0178141798302,
-      "y": -480.76205232660607,
-      "width": 1821.693119014456,
-      "height": 1081.8032311569136
+      "x": -93,
+      "y": -72,
+      "width": 990,
+      "height": 507
     },
     "sheets": [
       {
-        "file": "motion-08-00.png",
+        "file": "clip-7-0.png",
         "frames": 12
       },
       {
-        "file": "motion-08-01.png",
+        "file": "clip-7-1.png",
         "frames": 12
       },
       {
-        "file": "motion-08-02.png",
+        "file": "clip-7-2.png",
         "frames": 12
       },
       {
-        "file": "motion-08-03.png",
+        "file": "clip-7-3.png",
         "frames": 12
       },
       {
-        "file": "motion-08-04.png",
+        "file": "clip-7-4.png",
         "frames": 12
       },
       {
-        "file": "motion-08-05.png",
+        "file": "clip-7-5.png",
         "frames": 12
       },
       {
-        "file": "motion-08-06.png",
+        "file": "clip-7-6.png",
         "frames": 12
       },
       {
-        "file": "motion-08-07.png",
+        "file": "clip-7-7.png",
         "frames": 12
       },
       {
-        "file": "motion-08-08.png",
+        "file": "clip-7-8.png",
         "frames": 1
       }
     ]
@@ -57,9 +57,6 @@
   "delivery": {
     "packageAnimationIndex": 7,
     "manifest": "../../package-manifest.json",
-    "preserveNativeResolution": true,
-    "sourceAssetBytesVerified": true
-  },
-  "runtimeReferenceBlending": false,
-  "durationSeconds": 4.041666666666667
+    "preserveNativeResolution": true
+  }
 }

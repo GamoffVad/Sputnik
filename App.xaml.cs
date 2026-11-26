@@ -91,6 +91,7 @@ public partial class App : Application
         pet = new DesktopPetWindow(ShowWorkspace, ExitApp);
         pet.UpdateFromStore();
         pet.Show();
+        tray = new DesktopTray(RestoreFromTray, () => ShowWorkspace("quick"), HideToTray, ExitApp, () => hiddenInTray);
         _ = RefreshSiteIcons();
         reminders = new ReminderScheduler(DataDirectory, window => pet?.PositionPanel(window, "reminders"));
         reminders.OpenNote = id => Notes().OpenById(id);
@@ -135,6 +136,8 @@ public partial class App : Application
     internal void ShowWorkspace(string section)
     {
         if (exiting) return;
+        if (section == "tray") { HideToTray(); return; }
+        RestoreFromTray();
         if (section == "notes")
         {
             workspace?.Hide();
@@ -332,7 +335,25 @@ public partial class App : Application
     }
     internal void RefreshNotesCheck() => pet?.SetNotesChecked(NotesVisible);
 
-    internal void SetPlayback(string command, int index) => pet?.SetPlayback(command, index);
+    internal void SetPlayback(string command, int index)
+    {
+        if (command == "shuffle")
+        {
+            bool enabled = !PlaybackState.Shuffle;
+            if (workspace is not null) workspace.SaveShufflePreference(enabled);
+            else
+            {
+                var state = FeatureFiles.Object(DataDirectory, "workspace.json");
+                state["shuffleMotions"] = enabled;
+                FeatureFiles.Write(DataDirectory, "workspace.json", state);
+                DataTransfer.SyncFor(Path.Combine(DataDirectory, "workspace.json"));
+            }
+            pet?.SetShufflePreference(enabled);
+        }
+        else pet?.SetPlayback(command, index);
+        workspace?.RefreshPlaybackControls();
+    }
+    internal (bool Paused, bool Shuffle) PlaybackState => pet?.PlaybackState ?? (false, true);
 
     internal (string Pet, (string Name, bool Enabled)[] Clips) MotionSettings() => pet?.MotionSettings() ?? ("", []);
 
@@ -369,6 +390,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        tray?.Dispose();
         try { StickyNoteContent.ClearImageCache(); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { WriteDiagnostic("image-cache-cleanup", error.Message); }
         hotkeys?.Dispose();

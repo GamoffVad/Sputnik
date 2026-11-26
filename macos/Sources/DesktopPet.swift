@@ -282,9 +282,10 @@ final class DesktopPet: NSObject {
     let window: SputnikPanel
     var visibleFrame: CGRect { window.convertToScreen(sprite.convert(sprite.visibleContentBounds, to: nil)) }
     static func displayScale(id: String?, requested: CGFloat?) -> CGFloat {
-        max(0.75, min(3.6, id == "military-eagle" ? 3.6 : requested ?? 1))
+        max(0.75, min(3.6, requested ?? 1))
     }
     var preferredDisplaySize: CGFloat { sprite.preferredSize }
+    var currentAnimationIndex: Int? { current }
     var onMenu: (() -> Void)?
     var onQuick: (() -> Void)?
     var onNotes: (() -> Void)?
@@ -313,6 +314,8 @@ final class DesktopPet: NSObject {
     private var lastFrame = -1
     private var start = CACurrentMediaTime()
     private var stoppedAt: CFTimeInterval?
+    private var shuffleMotions = true
+    var playbackState: [String: Any] { ["paused": stoppedAt != nil, "shuffle": shuffleMotions] }
     private(set) var palette = SputnikPalette(nil)
     private(set) var fontFamily: String?
     var name: String { selected?.name ?? "Спутник" }
@@ -361,6 +364,8 @@ final class DesktopPet: NSObject {
     }
 
     func refresh(_ workspace: [String: Any]) {
+        let nextShuffle = workspace["shuffleMotions"] as? Bool ?? true
+        if nextShuffle != shuffleMotions { shuffleMotions = nextShuffle; pending.removeAll(); pinned = nil }
         let desired = workspace["active"] as? String ?? "klyaksa"
         let validID = desired.range(of: #"\A[a-z0-9][a-z0-9-]{0,48}\z"#, options: .regularExpression) != nil
         let importedData = validID ? (try? Data(contentsOf: dataRoot.appendingPathComponent("pets").appendingPathComponent(desired).appendingPathComponent("pet.json"))) : nil
@@ -422,6 +427,8 @@ final class DesktopPet: NSObject {
     }
 
     func setPlayback(_ command: String, index: Int) {
+        if command == "toggle-pause" { setPlayback(stoppedAt == nil ? "pause" : "resume", index: index); return }
+        if command == "shuffle" { shuffleMotions.toggle(); pending.removeAll(); pinned = nil; return }
         let now = CACurrentMediaTime()
         switch command {
         case "pause":
@@ -430,14 +437,14 @@ final class DesktopPet: NSObject {
             if let stoppedAt { start += now - stoppedAt; self.stoppedAt = nil }
         case "clip", "shuffle":
             if command == "clip", selected?.animations.indices.contains(index) != true { return }
-            let finishCurrent = command == "clip" && current != index && stoppedAt == nil && lastFrame > 0 &&
-                current.map { lastFrame < (selected?.animations[$0].frameCount ?? 1) - 1 } == true
             cancelPreload()
             pinned = command == "clip" ? index : nil
             stoppedAt = nil
             pending.removeAll()
-            if finishCurrent { pending.append(index); return }
             playNext()
+            pinned = nil
+            pending.removeAll()
+            preloadNext()
         default: break
         }
     }
@@ -467,8 +474,12 @@ final class DesktopPet: NSObject {
     private func refillQueue() {
         guard let clips = selected?.animations else { return }
         if pending.isEmpty {
-            pending = (pinned.map { [$0] } ?? Array(clips.indices)).filter { !unavailable.contains($0) }.shuffled()
-            if pending.count > 1, pending.first == current {
+            pending = (pinned.map { [$0] } ?? Array(clips.indices)).filter { !unavailable.contains($0) }
+            if shuffleMotions { pending.shuffle() }
+            else if pinned == nil, let current, let position = pending.firstIndex(of: current) {
+                pending = Array(pending.dropFirst(position + 1)) + Array(pending.prefix(position + 1))
+            }
+            if shuffleMotions, pending.count > 1, pending.first == current {
                 pending.swapAt(0, Int.random(in: 1..<pending.count))
             }
         }

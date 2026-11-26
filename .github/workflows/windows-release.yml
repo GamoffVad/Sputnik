@@ -59,14 +59,21 @@ jobs:
           & ./installer/Prepare-Payload.ps1 -PublishDir $payload
           & ./installer/Test-Payload.ps1 -PublishDir $payload -Version $env:APP_VERSION -Target modern-x64
           $eagle = Join-Path $env:RUNNER_TEMP 'military-eagle.pet'
-          Invoke-WebRequest 'https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet' -OutFile $eagle
-          if ((Get-FileHash $eagle).Hash.ToLowerInvariant() -ne '583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7') { throw 'Eagle package checksum mismatch.' }
+          Invoke-WebRequest 'https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/military-eagle.pet' -OutFile $eagle
+          if ((Get-FileHash $eagle).Hash.ToLowerInvariant() -ne '1b011ad46b7565c495530d82bb1cae85e69efff2a443fffe321c32276e767730') { throw 'Eagle package checksum mismatch.' }
           dotnet run --project tests/eagle-check/Check.csproj -c Release "-p:SputnikDirectory=$payload" -- $payload $eagle
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $beat = Join-Path $env:RUNNER_TEMP 'helmet-beat.pet'
+          Invoke-WebRequest 'https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet' -OutFile $beat
+          if ((Get-FileHash $beat).Hash.ToLowerInvariant() -ne '6b11b3bf2b7de6f4182f9321d7a01adce1db4fa0e873a553458481e65567c4f9') { throw 'Beat package checksum mismatch.' }
+          dotnet run --project tests/beat-package-check/Check.csproj -c Release "-p:SputnikDirectory=$payload" -- $payload $beat 'artifacts/qa/beat-package'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           foreach ($check in @('notification-check','memory-check','pet-removal-check','application-icons-check')) {
             dotnet run --project "tests/$check/Check.csproj" -c Release "-p:SputnikDirectory=$payload" -- "artifacts/qa/$check-modern"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
+          dotnet run --project tests/playback-controls-check/Check.csproj -c Release "-p:SputnikDirectory=$payload" -- $payload 'artifacts/qa/playback-controls'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Compress-Archive -Path "$payload/*" -DestinationPath "$out/Sputnik-$env:APP_VERSION-Windows-10-11-x64-Portable.zip"
           & $compiler "/DAppVersion=$env:APP_VERSION" "/DVersionedOutput" "/DPublishDir=$payload" "/DInstallerOutput=$out" installer/Sputnik.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -89,7 +96,7 @@ jobs:
             }
           }
           $source = "artifacts/release/Sputnik-$env:APP_VERSION-Windows-source.zip"
-          git archive --format=zip -o $source HEAD -- ':(top,glob)*.cs' ':(top,glob)*.xaml' Sputnik.csproj Sputnik.ico Components wwwroot/assets/klyaksa wwwroot/assets/pets.json wwwroot/assets/icon-catalog.json wwwroot/assets/LUCIDE-LICENSE.txt installer tests/notification-check tests/memory-check tests/pet-removal-check tests/application-icons-check tests/eagle-check "docs/releases/$env:APP_VERSION.md" docs/fixes/windows-memory.md README.md .gitignore .gitattributes
+          git archive --format=zip -o $source HEAD -- ':(top,glob)*.cs' ':(top,glob)*.xaml' Sputnik.csproj Sputnik.ico Components wwwroot/assets/klyaksa wwwroot/assets/pets.json wwwroot/assets/icon-catalog.json wwwroot/assets/LUCIDE-LICENSE.txt installer tests/notification-check tests/memory-check tests/pet-removal-check tests/application-icons-check tests/eagle-check tests/beat-package-check tests/tray-check tests/playback-controls-check "docs/releases/$env:APP_VERSION.md" docs/fixes/windows-memory.md README.md .gitignore .gitattributes
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if ($env:INCLUDE_PETS -eq 'true') { & ./installer/Build-Pet-Packages.ps1 -OutputDir artifacts/release }
           Get-ChildItem artifacts/release -File | Sort-Object Name | ForEach-Object {

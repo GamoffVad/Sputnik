@@ -1,55 +1,55 @@
 {
   "id": "action-05",
   "name": "Кругом!",
-  "status": "installed-animation",
+  "status": "available",
   "existingClip": {
     "name": "Кругом!",
-    "frameWidth": 618,
-    "frameHeight": 427,
+    "frameWidth": 694,
+    "frameHeight": 434,
     "columns": 4,
     "frameCount": 97,
     "fps": 24,
     "viewport": {
-      "x": -566.2713846153846,
-      "y": -483.0098461538462,
-      "width": 1826.358153846154,
-      "height": 1084.5735384615384
+      "x": -92,
+      "y": -73,
+      "width": 990,
+      "height": 507
     },
     "sheets": [
       {
-        "file": "motion-05-00.png",
+        "file": "clip-4-0.png",
         "frames": 12
       },
       {
-        "file": "motion-05-01.png",
+        "file": "clip-4-1.png",
         "frames": 12
       },
       {
-        "file": "motion-05-02.png",
+        "file": "clip-4-2.png",
         "frames": 12
       },
       {
-        "file": "motion-05-03.png",
+        "file": "clip-4-3.png",
         "frames": 12
       },
       {
-        "file": "motion-05-04.png",
+        "file": "clip-4-4.png",
         "frames": 12
       },
       {
-        "file": "motion-05-05.png",
+        "file": "clip-4-5.png",
         "frames": 12
       },
       {
-        "file": "motion-05-06.png",
+        "file": "clip-4-6.png",
         "frames": 12
       },
       {
-        "file": "motion-05-07.png",
+        "file": "clip-4-7.png",
         "frames": 12
       },
       {
-        "file": "motion-05-08.png",
+        "file": "clip-4-8.png",
         "frames": 1
       }
     ]
@@ -57,9 +57,6 @@
   "delivery": {
     "packageAnimationIndex": 4,
     "manifest": "../../package-manifest.json",
-    "preserveNativeResolution": true,
-    "sourceAssetBytesVerified": true
-  },
-  "runtimeReferenceBlending": false,
-  "durationSeconds": 4.041666666666667
+    "preserveNativeResolution": true
+  }
 }

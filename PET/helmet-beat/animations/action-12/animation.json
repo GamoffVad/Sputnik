@@ -1,0 +1,48 @@
+{
+  "id": "action-12",
+  "name": "Настройка наушников",
+  "status": "available",
+  "existingClip": {
+    "name": "Настройка наушников",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "clip-11-0.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-11-1.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-11-2.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-11-3.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-11-4.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-11-5.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-11-6.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 11,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true
+  }
+}

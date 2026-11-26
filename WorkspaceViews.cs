@@ -10,6 +10,9 @@ namespace Sputnik;
 public partial class MainWindow
 {
     private bool editing;
+    private Action? motionRefresh;
+    internal void RefreshPlaybackControls() => motionRefresh?.Invoke();
+    internal void SaveShufflePreference(bool enabled) => UpdateWorkspace(current => current["shuffleMotions"] = enabled);
     private StackPanel? chatHistory;
     private ScrollViewer? chatScroll;
     private Action? chatSendState;
@@ -204,6 +207,7 @@ public partial class MainWindow
 
     private void OpenNativeSection(string value)
     {
+        motionRefresh = null;
         editing = false;
         chatHistory = null;
         chatScroll = null;
@@ -250,13 +254,33 @@ public partial class MainWindow
             page.Children.Add(Text("У питомца пока нет движений.", "Muted"));
             return;
         }
-        var shuffle = MotionButton("Случайный порядок", "M3 5 H5 L15 15 H18 M15 12 L18 15 15 18 M3 15 H5 L8 12 M12 8 L15 5 H18 M15 2 L18 5 15 8",
-            () => Desktop?.SetPlayback("shuffle", 0), true);
-        var pause = MotionButton("Пауза", "M7 4 V16 M13 4 V16", () => Desktop?.SetPlayback("pause", 0));
-        var resume = MotionButton("Продолжить", "M6 3 L16 10 6 17 Z", () => Desktop?.SetPlayback("resume", 0));
-        page.Children.Add(Actions(shuffle, pause, resume));
+        var transport = MotionButton("Пауза", "M7 4 V16 M13 4 V16", () => Desktop?.SetPlayback("toggle-pause", 0), true);
+        transport.Width = transport.Height = 42;
+        transport.Margin = new Thickness(0, 0, 10, 0);
+        var shuffle = new CheckBox { Content = Text("Случайный порядок", size: 13), MinHeight = 42, VerticalAlignment = VerticalAlignment.Center };
+        shuffle.SetResourceReference(StyleProperty, "SputnikSettingsToggle");
+        shuffle.ToolTip = "Выключено — движения воспроизводятся по порядку";
+        AutomationProperties.SetName(shuffle, "Случайный порядок");
+        shuffle.Click += (_, _) =>
+        {
+            try { Desktop?.SetPlayback("shuffle", 0); }
+            catch (Exception error) { ShowError(error); }
+            RefreshPlaybackControls();
+        };
+        var toolbar = new DockPanel { Margin = new Thickness(0, 2, 0, 12) };
+        DockPanel.SetDock(transport, Dock.Left); toolbar.Children.Add(transport); toolbar.Children.Add(shuffle);
+        page.Children.Add(toolbar);
         var enabled = new HashSet<string>(clips.Where(clip => clip.Enabled).Select(clip => clip.Name), StringComparer.Ordinal);
-        void UpdateActions() => shuffle.IsEnabled = pause.IsEnabled = resume.IsEnabled = enabled.Count != 0;
+        void UpdateActions()
+        {
+            shuffle.IsEnabled = transport.IsEnabled = enabled.Count != 0;
+            var state = Desktop?.PlaybackState ?? (Paused: false, Shuffle: WorkspaceData()["shuffleMotions"]?.GetValue<bool>() != false);
+            shuffle.IsChecked = state.Shuffle;
+            string label = state.Paused ? "Продолжить" : "Пауза";
+            AutomationProperties.SetName(transport, label); transport.ToolTip = label;
+            ((System.Windows.Shapes.Path)transport.Content).Data = System.Windows.Media.Geometry.Parse(state.Paused ? "M6 3 L16 10 6 17 Z" : "M7 4 V16 M13 4 V16");
+        }
+        motionRefresh = UpdateActions;
         UpdateActions();
 
         for (int i = 0; i < clips.Length; i++)

@@ -32,11 +32,28 @@
     },
     {
       "id": "helmet-beat",
-      "animations": 10,
-      "frames": 970,
-      "sha256": "ec2eed5efa2deb6766c5cc451a6cc3bd4ff168fb16a727fd7989b97cb2383bf7",
-      "bytes": 249202608,
-      "entries": 71
+      "name": "Бит",
+      "animations": 18,
+      "frames": 1746,
+      "bundled": false,
+      "file": "helmet-beat.pet",
+      "bytes": 423028334,
+      "sha256": "6b11b3bf2b7de6f4182f9321d7a01adce1db4fa0e873a553458481e65567c4f9",
+      "entries": 127,
+      "sourceAssetsByteIdentical": true,
+      "uncompressedBytes": 423015498,
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet",
+      "folder": "helmet-beat",
+      "metadata": "helmet-beat/pet.json",
+      "reference": "helmet-beat/reference.png",
+      "referenceSize": [
+        960,
+        960
+      ],
+      "theme": "helmet-beat/theme.json",
+      "package": "helmet-beat/exports/helmet-beat.pet",
+      "minimumWindowsVersion": "1.3.28.36",
+      "minimumMacOSVersion": "0.2.7"
     },
     {
       "id": "hudi",
@@ -80,11 +97,28 @@
     },
     {
       "id": "military-eagle",
-      "animations": 12,
-      "frames": 1164,
-      "sha256": "583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7",
-      "bytes": 187249245,
-      "entries": 109
+      "name": "Орёл",
+      "animations": 10,
+      "frames": 970,
+      "bundled": false,
+      "file": "military-eagle.pet",
+      "bytes": 153861680,
+      "sha256": "1b011ad46b7565c495530d82bb1cae85e69efff2a443fffe321c32276e767730",
+      "entries": 91,
+      "sourceAssetsByteIdentical": true,
+      "uncompressedBytes": 153852556,
+      "downloadUrl": "https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/military-eagle.pet",
+      "folder": "military-eagle",
+      "metadata": "military-eagle/pet.json",
+      "reference": "military-eagle/reference.png",
+      "referenceSize": [
+        868,
+        457
+      ],
+      "theme": "military-eagle/theme.json",
+      "package": "military-eagle/exports/military-eagle.pet",
+      "minimumWindowsVersion": "1.3.28.36",
+      "minimumMacOSVersion": "0.2.7"
     },
     {
       "id": "quiet-ninja",

@@ -221,8 +221,14 @@ dialog .page-head{margin-bottom:18px}
 .compact #appearance-form{gap:5px}
 .desktop-scale input::-webkit-slider-runnable-track{height:6px;border:1px solid var(--line);border-radius:6px;background:var(--slider-track,color-mix(in srgb,var(--surface),var(--accent) 14%))}
 .desktop-scale input::-webkit-slider-thumb{appearance:none;width:15px;height:15px;margin-top:-5px;border:1px solid var(--surface);border-radius:50%;background:var(--accent)}
-.motion-toolbar{display:flex;gap:4px}
-.compact .motion-toolbar .favorite-action button{width:32px;height:32px}
+.motion-toolbar{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.compact .motion-toolbar .favorite-action button{width:42px;height:42px}
+.motion-shuffle{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:1;min-height:42px;padding:8px 12px;background:color-mix(in srgb,var(--surface),var(--ink) 5%);border:1px solid transparent;border-radius:8px;color:var(--ink);font-size:13px}
+.motion-switch{display:inline-flex;align-items:center;flex-shrink:0;width:36px;height:20px;padding:3px;box-sizing:border-box;border-radius:10px;background:color-mix(in srgb,var(--surface),var(--ink) 12%)}
+.motion-switch::after{content:"";width:14px;height:14px;border-radius:50%;background:var(--soft)}
+.motion-shuffle[aria-checked="true"] .motion-switch{background:var(--accent)}
+.motion-shuffle[aria-checked="true"] .motion-switch::after{margin-left:auto;background:var(--accent-ink)}
+.motion-shuffle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .compact .motion-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}
 .compact .motion-list .list-row{min-height:32px}
 @media(max-width:390px){.compact .motion-list{grid-template-columns:minmax(0,1fr)}}

@@ -1,0 +1,48 @@
+{
+  "id": "action-11",
+  "name": "Лунная дорожка",
+  "status": "available",
+  "existingClip": {
+    "name": "Лунная дорожка",
+    "frameWidth": 960,
+    "frameHeight": 960,
+    "columns": 4,
+    "frameCount": 97,
+    "fps": 24,
+    "sheets": [
+      {
+        "file": "clip-10-0.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-10-1.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-10-2.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-10-3.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-10-4.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-10-5.png",
+        "frames": 16
+      },
+      {
+        "file": "clip-10-6.png",
+        "frames": 1
+      }
+    ]
+  },
+  "delivery": {
+    "packageAnimationIndex": 10,
+    "manifest": "../../package-manifest.json",
+    "preserveNativeResolution": true
+  }
+}

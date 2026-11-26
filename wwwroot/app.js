@@ -54,6 +54,7 @@ let route = 'home', tab = 'pets', currentNote, kind = 'site', motion = 0, paused
 let quick = false, menu = false, hidden = false, busy = false, chatError = '', noticeId = null, dismissed = new Set(), draft = '';
 let model = {};
 let desktopSection = null, desktopMotions = [], autoStart = false;
+let desktopPlaybackState={paused:false,shuffle:true};
 let shareChannels = [];
 let appearanceFonts = [isMac?'Helvetica Neue':'Segoe UI'];
 let hotkeys = {sections:[],bindings:{}};
@@ -604,7 +605,7 @@ function renderSection() {
     pets:()=>head('Питомцы')+petList(),
     chat:desktopChat,
     quick:desktopQuick,
-    motion:()=>head('Движения','<div class="motion-toolbar" role="group" aria-label="Управление воспроизведением">'+iconAction('Случайный порядок','shuffle','class="primary" data-playback="shuffle"')+iconAction('Пауза','pause','data-playback="pause"')+iconAction('Продолжить','play','data-playback="resume"')+'</div>')+'<div class="list motion-list">'+movements+'</div>',
+    motion:()=>head('Движения')+'<div class="motion-toolbar" role="group" aria-label="Управление воспроизведением">'+iconAction(desktopPlaybackState.paused?'Продолжить':'Пауза',desktopPlaybackState.paused?'play':'pause','class="primary" data-playback="toggle-pause"')+'<button type="button" class="motion-shuffle" role="switch" aria-checked="'+desktopPlaybackState.shuffle+'" data-playback="shuffle" title="Выключено — движения воспроизводятся по порядку"><span>Случайный порядок</span><span class="motion-switch" aria-hidden="true"></span></button></div><div class="list motion-list">'+movements+'</div>',
     manage:()=>head('Управление')+'<section class="panel toggles"><label><input type="checkbox" id="autostart" '+(autoStart?'checked':'')+'>Запускать питомца при входе в '+(isMac?'macOS':'Windows')+'</label></section>'+button('Горячие клавиши','id="manage-hotkeys"','settings'),
     theme:()=>head('Внешний вид')+settings(true),
     model:()=>head('Модель и API')+settings(true),
@@ -627,7 +628,7 @@ async function openSection(section) {
   route=section;
   if(section==='model'||section==='theme') tab=section;
   try {
-    if(section==='motion') desktopMotions=await call('desktopMotions');
+    if(section==='motion') {desktopMotions=await call('desktopMotions');desktopPlaybackState=(await call('desktopPlaybackState'))??desktopPlaybackState;}
     if(section==='manage') autoStart=await call('autoStart');
     if(section==='theme') appearanceFonts=(await call('appearanceFonts'))??appearanceFonts;
     if(section==='sharing') shareChannels=await call('shareChannels');
@@ -1113,7 +1114,7 @@ document.addEventListener('click',async event=>{
   if(!b) return;
   const d=b.dataset;
   try {
-    if(d.playback){await call('desktopPlayback',{command:d.playback,index:Number(d.index??0)});feedback('Движение обновлено');return;}
+    if(d.playback){desktopPlaybackState=(await call('desktopPlayback',{command:d.playback,index:Number(d.index??0)}))??desktopPlaybackState;if(desktopSection==='motion'){const scroll=main.scrollTop;renderSection();main.scrollTop=scroll;main.querySelector('[data-playback="'+d.playback+'"]')?.focus();}return;}
     if(d.section){await call('openSection',d.section);return;}
     if(d.pageKey){
       pageNumbers.set(d.pageKey,Number(d.page));render();

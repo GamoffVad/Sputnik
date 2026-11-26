@@ -45,7 +45,8 @@ internal static class Program
             pet.Width=pet.Height=500;
             pet.Left=area.Left+(area.Width-500)/2;
             pet.Top=area.Bottom-510;
-            for(int clip=0;clip<12;clip++)
+            int clipCount=((Array)model.GetType().GetProperty("Animations")!.GetValue(model)!).Length;
+            for(int clip=0;clip<clipCount;clip++)
             {
                 Call(pet,"SetPlayback","clip",clip);
                 if(Field(pet,"preloaded") is Task task) task.GetAwaiter().GetResult();
@@ -71,14 +72,21 @@ internal static class Program
             scale.SetValue(model,2.4d);
             Call(pet,"ApplyAppearanceSizes",160d,100d,100d,10d,true);
             double before=pet.Width;
+            double beforeRequested=(double)Field(pet,"preferredSize")!;
             double ground=pet.Top+pet.Height*(double)Field(pet,"groundLevel")!;
             scale.SetValue(model,3.6d);
             Call(pet,"ApplyAppearanceSizes",160d,100d,100d,10d,true);
             Check(Math.Abs((double)Field(pet,"preferredSize")!-1324.8)<.01,"Eagle preferred size is not 1.5 times the former 883.2 DIP size");
-            Check(Math.Abs(pet.Width-before)<1,"Existing imported eagle scale was not upgraded automatically");
+            Check(Math.Abs((double)Field(pet,"preferredSize")!/beforeRequested-1.5)<.002,"Pet metadata scale is not respected");
             Check(Math.Abs(ground-(pet.Top+pet.Height*(double)Field(pet,"groundLevel")!))<1,"Scaling moved the standing level");
-            Console.WriteLine($"PASS eagle size: former 883.2 DIP → preferred 1324.8 DIP (1.5x), existing imports upgraded, standing level retained.");
-            Console.WriteLine("PASS actual eagle, 12 animations: menu gap 10px from visible silhouette, no per-frame menu movement; 48 theme/motion menu selections route correctly. User data unchanged.");
+            double larger=(double)Field(pet,"preferredSize")!;
+            scale.SetValue(model,2.4d);
+            Call(pet,"ApplyAppearanceSizes",160d,100d,100d,10d,true);
+            Check(Math.Abs((double)Field(pet,"preferredSize")!/larger-1/1.5)<.002,"Eagle did not shrink by 1.5");
+            Check(pet.Width<=before+1,"Reducing metadata enlarged the visible pet window");
+            Check(Math.Abs(ground-(pet.Top+pet.Height*(double)Field(pet,"groundLevel")!))<1,"Shrinking moved standing level");
+            Console.WriteLine($"PASS eagle size: metadata respected, 3.6 → 2.4 (divided by 1.5), standing level retained.");
+            Console.WriteLine($"PASS actual eagle, {clipCount} animations: menu gap 10px from visible silhouette, no per-frame menu movement; {clipCount*4} theme/motion menu selections route correctly. User data unchanged.");
         }
         finally{pet.Close();}
     }

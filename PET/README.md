@@ -1,8 +1,8 @@
 # Питомцы «Спутника»
 
-Каталог соответствует установленной библиотеке на 23 ноября 2026 года: **12 питомцев**, включая встроенную Кляксу.
+Каталог соответствует установленной библиотеке на 27 ноября 2026 года: **12 питомцев**, включая встроенную Кляксу.
 
-[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.32) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.6) · [Каталог JSON](catalog.json) · [Проверка](validation.json)
+[Спутник для Windows](https://github.com/GamoffVad/Sputnik/releases/tag/v1.3.28.37) · [Спутник для macOS](https://github.com/GamoffVad/Sputnik/releases/tag/macos-v0.2.7) · [Каталог JSON](catalog.json) · [Проверка](validation.json)
 
 Скачайте `.pet`, затем выберите **Питомцы → плюс → файл → Установить питомца**. Все PNG перенесены из установленной библиотеки побайтово. Настройки, заметки и данные подключения в пакеты не входят.
 
@@ -11,11 +11,11 @@
 | [Брюнетка в очках](black-haired-doll/README.md) | 10 | 970 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/black-haired-doll.pet) |
 | [Праздничная ёлка](christmas-tree/README.md) | 13 | 1651 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/christmas-tree.pet) |
 | [Тканевый ниндзя](cloth-ninja/README.md) | 11 | 1056 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/cloth-ninja.pet) |
-| [Бит](helmet-beat/README.md) | 10 | 970 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/helmet-beat.pet) |
+| [Бит](helmet-beat/README.md) | 18 | 1746 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet) |
 | [HUDI](hudi/README.md) | 1 | 1 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/hudi.pet) |
 | [Девочка в розовом](kitty-girl/README.md) | 14 | 1736 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kitty-girl.pet) |
 | [Клякса](klyaksa/README.md) | 8 | 712 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/klyaksa.pet) |
-| [Орёл](military-eagle/README.md) | 12 | 1164 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet) |
+| [Орёл](military-eagle/README.md) | 10 | 970 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/military-eagle.pet) |
 | [Кудряшка](kudryashka/README.md) | 4 | 431 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/kudryashka.pet) |
 | [Лерка — все анимации](lerka-rebuilt/README.md) | 12 | 1260 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/lerka-rebuilt.pet) |
 | [Тихий ниндзя](quiet-ninja/README.md) | 10 | 1085 | [.pet](https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-22/quiet-ninja.pet) |
@@ -25,13 +25,15 @@
 
 Ёлка уменьшена на 47,6%, содержит 13 движений без референсных вставок, повторного поклона и праздничного прыжка. [Подробности](christmas-tree/README.md).
 
-У Бита сохранены все десять прозрачных движений без референсных вставок. [Превью и проверка](helmet-beat/README.md).
+У Бита 18 анимаций: прежние десять и восемь новых с живой мимикой глаз. [Превью и проверка](helmet-beat/README.md).
 
 У брюнетки выровнен масштаб на стыках и убрана зелёная примесь на кончиках волос. Прозрачность сохранена; референсных вставок и смешивания нет. В каждом движении сохранены 97 исходных кадров. [Сравнение до/после](black-haired-doll/README.md).
 
 Тяжёлые `.pet` публикуются в [едином выпуске библиотеки](https://github.com/GamoffVad/Sputnik/releases/tag/pets-2026-11-22); в Git хранятся манифесты, референсы и описания. Старые выпуски доступны в истории.
 
-У орла — 12 движений, новая «Кругом» с работой лап и два полёта. Для увеличенного размера требуется Windows 1.3.28.34 или новее; см. [проверки и ограничения](military-eagle/README.md).
 
 
-Орёл увеличен ещё в 1,5 раза: масштаб 3,6. Размер и отступ меню исправлены в Windows 1.3.28.34 и macOS 0.2.6; уже импортированный орёл также получает исправление.
+
+Орёл: масштаб 2,0 и собственная медно-коричневая тема «Орлиное оперение». Для применения размера и палитры обновите приложение до Windows 1.3.28.36 или macOS 0.2.7 и импортируйте новый пакет.
+
+[Обновлённые Орёл и Бит](https://github.com/GamoffVad/Sputnik/releases/tag/pets-2026-11-27). Остальные питомцы доступны по прежним ссылкам в таблице.

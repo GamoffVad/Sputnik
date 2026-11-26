@@ -5,7 +5,7 @@ on:
       version:
         description: macOS version without v
         required: true
-        default: '0.2.6'
+        default: '0.2.7'
         type: string
       publish:
         description: Publish tested preview without Apple notarization
@@ -37,8 +37,11 @@ jobs:
           APP_VERSION: ${{ inputs.version }}
           SPUTNIK_SMOKE_TEST: '1'
         run: |
-          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet' --output "$RUNNER_TEMP/eagle.pet"
-          echo '583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7  eagle.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/military-eagle.pet' --output "$RUNNER_TEMP/eagle.pet"
+          echo '1b011ad46b7565c495530d82bb1cae85e69efff2a443fffe321c32276e767730  eagle.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet' --output "$RUNNER_TEMP/beat.pet"
+          echo '6b11b3bf2b7de6f4182f9321d7a01adce1db4fa0e873a553458481e65567c4f9  beat.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          export SPUTNIK_TEST_BEAT="$RUNNER_TEMP/beat.pet"
           export SPUTNIK_TEST_EAGLE="$RUNNER_TEMP/eagle.pet"
           bash macos/build.sh "$APP_VERSION"
       - name: Include isolated import fixtures for native DMG checks
@@ -81,8 +84,11 @@ jobs:
           codesign --verify --strict --verbose=2 "$app"
           architectures=" $(xcrun lipo -archs "$app/Contents/MacOS/Sputnik") "
           [[ "$architectures" == *" arm64 "* && "$architectures" == *" x86_64 "* ]]
-          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pet-military-eagle-v2/military-eagle.pet' --output "$RUNNER_TEMP/eagle.pet"
-          echo '583a34b028323cf7cb84ca38d73432e18939431277cf7b933d63dd321e4fe7e7  eagle.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/military-eagle.pet' --output "$RUNNER_TEMP/eagle.pet"
+          echo '1b011ad46b7565c495530d82bb1cae85e69efff2a443fffe321c32276e767730  eagle.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          curl --fail --location --retry 3 'https://github.com/GamoffVad/Sputnik/releases/download/pets-2026-11-27/helmet-beat.pet' --output "$RUNNER_TEMP/beat.pet"
+          echo '6b11b3bf2b7de6f4182f9321d7a01adce1db4fa0e873a553458481e65567c4f9  beat.pet' | (cd "$RUNNER_TEMP" && shasum -a 256 --check)
+          export SPUTNIK_TEST_BEAT="$RUNNER_TEMP/beat.pet"
           SPUTNIK_TEST_EAGLE="$RUNNER_TEMP/eagle.pet" SPUTNIK_TEST_PET="$PWD/release/import-smoke.pet" SPUTNIK_TEST_PET_UPDATE="$PWD/release/import-smoke-update.pet" "$app/Contents/MacOS/Sputnik" --smoke-test
   publish:
     needs: [build, smoke]

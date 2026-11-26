@@ -36,6 +36,7 @@ internal sealed class DesktopControls : IDisposable
         ("Модель и API", "model", "settings", ""),
         ("Управление", "manage", "settings", ""),
         ("Каналы отправки", "sharing", "link", ""),
+        ("Скрыть в трей", "tray", "tray", ""),
         ("Закрыть питомца", "exit", "close", ""),
     ];
     internal static IEnumerable<(string Title, string Action)> Sections =>
@@ -717,7 +718,7 @@ internal sealed class DesktopControls : IDisposable
         hook = IntPtr.Zero;
     }
 
-    private void CloseMenu()
+    internal void CloseMenu()
     {
         var openMenu = menu;
         menu = null;
@@ -835,6 +836,7 @@ internal sealed class DesktopControls : IDisposable
             "pet" => "M15.5 7 A3.5 3.5 0 1 1 8.5 7 A3.5 3.5 0 1 1 15.5 7 M5 16 Q5 14 7 14 H17 Q19 14 19 16 Q19 21 12 21 Q5 21 5 16 Z",
             "play" => "M6 3 L20 12 6 21 Z",
             "palette" => "M5 18 L19 4 M11 4 H19 V12 M5 10 V18 H13",
+            "tray" => "M3 14V20H21V14 M7 10L12 15 17 10 M12 3V15",
             "close" => "M4 4 L20 20 M20 4 L4 20",
             _ => "M12 3 V5 M12 19 V21 M3 12 H5 M19 12 H21 M6 6 L8 8 M16 16 L18 18 M6 18 L8 16 M16 8 L18 6 M17 12 A5 5 0 1 1 7 12 A5 5 0 1 1 17 12",
         };
