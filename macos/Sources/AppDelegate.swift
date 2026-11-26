@@ -603,7 +603,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return animationNames
         case "desktopPlayback":
             if let dict = payload as? [String: Any], let command = dict["command"] as? String {
-                if command == "shuffle", let store {
+                if command == "shuffle" {
                     var state = store.readWorkspace()
                     state["shuffleMotions"] = !(pet?.playbackState["shuffle"] as? Bool ?? true)
                     try store.writeWorkspace(state)
