@@ -124,7 +124,7 @@ internal sealed class StickyNoteWindow : Window
         UpdatePin();
         var heading = new TextBlock { Text = "Заметка", FontSize = 12, FontWeight = FontWeights.SemiBold,
             VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis,
-            TextWrapping = TextWrapping.NoWrap, Margin = new Thickness(0, 0, 8, 0), ToolTip = "Перетащите, чтобы переместить заметку" };
+            TextWrapping = TextWrapping.NoWrap, Margin = new Thickness(0, 0, 8, 0), ToolTip = "Перетащите для выравнивания с соседней заметкой. Alt — без примагничивания" };
         heading.UseTheme(TextBlock.ForegroundProperty, "Ink");
         Grid.SetColumn(heading, 1);
         header.Children.Add(heading);

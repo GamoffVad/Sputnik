@@ -10,6 +10,7 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "dotnet failed ($LASTEXITCODE): $args" }
     }
     Run-Dotnet build Sputnik.csproj -c Release --nologo
+    Run-Dotnet run --project tests/note-snapping-check/Check.csproj -c Release -- (Join-Path 'artifacts/qa' ('note-snapping-' + (Get-Date -Format 'yyyyMMdd-HHmmss')))
     Run-Dotnet run --project tests/tray-check/Check.csproj -c Release -- bin/Release/net10.0-windows
     Run-Dotnet run --project tests/playback-controls-check/Check.csproj -c Release -- bin/Release/net10.0-windows artifacts/playback-controls-check
     Run-Dotnet run --project tests/notification-check/Check.csproj -c Release -- artifacts/notification-check/current

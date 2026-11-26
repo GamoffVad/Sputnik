@@ -169,6 +169,7 @@ internal sealed class StickyNotes(string directory, Action<Window> position, Act
             }
         }
         windows.Add(note.Id, window);
+        NoteSnapping.Attach(window, () => windows.Values);
         var savePosition = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         void PersistPosition()
         {

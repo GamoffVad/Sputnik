@@ -205,6 +205,39 @@ final class MacStickyNotes {
         guard notes.cards.count == 3, notes.cards.values.allSatisfy({ $0.window.isVisible }) else {
             throw MacError("Не открылись три тестовые заметки.")
         }
+        let others = notes.cards.values.filter { $0 !== first }
+        let neighbour = others[0], hidden = others[1]
+        hidden.window.orderOut(nil)
+        let area = NSScreen.main?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1200, height: 800)
+        let anchor = CGRect(x: area.minX + 40, y: area.minY + 40, width: 340, height: 255)
+        neighbour.window.setFrame(anchor, display: false)
+        let proposed = CGRect(x: anchor.maxX + 17, y: anchor.minY + 6, width: 340, height: 255)
+        let aligned = CGRect(x: anchor.maxX + 12, y: anchor.minY, width: 340, height: 255)
+        first.move(to: proposed)
+        guard first.window.frame == aligned, neighbour.window.frame == anchor else {
+            throw MacError("Заметки не примагничиваются или двигают соседа.")
+        }
+        first.move(to: proposed, bypass: true)
+        guard first.window.frame == proposed else { throw MacError("Option не отключает примагничивание.") }
+        neighbour.window.orderOut(nil)
+        first.move(to: proposed)
+        guard first.window.frame == proposed else { throw MacError("Скрытая заметка влияет на выравнивание.") }
+        neighbour.window.orderFront(nil)
+        first.move(to: proposed)
+        let vectors: [(CGRect, CGRect)] = [
+            (CGRect(x: -257, y: 94, width: 340, height: 320), CGRect(x: -252, y: 100, width: 340, height: 320)),
+            (CGRect(x: 106, y: 437, width: 340, height: 320), CGRect(x: 100, y: 432, width: 340, height: 320)),
+            (CGRect(x: 94, y: -237, width: 340, height: 320), CGRect(x: 100, y: -232, width: 340, height: 320)),
+            (CGRect(x: 167, y: 450, width: 200, height: 200), CGRect(x: 170, y: 450, width: 200, height: 200)),
+            (CGRect(x: 470, y: 157, width: 200, height: 200), CGRect(x: 470, y: 160, width: 200, height: 200)),
+            (CGRect(x: 105, y: 900, width: 340, height: 320), CGRect(x: 105, y: 900, width: 340, height: 320))
+        ]
+        for (input, expected) in vectors {
+            guard NoteSnapping.snap(input, to: [CGRect(x: 100, y: 100, width: 340, height: 320)]) == expected else {
+                throw MacError("Неверное выравнивание заметок по краям или центрам.")
+            }
+        }
+        try first.verifyHeaderHitTargets()
         notes.toggle(palette: palette)
         guard !notes.isVisible else { throw MacError("Тестовые заметки не скрылись.") }
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
@@ -214,6 +247,13 @@ final class MacStickyNotes {
         guard Set(saved.map(\.tint)).count == 3, saved.count == 3, saved.filter(\.pinned).count == 1, saved.contains(where: { $0.content != nil }) else {
             throw MacError("Не сохранились три тестовые заметки с текстом и закреплением.")
         }
+        let reloaded = MacStickyNotes(dataDirectory: directory)
+        reloaded.show(palette: palette)
+        guard reloaded.cards[first.snapshot().id]?.window.frame == aligned else {
+            throw MacError("Не восстановлено выровненное положение заметки.")
+        }
+        reloaded.toggle(palette: palette)
+        FileHandle.standardOutput.write(Data("Sputnik smoke: note magnets align edges and centres, dock with 12pt gap, exclude hidden cards, honour Option, preserve header buttons and restore aligned positions.\n".utf8))
     }
 
     @discardableResult
@@ -221,6 +261,10 @@ final class MacStickyNotes {
         if let existing = cards[record.id] { return existing }
         let card = StickyCard(record, palette: palette, offset: offset)
         cards[record.id] = card
+        card.neighbours = { [weak self] in
+            self?.cards.filter { $0.key != record.id && $0.value.window.isVisible && !$0.value.window.isMiniaturized }
+                .map { $0.value.window.frame } ?? []
+        }
         card.didEdit = { [weak self] in self?.saveSoon() }
         card.shareChannels = { [sharingSettings] in StickyShareChannel.load(from: sharingSettings) }
         card.create = { [weak self, weak card] in
@@ -277,7 +321,34 @@ private final class StickyEditor: NSTextView {
 
 @MainActor
 private final class StickyHeader: NSView {
-    override var mouseDownCanMoveWindow: Bool { true }
+    var move: ((CGRect, Bool) -> Void)?
+    private var dragPoint: CGPoint?
+    private var dragOrigin = CGPoint.zero
+    override var mouseDownCanMoveWindow: Bool { false }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let hit = super.hitTest(point) else { return nil }
+        var ancestor: NSView? = hit
+        while let view = ancestor, view !== self {
+            if view is NSButton { return hit }
+            ancestor = view.superview
+        }
+        return self
+    }
+    override func mouseDown(with event: NSEvent) {
+        dragPoint = NSEvent.mouseLocation
+        dragOrigin = window?.frame.origin ?? .zero
+        window?.makeKeyAndOrderFront(nil)
+    }
+    override func mouseDragged(with event: NSEvent) {
+        guard let window, let dragPoint else { return }
+        let cursor = NSEvent.mouseLocation
+        let proposed = CGRect(x: dragOrigin.x + cursor.x - dragPoint.x,
+                              y: dragOrigin.y + cursor.y - dragPoint.y,
+                              width: window.frame.width, height: window.frame.height)
+        move?(proposed, event.modifierFlags.contains(.option))
+    }
+    override func mouseUp(with event: NSEvent) { dragPoint = nil }
 }
 
 @MainActor
@@ -288,6 +359,7 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
     var create: (() -> Void)?
     var delete: (() -> Void)?
     var shareChannels: (() -> [StickyShareChannel])?
+    var neighbours: (() -> [CGRect])?
 
     private var record: StickyRecord
     private var contentDirty = false
@@ -339,7 +411,9 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
 
     private func setup() {
         window.title = "Заметка"
-        window.isMovableByWindowBackground = true
+        window.isMovableByWindowBackground = false
+        header.toolTip = "Перетащите для выравнивания с соседней заметкой. Option — без примагничивания"
+        header.move = { [weak self] frame, bypass in self?.move(to: frame, bypass: bypass) }
         window.styleMask.insert(.resizable)
         window.minSize = CGSize(width: 312, height: 164)
         window.contentView = card
@@ -764,6 +838,25 @@ private final class StickyCard: NSObject, NSWindowDelegate, NSTextViewDelegate {
             }
         }
         return record
+    }
+
+    func move(to proposed: CGRect, bypass: Bool = false) {
+        let aligned = bypass ? proposed : NoteSnapping.snap(proposed, to: neighbours?() ?? [])
+        window.setFrameOrigin(aligned.origin)
+    }
+
+    func verifyHeaderHitTargets() throws {
+        window.contentView?.layoutSubtreeIfNeeded()
+        let labelPoint = header.convert(CGPoint(x: heading.bounds.midX, y: heading.bounds.midY), from: heading)
+        let hitPoint = header.convert(labelPoint, to: header.superview)
+        guard header.hitTest(hitPoint) === header, let button = controls.first else {
+            throw MacError("Заголовок заметки не доступен для перетаскивания.")
+        }
+        let buttonPoint = header.convert(CGPoint(x: button.bounds.midX, y: button.bounds.midY), from: button)
+        let controlPoint = header.convert(buttonPoint, to: header.superview)
+        var hit = header.hitTest(controlPoint)
+        while let view = hit, view !== button, view !== header { hit = view.superview }
+        guard hit === button else { throw MacError("Примагничивание перехватывает кнопки заголовка.") }
     }
 
     func textDidChange(_ notification: Notification) {

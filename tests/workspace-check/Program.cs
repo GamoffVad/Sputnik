@@ -108,7 +108,18 @@ partial class Check
                 Call("OpenSection", "theme");
                 Layout(window);
                 ComboBox ColorMode() => Find<ComboBox>(window).Single(x => AutomationProperties.GetName(x) == "Цвет новых заметок");
-                Button SaveAppearance() => Find<Button>(window).Single(x => AutomationProperties.GetName(x) == "Сохранить");
+                void AwaitColorMode(string expected)
+                {
+                    var deadline = DateTime.UtcNow.AddSeconds(2);
+                    while (DateTime.UtcNow < deadline)
+                    {
+                        Layout(window);
+                        var saved = JsonNode.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(data,"workspace.json")));
+                        if (saved?["noteColorMode"]?.ToString() == expected) return;
+                        System.Threading.Thread.Sleep(20);
+                    }
+                    throw new Exception("Note color mode was not saved automatically");
+                }
                 if (ColorMode().SelectedIndex != 0) throw new Exception("Existing behavior must remain default");
                 var notesType = assembly.GetType("Sputnik.StickyNotes")!;
                 object NewManager() => Activator.CreateInstance(notesType, data, new Action<Window>(w=>{w.Left=100;w.Top=100;}),new Action(()=>{}))!;
@@ -126,8 +137,9 @@ partial class Check
                     if (ReadNotes().Any(n=>n!["Color"] is not null)) throw new Exception("Default notes must inherit pet theme");
                     ColorMode().SelectedIndex=1;
                     Render(window,"notes-color-settings");
-                    SaveAppearance().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                    if (window.IsVisible) throw new Exception("Preference save did not close window");
+                    AwaitColorMode("auto");
+                    if (!window.IsVisible || Find<Button>(window).Any(x=>AutomationProperties.GetName(x)=="Сохранить"))
+                        throw new Exception("Appearance must autosave without a Save button or closing");
                     var originalNotes=ReadNotes().ToJsonString();
                     string previous="";
                     var seen=new HashSet<string>();
@@ -153,7 +165,7 @@ partial class Check
                     window.Show(); Call("OpenSection","theme"); Layout(window);
                     if(ColorMode().SelectedIndex!=1) throw new Exception("Auto color preference not persisted");
                     ColorMode().SelectedIndex=0;
-                    SaveAppearance().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    AwaitColorMode("pet");
                     CreateNote(); CloseNotes();
                     if(ReadNotes().Last()!["Color"] is not null) throw new Exception("Switching back did not restore theme color");
                     window.Show(); Call("OpenSection","theme"); Layout(window);
@@ -165,7 +177,7 @@ partial class Check
                         var sliders=Find<Slider>(window).ToArray();
                         foreach(var slider in sliders) slider.Value=i%2==0?slider.Minimum:slider.Maximum;
                         Layout(window);
-                        if(Find<Slider>(window).Count()!=5 || Find<TextBlock>(window).Count(t=>t.Text.StartsWith("Размер питомца ·"))!=1)
+                        if(Find<Slider>(window).Count()!=6 || Find<TextBlock>(window).Count(t=>t.Text.StartsWith("Размер питомца ·"))!=1)
                             throw new Exception("Duplicate appearance controls after resize/update");
                     }
                     window.Width=450;
